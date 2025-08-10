@@ -9,7 +9,7 @@
 [![Docker](https://img.shields.io/badge/docker-ready-blue?style=for-the-badge&logo=docker&logoColor=white)](https://hub.docker.com/r/semanticore/semanticore)
 [![Kubernetes](https://img.shields.io/badge/kubernetes-ready-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
 
-**🚀 Open Source Semantic Layer Toolkit**
+**🚀 Open Source Semantic Layer and Knowlege Engineering Toolkit**
 
 *Transform any unstructured data format into intelligent, structured semantic knowledge graphs, embeddings, and ontologies for LLMs, Agents, RAG systems, and Knowledge Graphs.*
 
