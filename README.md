@@ -25,7 +25,7 @@
 
 Semantica is a comprehensive semantic data transformation platform that bridges the gap between raw unstructured data and intelligent AI systems. It extracts meaning, builds knowledge, and creates intelligent semantic layers that power next-generation AI applications.
 
-> **"The missing link between your data and AI — turning unstructured chaos into structured, intelligent semantic knowledge with enterprise-grade quality assurance."**
+> **"The missing fabric between your Data and AI — turning unstructured chaos into structured, intelligent semantic knowledge with enterprise-grade quality assurance."**
 
 ### Why Choose Semantica?
 
