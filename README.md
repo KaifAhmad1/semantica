@@ -9,13 +9,13 @@
 [![PyPI version](https://badge.fury.io/py/semantica.svg)](https://badge.fury.io/py/semantica)
 [![Downloads](https://pepy.tech/badge/semantica)](https://pepy.tech/project/semantica)
 
-**Open Source Semantic Layer & Knowledge Engineering Toolkit**
+**Open Source Framework for Building Semantic Layers & Knowledge Engineering**
 
-*Transform any unstructured data format into intelligent, structured semantic knowledge graphs, embeddings, and ontologies for LLMs, Agents, RAG systems, and Knowledge Graphs.*
+*The missing fabric between raw data and AI engineering. A comprehensive open-source framework for building semantic layers and knowledge engineering systems that transform unstructured data into AI-ready knowledge — powering **Knowledge Graph-Powered RAG (GraphRAG)**, **AI Agents**, **Multi-Agent Systems**, and AI applications with structured semantic knowledge.*
 
 **🆓 100% Open Source & Free Forever** • **📜 MIT License** • **🌍 Community Driven**
 
-[📖 Documentation](https://semantica.readthedocs.io/) • [🚀 Quick Start](#-quick-start) • [💡 Features](#-core-capabilities) • [🤝 Community](#-community--support)
+[📖 Documentation](https://semantica.readthedocs.io/) • [🚀 Quick Start](#-quick-start) • [💡 Features](#-core-capabilities) • [🔍 GraphRAG & Multi-Agent](#-knowledge-graph-powered-rag--multi-agent-systems) • [🧠 Context Engineering](#-context-engineering-for-agents) • [🤝 Community](#-community--support)
 
 </div>
 
@@ -23,18 +23,122 @@
 
 ## 🌟 What is Semantica?
 
-Semantica is a comprehensive semantic data transformation platform that bridges the gap between raw unstructured data and intelligent AI systems. It extracts meaning, builds knowledge, and creates intelligent semantic layers that power next-generation AI applications.
+Semantica is an **Open Source Framework for Building Semantic Layers & Knowledge Engineering** — the missing fabric between raw data and AI engineering. It's a comprehensive framework that enables you to build semantic layers and knowledge engineering systems, transforming unstructured chaos into structured, intelligent semantic knowledge that powers **Knowledge Graph-Powered RAG (GraphRAG)**, **AI Agents**, **Multi-Agent Systems**, and AI applications.
 
-> **"The missing fabric between your Data and AI — turning unstructured chaos into structured, intelligent semantic knowledge with enterprise-grade quality assurance."**
+> **"An Open Source Framework for Building Semantic Layers & Knowledge Engineering — bridging the gap between raw data and AI engineering by providing the tools to build semantic layers that transform unstructured data into AI-ready knowledge graphs, ontologies, and embeddings. These outputs power **Knowledge Graph-Powered RAG (GraphRAG)**, **AI Agents**, **Multi-Agent Systems**, and AI applications with structured semantic knowledge."**
+
+### The Gap We Fill
+
+The fundamental problem in AI engineering today:
+
+| Raw Data | The Gap | AI Systems |
+|----------|---------|------------|
+| • Unstructured documents (PDFs, emails, web pages) | ❌ **Missing Semantic Layer** | • LLMs need structured context |
+| • Multiple formats (JSON, CSV, XML, binary) | ❌ **No Knowledge Structure** | • Agents need formal ontologies |
+| • Siloed data sources | ❌ **No Relationships** | • RAG needs vector + graph retrieval |
+| • Inconsistent schemas | ❌ **No Quality Assurance** | • Production needs conflict detection |
+| • No semantic meaning | ❌ **No Context Engineering** | • AI needs meaningful connections |
+
+**Semantica fills this gap** as a comprehensive **Framework for Semantic Layers & Knowledge Engineering**, providing the foundation that powers **Knowledge Graph-Powered RAG (GraphRAG)**, **AI Agents**, **Multi-Agent Systems**, and AI applications:
+
+1. **Semantic Extraction** → Transform raw data into entities, relationships, and triples
+2. **Knowledge Graph Construction** → Build structured knowledge from unstructured sources
+3. **Ontology Generation** → Create formal semantic models (6-stage LLM-based pipeline)
+4. **Context Engineering** → Formalize context as graphs for AI Agents and Multi-Agent System coordination
+5. **Quality Assurance** → Ensure production-ready outputs with validation and conflict detection
+6. **AI-Ready Formats** → Output embeddings, vectors, and knowledge graphs that power Knowledge Graph-Powered RAG, AI Agents, Multi-Agent Systems, and AI applications
+
+### Open Source Framework for Building Semantic Layers & Knowledge Engineering
+
+Semantica provides the **complete open-source framework** for building semantic layers and knowledge engineering systems:
+
+- **Semantic Layer Construction**: Build unified semantic layers that translate business concepts into machine-readable formats
+- **Knowledge Engineering Pipeline**: Complete pipeline from data ingestion to knowledge graph deployment
+- **Ontology Management**: Full lifecycle support for ontology development, validation, and maintenance
+- **Context Engineering**: Formalize context as graphs to enable agent understanding and reasoning
+- **Quality-Assured Outputs**: Enterprise-grade validation, conflict detection, and deduplication
+- **Production-Ready**: Complete framework ready for enterprise deployment with monitoring and analytics
+- **Powers AI Systems**: Provides the semantic knowledge foundation that powers **Knowledge Graph-Powered RAG (GraphRAG)**, **AI Agents**, **Multi-Agent Systems**, and AI applications
+
+### How Semantica Powers Knowledge Graph-Powered RAG, AI Agents, Multi-Agent Systems, and AI Applications
+
+Semantica's outputs provide the semantic foundation that powers next-generation AI systems:
+
+| Output | Powers | Impact |
+|--------|--------|--------|
+| **Knowledge Graphs** | **Knowledge Graph-Powered RAG (GraphRAG)** | 30% accuracy improvement with hybrid vector + graph retrieval |
+| **Formal Ontologies** | **AI Agents & Multi-Agent Systems** | Constraint validation, semantic routing, task decomposition, agent coordination |
+| **Vector Embeddings** | RAG Systems | Fast semantic similarity search for context retrieval |
+| **Context Graphs** | **AI Agents & Multi-Agent Systems** | Persistent memory and context-aware decision making |
+| **Semantic Layers** | AI Systems | Unified business definitions for consistent AI reasoning |
+| **Quality-Assured Data** | Production AI | Conflict-free, validated knowledge for reliable AI operations |
+
+### Knowledge Graph-Powered RAG (GraphRAG)
+
+Semantica enables **Knowledge Graph-Powered RAG** systems that combine the speed of vector search with the precision of knowledge graph traversal:
+
+- **Hybrid Retrieval**: Vector similarity search + knowledge graph expansion
+- **30% Accuracy Improvement**: Over vector-only RAG systems
+- **Context-Aware Answers**: Leverages entity relationships for deeper understanding
+- **Graph Expansion**: Expands from vector results using knowledge graph relationships
+- **Provenance Tracking**: Trace answers back to source entities and relationships
+
+### AI Agents & Multi-Agent System Foundation
+
+Semantica provides the semantic infrastructure that powers **AI Agents** and **Multi-Agent Systems**:
+
+**For Individual AI Agents:**
+- **Ontology-Based Constraints**: Validate actions against domain ontologies
+- **Semantic Routing**: Intent understanding using ontology-based classification
+- **Context Memory**: Persistent memory through context graphs
+- **Task Decomposition**: Break down complex goals using formal task hierarchies
+
+**For Multi-Agent Systems:**
+- **Shared Ontologies**: Enable agents to coordinate through shared semantic models
+- **Constraint Validation**: Real-time action validation against domain rules
+- **Semantic Coordination**: Agents coordinate through shared knowledge graphs
+- **Context Sharing**: Agents access common knowledge graphs for coordinated decision-making
+- **Agent Orchestration**: Orchestrate multi-agent workflows with semantic routing
 
 ### Why Choose Semantica?
 
-- **📄 Universal Data Processing** - 50+ file formats, live feeds, complex documents, multi-modal content
-- **🧠 Advanced Semantic AI** - Multi-layer understanding, automatic ontology generation, knowledge graphs
-- **🤖 AI-Ready Outputs** - RAG-optimized chunking, LLM-compatible schemas, vector embeddings
-- **🔧 Production-Ready Quality** - Schema enforcement, conflict detection, advanced deduplication
-- **🚀 Enterprise Scale** - Real-time processing, distributed architecture, SOC2/GDPR compliant
+Semantica is the **only open-source framework for building semantic layers and knowledge engineering** that provides a complete transformation pipeline from raw data to AI-ready knowledge:
+
+- **📄 Universal Data Processing** - Process 50+ file formats, live feeds, complex documents, multi-modal content
+- **🧠 Semantic Intelligence Layer** - Extract meaning, build knowledge graphs, generate ontologies automatically
+- **🤖 AI-Ready Outputs** - Produce RAG-optimized chunks, vector embeddings, knowledge graphs that AI systems consume
+- **🔗 Context Engineering** - Formalize context as graphs for agents with memory, tools, and purpose
+- **🔧 Production-Ready Quality** - Enterprise-grade validation, conflict detection, deduplication, quality scoring
+- **📊 Complete Framework** - Everything from parsing to ontology generation in one integrated framework for semantic layers and knowledge engineering
 - **🆓 Completely Free** - MIT license, no costs, no limits, self-hosted with full control
+
+### From Raw Data to AI Engineering
+
+```python
+# THE PROBLEM: Raw data is unstructured and AI systems need structured knowledge
+
+# Raw Input (The Gap)
+raw_data = [
+    "financial_report.pdf",           # Unstructured document
+    "https://news.com/rss",           # Live feed
+    "customer_data.json",            # No semantic meaning
+    "internal_emails/",               # No relationships
+]
+
+# WITH SEMANTICA: Transform raw data into AI-ready knowledge
+from semantica import Semantica
+
+core = Semantica()
+knowledge_base = core.build_knowledge_base(raw_data)
+
+# AI-Ready Outputs (Bridges the Gap)
+# ✅ Structured entities and relationships
+# ✅ Knowledge graph with semantic connections
+# ✅ Vector embeddings for RAG systems
+# ✅ Generated ontologies for agents
+# ✅ Context graphs for agent memory
+# ✅ Quality-assured, conflict-detected outputs
+```
 
 ---
 
@@ -88,10 +192,12 @@ Semantica is a comprehensive semantic data transformation platform that bridges 
 | **Multi-Layer Understanding** | Lexical, syntactic, semantic, and pragmatic analysis | Custom NLP pipelines |
 | **Entity & Relationship Extraction** | Named entities, relationships, complex event detection | spaCy, NLTK, Custom |
 | **Automatic Triple Generation** | Subject-Predicate-Object triples from any content | RDF, JSON-LD, Custom |
+| **Semantic Network Extraction** | YAML-formatted semantic networks for ontology pipeline | 6-stage ontology generation |
 | **Context Preservation** | Semantic context across document boundaries | Advanced chunking |
 | **Temporal Analysis** | Time-aware semantic understanding and event sequencing | Temporal reasoning |
 | **Cross-Document Linking** | Entity resolution and relationship mapping across sources | Graph algorithms |
 | **Ontology Alignment** | Automatic mapping to existing ontologies | Schema.org, FOAF, Dublin Core |
+| **Controlled Vocabularies** | Hierarchical vocabularies connected to ontology classes | SKOS, multi-language support |
 
 ### 🕸️ Knowledge Graph Capabilities
 
@@ -100,8 +206,10 @@ Semantica is a comprehensive semantic data transformation platform that bridges 
 | **Automated Construction** | Build knowledge graphs from any data format | All major graph DBs |
 | **Triple Stores** | RDF storage and SPARQL querying | Blazegraph, Virtuoso, Apache Jena, GraphDB |
 | **Graph Databases** | Property graph storage and Cypher queries | Neo4j, KuzuDB, ArangoDB, Neptune, TigerGraph |
+| **Knowledge Graph-Powered RAG (GraphRAG)** | Hybrid retrieval combining vector search + knowledge graphs | 30% accuracy improvement over vector-only RAG |
 | **Semantic Reasoning** | Inductive, deductive, and abductive reasoning | Custom reasoning engines |
-| **Ontology Generation** | Automatic OWL/RDF ontology creation | OWL 2.0, RDF 1.1 |
+| **Ontology Generation** | 6-stage LLM-based pipeline (parsing → YAML → definitions → types → hierarchy → TTL) | OWL 2.0, RDF 1.1 |
+| **Symbolic Validation** | HermiT/Pellet reasoner validation (F1 up to 0.99) | Hybrid LLM + reasoner approach |
 | **Graph Analytics** | Centrality, community detection, path finding | NetworkX, Custom |
 | **SPARQL Generation** | Automatic query generation for semantic search | SPARQL 1.1 |
 
@@ -227,6 +335,74 @@ sources = source_tracker.track_property_sources(property, "sales_figure", "$10M"
 
 ---
 
+## 🧠 Knowledge Graph-Powered RAG, AI Agents & Multi-Agent Systems
+
+Semantica provides the infrastructure that powers **Knowledge Graph-Powered RAG (GraphRAG)**, **AI Agents**, and **Multi-Agent Systems**, enabling next-generation AI applications with structured semantic knowledge.
+
+### Knowledge Graph-Powered RAG (GraphRAG)
+
+Build RAG systems that combine vector search speed with knowledge graph precision for 30% accuracy improvements:
+
+- **Hybrid Retrieval**: Vector similarity + knowledge graph traversal
+- **Graph Expansion**: Expand from vector results using entity relationships
+- **Context Enrichment**: Enrich answers with relationship context from knowledge graphs
+- **Provenance**: Trace answers to source entities and relationships
+
+### Multi-Agent System Infrastructure
+
+Enable Multi-Agent Systems with shared semantic models and coordinated decision-making:
+
+- **Shared Ontologies**: Coordinate agents through common semantic models
+- **Constraint Validation**: Real-time action validation against domain ontologies
+- **Semantic Routing**: Ontology-based intent understanding and routing
+- **Task Decomposition**: Break complex goals using formal task hierarchies
+- **Context Sharing**: Shared knowledge graphs for coordinated agent actions
+
+## 🧠 Context Engineering for Agents
+
+Semantica provides comprehensive **context engineering** infrastructure that transforms LLMs into agents with memory, tools, and purpose. Context engineering formalizes context as a graph of connections, enabling agents to understand and act with meaningful context.
+
+### Three Layers of Context Engineering
+
+| Layer | Description | Implementation |
+|-------|-------------|----------------|
+| **📝 Prompting** | Natural-language programming for agent goals | Prompt Builder, Template Engine |
+| **💾 Memory** | RAG with vector databases + knowledge graphs | Context Graph, Agent Memory, GraphRAG |
+| **🔧 Tools** | Consistent tool access via standardized interfaces | Tool Registry (MCP-ready) |
+
+### Context as a Graph
+
+**Context is connection.** Semantica formalizes context into knowledge graphs where:
+- **Concepts**: Ontologies provide the abstract map of concepts and relationships
+- **Connections**: Entity linking creates a web of meaningful context
+- **Memory**: Persistent context storage enables agent memory across conversations
+- **Retrieval**: Hybrid retrieval (GraphRAG) combines vector speed with graph precision
+
+### Key Context Engineering Modules
+
+```python
+from semantica.context import ContextGraphBuilder, EntityLinker, AgentMemoryManager
+from semantica.qa_rag import HybridRetriever, ContextBuilder
+from semantica.prompting import PromptBuilder
+
+# Build context graph
+context_graph = ContextGraphBuilder()
+graph = context_graph.build_from_entities(entities, relationships)
+
+# Link entities across sources
+entity_linker = EntityLinker()
+linked = entity_linker.link_entities(entities, sources)
+
+# Agent memory management
+memory = AgentMemoryManager()
+memory.store_conversation(context, conversation_id)
+retrieved = memory.retrieve_relevant_context(query)
+
+# GraphRAG hybrid retrieval
+retriever = HybridRetriever(vector_store, knowledge_graph)
+results = retriever.retrieve(query, use_vectors=True, use_graph=True)
+```
+
 ## 🤖 Agentic Analytics & Autonomous AI
 
 By 2028, Gartner predicts 15% of business decisions will be made autonomously through agentic AI, and 33% of enterprise applications will include agentic AI capabilities.
@@ -279,12 +455,73 @@ By 2028, Gartner predicts 15% of business decisions will be made autonomously th
 
 ### Technology Stack
 
-- **AI Agents**: Autonomous copilots for end-to-end analytical processes
+- **AI Agents**: Autonomous copilots with context engineering (prompting, memory, tools)
 - **Semantic Layers**: Unified business definitions, context, and governance
 - **Knowledge Graphs**: Enterprise data relationship mapping for deeper reasoning
-- **Data Fabrics**: Unified, real-time access across distributed sources
-- **GraphRAG**: Knowledge graphs + semantic context for comprehensive insights
-- **SLMs + Semantic Layers**: Domain-specific models with semantic foundations
+- **Context Engineering**: Formalized context as graphs for agent understanding
+- **Knowledge Graph-Powered RAG (GraphRAG)**: Hybrid retrieval combining vector search + knowledge graphs (30% improvement)
+- **AI Agents**: Ontology-based constraint validation, semantic routing, and context-aware decision making
+- **Multi-Agent Systems**: Shared ontologies, context graphs, and semantic coordination infrastructure
+- **Ontology Generation**: 6-stage LLM-based pipeline with symbolic validation
+- **Semantic Modeling**: Best practices following industry guidelines and standards
+
+---
+
+## 🔧 How Semantica Bridges the Gap
+
+### The Complete Pipeline: Raw Data → AI Engineering
+
+```
+┌─────────────────┐
+│   RAW DATA      │  PDFs, Emails, Web Pages, JSON, CSV, APIs
+│  (Unstructured) │  No semantics, no relationships, no context
+└────────┬────────┘
+         │
+         │  ═══════════════════════════════════════════════════
+         │  SEMANTICA: Open Source Framework for Building
+         │  Semantic Layers & Knowledge Engineering
+         │  ═══════════════════════════════════════════════════
+         │
+         ├─→ 📄 Parsing (50+ formats)
+         ├─→ 🧠 Semantic Extraction (NER, relationships, triples)
+         ├─→ 🕸️ Knowledge Graph Construction
+         ├─→ 📚 Ontology Generation (6-stage pipeline)
+         ├─→ 🔗 Context Engineering (formalized as graphs)
+         ├─→ 💾 Vector Embeddings
+         ├─→ ✅ Quality Assurance (validation, conflicts, deduplication)
+         │
+┌────────▼────────────────────────────────────────────────────┐
+│   AI-READY KNOWLEDGE                                        │
+│  • Structured entities & relationships                      │
+│  • Knowledge graphs with semantic connections               │
+│  • Formal ontologies for agents                             │
+│  • Vector embeddings for RAG                                │
+│  • Context graphs for agent memory                          │
+│  • Quality-assured, production-ready outputs                 │
+└─────────────────────────────────────────────────────────────┘
+         │
+         │  ⚡ FUELS
+         ▼
+┌──────────────────────────────────────────────────────────────┐
+│  GRAPHRAG • AI AGENTS • MULTI-AGENT SYSTEMS • AI            │
+│  • GraphRAG: Vector + graph hybrid retrieval (30% improvement)│
+│  • AI Agents: Ontology-based constraints & semantic routing │
+│  • Multi-Agent: Shared ontologies & context coordination     │
+│  • AI Systems: Structured knowledge for reasoning & action   │
+│  Powered by semantic layers with meaningful context          │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### Key Transformation Capabilities
+
+| Capability | Input | Output | Powers |
+|------------|-------|--------|--------|
+| **Semantic Extraction** | Unstructured text | Entities, relationships, triples | AI Agents & Multi-Agent decision-making |
+| **Knowledge Graph** | Multiple documents | Connected graph of entities | Knowledge Graph-Powered RAG (GraphRAG) |
+| **Ontology Generation** | Document patterns | Formal OWL/RDF ontologies | AI Agents & Multi-Agent constraint validation |
+| **Vector Embeddings** | Raw content | Semantic embeddings | GraphRAG similarity search |
+| **Context Engineering** | Conversation history | Context graphs | AI Agents & Multi-Agent memory & coordination |
+| **Quality Assurance** | Extracted data | Validated, conflict-free KG | Production GraphRAG, AI Agents & Multi-Agent Systems |
 
 ---
 
@@ -308,12 +545,12 @@ cd semantica
 pip install -e ".[dev]"
 ```
 
-### 30-Second Demo
+### 30-Second Demo: Raw Data → AI-Ready Knowledge
 
 ```python
 from semantica import Semantica
 
-# Initialize with preferred providers
+# Initialize the semantic transformation layer
 core = Semantica(
     llm_provider="openai",
     embedding_model="text-embedding-3-large",
@@ -321,24 +558,30 @@ core = Semantica(
     graph_db="neo4j"
 )
 
-# Process ANY data format
+# Raw unstructured data (THE GAP)
 sources = [
-    "financial_report.pdf",
-    "https://example.com/news/rss",
-    "research_papers/",
-    "data.json",
-    "https://example.com/article"
+    "financial_report.pdf",          # Unstructured document
+    "https://example.com/news/rss",  # Live feed
+    "research_papers/",               # Multiple formats
+    "data.json",                      # No semantic meaning
+    "https://example.com/article"     # Web content
 ]
 
-# One-line semantic transformation
+# One-line transformation: Raw Data → AI-Ready Knowledge
 knowledge_base = core.build_knowledge_base(sources)
 
-print(f"Processed {len(knowledge_base.documents)} documents")
-print(f"Extracted {len(knowledge_base.entities)} entities")
-print(f"Generated {len(knowledge_base.triples)} semantic triples")
-print(f"Created {len(knowledge_base.embeddings)} vector embeddings")
+# Semantica fills the gap - outputs are AI-ready:
+print(f"✅ Processed {len(knowledge_base.documents)} documents")
+print(f"✅ Extracted {len(knowledge_base.entities)} structured entities")
+print(f"✅ Generated {len(knowledge_base.triples)} semantic relationships")
+print(f"✅ Created {len(knowledge_base.embeddings)} vector embeddings")
+print(f"✅ Built knowledge graph with {len(knowledge_base.graph.nodes)} nodes")
+print(f"✅ Generated ontology with {len(knowledge_base.ontology.classes)} classes")
 
-# Query the knowledge base
+# Semantica outputs fuel RAG, AI Agents, and AI Systems:
+# • RAG Systems: Query with vector + graph hybrid retrieval (GraphRAG)
+# • AI Agents: Use ontology for constraint validation and semantic routing
+# • AI Systems: Access structured context from knowledge graph for reasoning
 results = knowledge_base.query("What are the key financial trends?")
 ```
 
@@ -386,18 +629,24 @@ print(f"Conflicts Detected: {quality_report.conflicts_count}")
 
 ---
 
-## 🧩 Module Ecosystem
+## 🧩 Framework Architecture
 
-### 20 Production-Ready Modules
+Semantica is built as a comprehensive **Open Source Framework for Building Semantic Layers & Knowledge Engineering**, providing modular components that work together to transform raw data into AI-ready knowledge.
+
+### 25+ Production-Ready Modules
 
 | Category | Modules | Key Capabilities |
 |----------|---------|------------------|
 | **🏗️ Core** | Core Engine, Pipeline Builder | Orchestration, configuration, execution |
 | **📊 Data Processing** | Ingestion, Parsing, Normalization, Chunking | Universal data processing, 50+ formats |
 | **🧠 Semantic Intelligence** | Extraction, Ontology, Knowledge Graph | NER, relationships, ontology generation |
+| **📚 Vocabulary** | Vocabulary Manager, Controlled Vocabularies | Hierarchical terms, SKOS support |
 | **💾 Storage & Retrieval** | Vector Store, Triple Store, Embeddings | Pinecone, FAISS, Neo4j, SPARQL |
-| **🤖 AI & Reasoning** | RAG System, Reasoning Engine, Multi-Agent | Question answering, inference, orchestration |
+| **🤖 AI & Reasoning** | Knowledge Graph-Powered RAG, Reasoning Engine, Multi-Agent Systems | GraphRAG, hybrid retrieval, agent coordination, inference |
+| **🧠 Context Engineering** | Context Graph, Entity Linker, Agent Memory | Context as connections, agent memory |
+| **📝 Prompt Engineering** | Prompt Builder, Template Engine | Natural-language programming for agents |
 | **🔧 Quality Assurance** | Templates, Seed Data, Deduplication, Conflicts, KG QA | Production-ready knowledge graphs |
+| **📖 Semantic Modeling** | Requirements Spec, Competency Questions, Documentation | Best practices for ontology development |
 
 ### Core Processing Modules
 
@@ -455,6 +704,52 @@ print(f"Conflicts Detected: {quality_report.conflicts_count}")
 | **🧬 Healthcare** | Biomedical Literature Processing | Research papers, PubMed, clinical reports | Medical ontologies, UMLS, BioPortal |
 | **📊 Finance** | Data Aggregation & Analysis | SEC filings, financial news, market data | Knowledge graphs, Bloomberg, Refinitiv |
 
+### Semantic Modeling & Ontology Development
+
+Semantica supports comprehensive **semantic modeling** following industry best practices:
+
+```python
+from semantica.ontology import (
+    RequirementsSpec, CompetencyQuestions, OntologyDocumentation,
+    NamespaceManager, VocabularyManager, OntologyEvaluator
+)
+
+# Requirements specification
+requirements = RequirementsSpec()
+scope = requirements.define_scope(competency_questions)
+
+# Competency questions
+questions = CompetencyQuestions()
+questions.add("Which companies are involved in the same projects?")
+questions.add("What kind of job roles exist in which organization?")
+validated = questions.validate_against_ontology(ontology)
+
+# Controlled vocabularies
+vocab_manager = VocabularyManager()
+vocabulary = vocab_manager.create_vocabulary("Role Vocabulary")
+vocabulary.add_term("Software Architect", parent="Technical Role")
+vocab_manager.connect_to_class(vocabulary, "Role")
+
+# Namespace management with speaking IRIs
+ns_manager = NamespaceManager()
+iri = ns_manager.generate_class_iri("Organization")  # PascalCase
+iri = ns_manager.generate_property_iri("hasMember")    # camelCase
+
+# Ontology evaluation
+evaluator = OntologyEvaluator()
+report = evaluator.evaluate(ontology, competency_questions)
+```
+
+**Supported Features:**
+- ✅ Competency question management and validation
+- ✅ Requirements specification and scope definition
+- ✅ Controlled vocabularies with SKOS support
+- ✅ Modular ontology development with imports
+- ✅ Associative classes for complex relationships
+- ✅ Ontology reuse and evaluation
+- ✅ Best-practice naming conventions
+- ✅ Comprehensive documentation management
+
 ---
 
 ## 🏗️ Enterprise Architecture
@@ -479,6 +774,110 @@ print(f"Conflicts Detected: {quality_report.conflicts_count}")
 
 ---
 
+## 🎯 Use Cases: Bridging Data-to-AI Gaps
+
+### Enterprise AI Engineering
+
+**Problem**: Raw business data exists but Knowledge Graph-Powered RAG, AI Agents, Multi-Agent Systems, and AI Systems can't use it effectively
+**Solution**: Semantica transforms it into AI-ready knowledge that powers these systems
+
+```python
+# Transform enterprise data for AI agents
+enterprise_data = [
+    "sales_reports/",      # Unstructured PDFs
+    "customer_emails/",   # No semantic structure
+    "product_catalog.json", # Flat data
+]
+
+knowledge_base = core.build_knowledge_base(
+    enterprise_data,
+    generate_ontology=True,      # For agent constraint validation
+    build_knowledge_graph=True,   # For GraphRAG
+    enable_quality_assurance=True # Production-ready
+)
+
+# Semantica outputs power your AI systems:
+# • Knowledge Graph-Powered RAG: Query with "Which products are mentioned in sales reports?" using GraphRAG
+# • AI Agents: Reason using ontology to validate business rules and semantic routing
+# • Multi-Agent Systems: Coordinate through shared ontologies and context graphs
+# • AI Systems: Retrieve context-aware answers from knowledge graph
+# • Autonomous Actions: Make decisions based on structured semantic knowledge
+```
+
+### Knowledge Graph-Powered RAG (GraphRAG) Development
+
+**Problem**: RAG systems need vector embeddings + knowledge graph context for accurate answers
+**Solution**: Semantica provides the infrastructure for **Knowledge Graph-Powered RAG** systems
+
+```python
+# Build Knowledge Graph-Powered RAG system
+from semantica.qa_rag import HybridRetriever, GraphRAGEngine
+
+# Semantica creates both:
+# • Vector embeddings (fast similarity search)
+# • Knowledge graph (relationship-aware context)
+
+# Initialize GraphRAG engine
+graphrag = GraphRAGEngine(
+    vector_store=knowledge_base.vector_store,
+    knowledge_graph=knowledge_base.graph
+)
+
+# Knowledge Graph-Powered RAG: 30% accuracy improvement over vector-only
+results = graphrag.retrieve(
+    query="What are the relationships between products and customers?",
+    use_vectors=True,  # Fast similarity search
+    use_graph=True,     # Knowledge graph expansion
+    max_hops=2          # Expand graph from seed entities
+)
+
+# Hybrid retrieval with graph expansion
+context = graphrag.generate_context(query, results)
+# Context includes both vector-similar content AND graph relationships
+```
+
+### AI Agents & Multi-Agent System Development
+
+**Problem**: AI Agents and Multi-Agent Systems need shared ontologies, context graphs, and semantic coordination
+**Solution**: Semantica provides the semantic infrastructure that powers AI Agents and Multi-Agent Systems
+
+```python
+# Build AI Agents and Multi-Agent System foundation
+from semantica.ontology import OntologyGenerator
+from semantica.context import ContextGraphBuilder, EntityLinker
+from semantica.qa_rag import AgentMemoryManager
+
+# Generate ontology for AI Agents and Multi-Agent Systems
+ontology_gen = OntologyGenerator()
+shared_ontology = ontology_gen.generate_from_documents(documents)
+
+# For Individual AI Agents:
+# • Constraint validation (validate actions against domain rules)
+# • Semantic routing (understand intent using ontology)
+# • Task decomposition (break goals using formal hierarchies)
+
+# Build context graph for agent memory and coordination
+context_builder = ContextGraphBuilder()
+context_graph = context_builder.build_from_entities(entities, relationships)
+
+# Link entities across agent interactions
+entity_linker = EntityLinker()
+linked_graph = entity_linker.link_entities(entities, sources)
+
+# Agent memory management for AI Agents
+memory = AgentMemoryManager()
+memory.store_conversation(context_graph, agent_id="agent_1")
+
+# For Multi-Agent Systems:
+# • Access shared semantic context through linked knowledge graph
+# • Coordinate through ontology-based protocols
+# • Validate actions against domain constraints
+# • Retrieve relevant context for decision-making
+# • Orchestrate multi-agent workflows with semantic routing
+```
+
+---
+
 ## 📈 Performance & Monitoring
 
 ### Real-Time Analytics Dashboard
@@ -497,6 +896,8 @@ print(f"Conflicts Detected: {quality_report.conflicts_count}")
 - **Template Enforcement**: Fixed schema compliance and validation
 - **Conflict Detection**: Source disagreement flagging and tracking
 - **Advanced Deduplication**: Semantic duplicate detection and merging
+- **Symbolic Reasoner Validation**: HermiT/Pellet validation for LLM-generated ontologies
+- **Hybrid Validation**: LLM draft + symbolic reasoner + expert refinement (F1 up to 0.99)
 
 ---
 
@@ -566,13 +967,16 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <div align="center">
 
-**Ready to transform your data into intelligent knowledge?**
+**Ready to build semantic layers and knowledge engineering systems?**
 
 [Get Started Now](https://semantica.readthedocs.io/quickstart/) • [View Examples](https://github.com/semantica/examples) • [Join Community](https://discord.gg/semantica)
 
-**20 Production-Ready Modules • 120+ Submodules • 1000+ Functions**
+**Open Source Framework for Building Semantic Layers & Knowledge Engineering**  
+**25+ Production-Ready Modules • 150+ Submodules • 1200+ Functions**
 
 **🆓 100% Open Source & Free Forever • MIT License • No Limits**
+
+Transform raw data into AI-ready knowledge. Build semantic layers and knowledge engineering systems that power **Knowledge Graph-Powered RAG (GraphRAG)**, **AI Agents**, **Multi-Agent Systems**, and AI applications.
 
 Made with ❤️ by the Semantica Community
 

@@ -8,6 +8,7 @@ Exports:
     - JSONExporter: JSON format export
     - CSVExporter: CSV format export
     - GraphExporter: Graph format export
+    - YAMLExporter: YAML format export for semantic networks
     - ReportGenerator: Report generation
 """
 
@@ -15,4 +16,5 @@ Exports:
 # from .json_exporter import JSONExporter
 # from .csv_exporter import CSVExporter
 # from .graph_exporter import GraphExporter
+# from .yaml_exporter import SemanticNetworkYAMLExporter, YAMLSchemaExporter
 # from .report_generator import ReportGenerator
