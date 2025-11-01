@@ -13,11 +13,11 @@
 
 **Open Source Framework for Semantic Intelligence & Knowledge Engineering**
 
-*Transform chaotic data into intelligent knowledge. The missing fabric between raw data and AI engineering. A comprehensive open-source framework for building semantic layers and knowledge engineering systems that transform unstructured data into AI-ready knowledge — powering Knowledge Graph-Powered RAG (GraphRAG), AI Agents, Multi-Agent Systems, and AI applications with structured semantic knowledge.*
+> **Transform chaotic data into intelligent knowledge.**
+
+*The missing fabric between raw data and AI engineering. A comprehensive open-source framework for building semantic layers and knowledge engineering systems that transform unstructured data into AI-ready knowledge — powering Knowledge Graph-Powered RAG (GraphRAG), AI Agents, Multi-Agent Systems, and AI applications with structured semantic knowledge.*
 
 **🆓 100% Open Source** • **📜 MIT Licensed** • **🚀 Production Ready** • **🌍 Community Driven**
-
-[📖 Documentation](https://semantica.readthedocs.io/) • [🚀 Quick Start](#-quick-start) • [💡 Features](#-core-capabilities) • [🎯 Use Cases](#-use-cases) • [🤝 Community](#-community--support)
 
 </div>
 
