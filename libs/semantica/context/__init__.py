@@ -12,15 +12,20 @@ Context engineering layers:
 - Graphs: Knowledge graphs for formalized context as connections
 """
 
-# from .context_graph import ContextGraphBuilder
-# from .entity_linker import EntityLinker
-# from .agent_memory import AgentMemoryManager
-# from .context_retriever import ContextRetriever
+from .context_graph import ContextGraphBuilder, ContextNode, ContextEdge
+from .entity_linker import EntityLinker, EntityLink, LinkedEntity
+from .agent_memory import AgentMemory, MemoryItem
+from .context_retriever import ContextRetriever, RetrievedContext
 
-# TODO: Implement context engineering
-# - Context graph building (formalizing context as connections)
-# - Entity linking and connection management
-# - Agent memory integration with RAG
-# - Context retrieval for agent decision-making
-# - Ontology-based context understanding
-# - Multi-source context aggregation
+__all__ = [
+    "ContextGraphBuilder",
+    "ContextNode",
+    "ContextEdge",
+    "EntityLinker",
+    "EntityLink",
+    "LinkedEntity",
+    "AgentMemory",
+    "MemoryItem",
+    "ContextRetriever",
+    "RetrievedContext",
+]
