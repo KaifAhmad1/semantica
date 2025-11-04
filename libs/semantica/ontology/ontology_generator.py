@@ -11,16 +11,34 @@ Key Features:
     - Ontology quality assessment
 
 Main Classes:
-    - OntologyGenerator: Main ontology generation class
+    - OntologyGenerator: Main ontology generation class (6-stage pipeline)
     - ClassInferencer: Class inference engine
     - PropertyInferencer: Property inference engine
     - OntologyOptimizer: Ontology optimization engine
 """
 
+from typing import Any, Dict, List, Optional
+from datetime import datetime
+
+from ..utils.exceptions import ValidationError, ProcessingError
+from ..utils.logging import get_logger
+from .class_inferrer import ClassInferrer
+from .property_generator import PropertyGenerator
+from .namespace_manager import NamespaceManager
+from .naming_conventions import NamingConventions
+
 
 class OntologyGenerator:
     """
-    Ontology generation handler.
+    Ontology generation handler with 6-stage pipeline.
+    
+    6-Stage Pipeline:
+    1. Semantic Network Parsing → Extract domain concepts
+    2. YAML-to-Definition → Transform into class definitions
+    3. Definition-to-Types → Map to OWL types
+    4. Hierarchy Generation → Build taxonomic structures
+    5. TTL Generation → Generate OWL/Turtle syntax
+    6. Symbolic Validation → HermiT/Pellet reasoning
     
     • Generates ontologies from data and text
     • Infers classes and properties automatically
@@ -28,86 +46,273 @@ class OntologyGenerator:
     • Optimizes ontology structure
     • Validates ontology quality
     • Supports various ontology formats
-    
-    Attributes:
-        • class_inferencer: Class inference engine
-        • property_inferencer: Property inference engine
-        • ontology_optimizer: Ontology optimization engine
-        • quality_assessor: Ontology quality assessor
-        • supported_formats: List of supported formats
-        
-    Methods:
-        • generate_ontology(): Generate ontology from data
-        • infer_classes(): Infer ontology classes
-        • infer_properties(): Infer ontology properties
-        • optimize_ontology(): Optimize ontology structure
     """
     
     def __init__(self, config=None, **kwargs):
         """
         Initialize ontology generator.
         
-        • Setup ontology generation models
-        • Configure class inference
-        • Initialize property inference
-        • Setup optimization tools
-        • Configure quality assessment
+        Args:
+            config: Configuration dictionary
+            **kwargs: Additional configuration options:
+                - base_uri: Base URI for ontology
+                - namespace_manager: Namespace manager instance
         """
-        pass
-    
-    def generate_ontology(self, data, **options):
-        """
-        Generate ontology from data.
+        self.logger = get_logger("ontology_generator")
+        self.config = config or {}
+        self.config.update(kwargs)
         
-        • Analyze data structure and content
-        • Infer classes and properties
-        • Create ontology hierarchy
-        • Apply domain-specific rules
-        • Validate ontology quality
-        • Return generated ontology
-        """
-        pass
+        # Initialize components
+        self.namespace_manager = self.config.get("namespace_manager") or NamespaceManager(**self.config)
+        self.naming_conventions = NamingConventions(**self.config)
+        self.class_inferrer = ClassInferrer(namespace_manager=self.namespace_manager, **self.config)
+        self.property_generator = PropertyGenerator(namespace_manager=self.namespace_manager, **self.config)
+        
+        self.supported_formats = ["owl", "ttl", "rdf", "json-ld"]
     
-    def infer_classes(self, data, **options):
+    def generate_ontology(
+        self,
+        data: Dict[str, Any],
+        **options
+    ) -> Dict[str, Any]:
+        """
+        Generate ontology from data using 6-stage pipeline.
+        
+        Args:
+            data: Input data (entities, relationships, semantic network)
+            **options: Generation options
+        
+        Returns:
+            Generated ontology dictionary
+        """
+        # Stage 1: Semantic Network Parsing
+        semantic_network = self._stage1_parse_semantic_network(data, **options)
+        
+        # Stage 2: YAML-to-Definition
+        definitions = self._stage2_yaml_to_definition(semantic_network, **options)
+        
+        # Stage 3: Definition-to-Types
+        typed_definitions = self._stage3_definition_to_types(definitions, **options)
+        
+        # Stage 4: Hierarchy Generation
+        ontology = self._stage4_hierarchy_generation(typed_definitions, **options)
+        
+        # Stage 5: TTL Generation (handled by OWLGenerator)
+        
+        # Stage 6: Symbolic Validation (handled by OntologyValidator)
+        
+        return ontology
+    
+    def _stage1_parse_semantic_network(
+        self,
+        data: Dict[str, Any],
+        **options
+    ) -> Dict[str, Any]:
+        """
+        Stage 1: Parse semantic network from data.
+        
+        Extract domain concepts from entities and relationships.
+        """
+        entities = data.get("entities", [])
+        relationships = data.get("relationships", [])
+        
+        # Extract concepts
+        concepts = {}
+        for entity in entities:
+            entity_type = entity.get("type") or entity.get("entity_type", "Entity")
+            if entity_type not in concepts:
+                concepts[entity_type] = {
+                    "instances": [],
+                    "relationships": []
+                }
+            concepts[entity_type]["instances"].append(entity)
+        
+        # Extract relationships
+        for rel in relationships:
+            rel_type = rel.get("type") or rel.get("relationship_type", "relatedTo")
+            source_type = rel.get("source_type")
+            target_type = rel.get("target_type")
+            
+            if source_type and source_type in concepts:
+                concepts[source_type]["relationships"].append(rel)
+        
+        return {
+            "concepts": concepts,
+            "entities": entities,
+            "relationships": relationships
+        }
+    
+    def _stage2_yaml_to_definition(
+        self,
+        semantic_network: Dict[str, Any],
+        **options
+    ) -> Dict[str, Any]:
+        """
+        Stage 2: Transform semantic network to class definitions.
+        
+        Convert concepts to structured class definitions.
+        """
+        concepts = semantic_network.get("concepts", {})
+        entities = semantic_network.get("entities", [])
+        
+        # Infer classes from entities
+        classes = self.class_inferrer.infer_classes(entities, **options)
+        
+        # Create definitions
+        definitions = {
+            "classes": classes,
+            "properties": [],
+            "metadata": {
+                "generated_at": datetime.now().isoformat(),
+                "concept_count": len(concepts)
+            }
+        }
+        
+        return definitions
+    
+    def _stage3_definition_to_types(
+        self,
+        definitions: Dict[str, Any],
+        **options
+    ) -> Dict[str, Any]:
+        """
+        Stage 3: Map definitions to OWL types.
+        
+        Convert class definitions to OWL-compliant types.
+        """
+        classes = definitions.get("classes", [])
+        relationships = options.get("relationships", [])
+        entities = options.get("entities", [])
+        
+        # Infer properties
+        properties = self.property_generator.infer_properties(
+            entities=entities,
+            relationships=relationships,
+            classes=classes,
+            **options
+        )
+        
+        # Add types to classes
+        for cls in classes:
+            cls["@type"] = "owl:Class"
+            if "uri" not in cls:
+                cls["uri"] = self.namespace_manager.generate_class_iri(cls["name"])
+        
+        # Add types to properties
+        for prop in properties:
+            if prop["type"] == "object":
+                prop["@type"] = "owl:ObjectProperty"
+            else:
+                prop["@type"] = "owl:DatatypeProperty"
+            
+            if "uri" not in prop:
+                prop["uri"] = self.namespace_manager.generate_property_iri(prop["name"])
+        
+        return {
+            "classes": classes,
+            "properties": properties,
+            "metadata": definitions.get("metadata", {})
+        }
+    
+    def _stage4_hierarchy_generation(
+        self,
+        typed_definitions: Dict[str, Any],
+        **options
+    ) -> Dict[str, Any]:
+        """
+        Stage 4: Build taxonomic structures.
+        
+        Generate class hierarchies and property relationships.
+        """
+        classes = typed_definitions.get("classes", [])
+        properties = typed_definitions.get("properties", [])
+        
+        # Build class hierarchy
+        classes = self.class_inferrer.build_class_hierarchy(classes, **options)
+        
+        # Build ontology structure
+        ontology = {
+            "uri": self.namespace_manager.get_base_uri(),
+            "name": options.get("name", "GeneratedOntology"),
+            "version": self.namespace_manager.version,
+            "classes": classes,
+            "properties": properties,
+            "metadata": {
+                **typed_definitions.get("metadata", {}),
+                "class_count": len(classes),
+                "property_count": len(properties)
+            }
+        }
+        
+        return ontology
+    
+    def infer_classes(
+        self,
+        data: Dict[str, Any],
+        **options
+    ) -> List[Dict[str, Any]]:
         """
         Infer ontology classes from data.
         
-        • Analyze data patterns
-        • Identify class candidates
-        • Apply class inference rules
-        • Handle class hierarchies
-        • Return inferred classes
+        Args:
+            data: Input data
+            **options: Additional options
+        
+        Returns:
+            List of inferred classes
         """
-        pass
+        entities = data.get("entities", [])
+        return self.class_inferrer.infer_classes(entities, **options)
     
-    def infer_properties(self, data, classes, **options):
+    def infer_properties(
+        self,
+        data: Dict[str, Any],
+        classes: List[Dict[str, Any]],
+        **options
+    ) -> List[Dict[str, Any]]:
         """
         Infer ontology properties from data.
         
-        • Analyze data relationships
-        • Identify property candidates
-        • Apply property inference rules
-        • Handle property domains and ranges
-        • Return inferred properties
+        Args:
+            data: Input data
+            classes: List of class definitions
+            **options: Additional options
+        
+        Returns:
+            List of inferred properties
         """
-        pass
+        entities = data.get("entities", [])
+        relationships = data.get("relationships", [])
+        
+        return self.property_generator.infer_properties(
+            entities=entities,
+            relationships=relationships,
+            classes=classes,
+            **options
+        )
     
-    def optimize_ontology(self, ontology, **options):
+    def optimize_ontology(
+        self,
+        ontology: Dict[str, Any],
+        **options
+    ) -> Dict[str, Any]:
         """
         Optimize ontology structure and quality.
         
-        • Analyze ontology structure
-        • Apply optimization algorithms
-        • Remove redundant elements
-        • Improve ontology coherence
-        • Return optimized ontology
+        Args:
+            ontology: Ontology dictionary
+            **options: Additional options
+        
+        Returns:
+            Optimized ontology
         """
-        pass
+        optimizer = OntologyOptimizer(**self.config)
+        return optimizer.optimize_ontology(ontology, **options)
 
 
 class ClassInferencer:
     """
-    Class inference engine.
+    Class inference engine (legacy compatibility).
     
     • Infers ontology classes from data
     • Handles class hierarchies
@@ -116,53 +321,26 @@ class ClassInferencer:
     """
     
     def __init__(self, **config):
-        """
-        Initialize class inferencer.
-        
-        • Setup class inference models
-        • Configure hierarchy processing
-        • Initialize relationship analysis
-        • Setup constraint handling
-        """
-        pass
+        """Initialize class inferencer."""
+        self.class_inferrer = ClassInferrer(**config)
     
     def infer_classes(self, data, **options):
-        """
-        Infer classes from data.
-        
-        • Analyze data patterns
-        • Identify class candidates
-        • Apply inference rules
-        • Return inferred classes
-        """
-        pass
+        """Infer classes from data."""
+        entities = data.get("entities", []) if isinstance(data, dict) else data
+        return self.class_inferrer.infer_classes(entities, **options)
     
     def build_class_hierarchy(self, classes, **options):
-        """
-        Build class hierarchy from classes.
-        
-        • Analyze class relationships
-        • Build hierarchical structure
-        • Handle multiple inheritance
-        • Return class hierarchy
-        """
-        pass
+        """Build class hierarchy."""
+        return self.class_inferrer.build_class_hierarchy(classes, **options)
     
     def validate_classes(self, classes, **criteria):
-        """
-        Validate inferred classes.
-        
-        • Check class consistency
-        • Validate class relationships
-        • Apply validation criteria
-        • Return validation results
-        """
-        pass
+        """Validate classes."""
+        return self.class_inferrer.validate_classes(classes, **criteria)
 
 
 class PropertyInferencer:
     """
-    Property inference engine.
+    Property inference engine (legacy compatibility).
     
     • Infers ontology properties from data
     • Handles property domains and ranges
@@ -171,48 +349,28 @@ class PropertyInferencer:
     """
     
     def __init__(self, **config):
-        """
-        Initialize property inferencer.
-        
-        • Setup property inference models
-        • Configure domain/range analysis
-        • Initialize relationship processing
-        • Setup constraint handling
-        """
-        pass
+        """Initialize property inferencer."""
+        self.property_generator = PropertyGenerator(**config)
     
     def infer_properties(self, data, classes, **options):
-        """
-        Infer properties from data and classes.
+        """Infer properties from data and classes."""
+        entities = data.get("entities", []) if isinstance(data, dict) else []
+        relationships = data.get("relationships", []) if isinstance(data, dict) else []
         
-        • Analyze data relationships
-        • Identify property candidates
-        • Apply inference rules
-        • Return inferred properties
-        """
-        pass
+        return self.property_generator.infer_properties(
+            entities=entities,
+            relationships=relationships,
+            classes=classes,
+            **options
+        )
     
     def infer_domains_and_ranges(self, properties, classes):
-        """
-        Infer property domains and ranges.
-        
-        • Analyze property usage
-        • Determine domain classes
-        • Determine range classes
-        • Return domain/range information
-        """
-        pass
+        """Infer domains and ranges."""
+        return self.property_generator.infer_domains_and_ranges(properties, classes)
     
     def validate_properties(self, properties, **criteria):
-        """
-        Validate inferred properties.
-        
-        • Check property consistency
-        • Validate domain/range constraints
-        • Apply validation criteria
-        • Return validation results
-        """
-        pass
+        """Validate properties."""
+        return self.property_generator.validate_properties(properties, **criteria)
 
 
 class OntologyOptimizer:
@@ -229,43 +387,108 @@ class OntologyOptimizer:
         """
         Initialize ontology optimizer.
         
-        • Setup optimization algorithms
-        • Configure redundancy detection
-        • Initialize coherence assessment
-        • Setup metric calculation
+        Args:
+            **config: Configuration options
         """
-        pass
+        self.logger = get_logger("ontology_optimizer")
+        self.config = config
     
-    def optimize_ontology(self, ontology, **options):
+    def optimize_ontology(
+        self,
+        ontology: Dict[str, Any],
+        **options
+    ) -> Dict[str, Any]:
         """
         Optimize ontology structure.
         
-        • Analyze ontology structure
-        • Apply optimization algorithms
-        • Remove redundant elements
-        • Improve coherence
-        • Return optimized ontology
+        Args:
+            ontology: Ontology dictionary
+            **options: Additional options
+        
+        Returns:
+            Optimized ontology
         """
-        pass
+        optimized = dict(ontology)
+        
+        # Remove redundancy
+        if options.get("remove_redundancy", True):
+            optimized = self.remove_redundancy(optimized)
+        
+        # Improve coherence
+        if options.get("improve_coherence", True):
+            optimized = self.improve_coherence(optimized)
+        
+        return optimized
     
-    def remove_redundancy(self, ontology):
+    def remove_redundancy(
+        self,
+        ontology: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Remove redundant elements from ontology.
         
-        • Identify redundant classes
-        • Remove redundant properties
-        • Consolidate similar elements
-        • Return cleaned ontology
+        Args:
+            ontology: Ontology dictionary
+        
+        Returns:
+            Cleaned ontology
         """
-        pass
+        # Remove duplicate classes
+        classes = ontology.get("classes", [])
+        seen_names = set()
+        unique_classes = []
+        
+        for cls in classes:
+            class_name = cls.get("name")
+            if class_name and class_name not in seen_names:
+                seen_names.add(class_name)
+                unique_classes.append(cls)
+        
+        ontology["classes"] = unique_classes
+        
+        # Remove duplicate properties
+        properties = ontology.get("properties", [])
+        seen_prop_names = set()
+        unique_properties = []
+        
+        for prop in properties:
+            prop_name = prop.get("name")
+            if prop_name and prop_name not in seen_prop_names:
+                seen_prop_names.add(prop_name)
+                unique_properties.append(prop)
+        
+        ontology["properties"] = unique_properties
+        
+        return ontology
     
-    def improve_coherence(self, ontology):
+    def improve_coherence(
+        self,
+        ontology: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Improve ontology coherence.
         
-        • Analyze ontology coherence
-        • Apply coherence improvements
-        • Fix inconsistencies
-        • Return improved ontology
+        Args:
+            ontology: Ontology dictionary
+        
+        Returns:
+            Improved ontology
         """
-        pass
+        # Ensure all classes have required fields
+        classes = ontology.get("classes", [])
+        for cls in classes:
+            if "uri" not in cls:
+                cls["uri"] = cls.get("name", "Entity")
+            if "label" not in cls:
+                cls["label"] = cls.get("name", "Entity")
+        
+        # Ensure all properties have domains and ranges
+        properties = ontology.get("properties", [])
+        for prop in properties:
+            if prop.get("type") == "object":
+                if "domain" not in prop or not prop["domain"]:
+                    prop["domain"] = ["owl:Thing"]
+                if "range" not in prop or not prop["range"]:
+                    prop["range"] = ["owl:Thing"]
+        
+        return ontology
