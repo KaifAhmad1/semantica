@@ -32,6 +32,15 @@
 - **Provenance Tracking**: Track data sources and processing history
 - **Quality Assurance**: Comprehensive data quality validation and monitoring
 
+### Visualization & Analytics
+- **Interactive Visualizations**: Plotly-based interactive charts and graphs
+- **Knowledge Graph Networks**: Network visualizations with community and centrality coloring
+- **Ontology Hierarchies**: Class hierarchy trees and property graphs
+- **Embedding Projections**: 2D/3D projections with UMAP, t-SNE, and PCA
+- **Quality Dashboards**: Comprehensive quality metrics and issue tracking
+- **Analytics Visualizations**: Centrality rankings, community structures, connectivity analysis
+- **Temporal Views**: Timeline and evolution visualizations
+
 ## 📦 Installation
 
 ### Basic Installation
@@ -53,6 +62,13 @@ pip install semantica[cloud]
 ```bash
 pip install semantica[monitoring]
 ```
+
+### With Visualization (Optional)
+```bash
+pip install semantica[viz]
+```
+
+Note: Visualization dependencies (plotly, matplotlib, seaborn) are included by default. The `viz` extra includes optional dependencies like `umap-learn` and `graphviz` for advanced features.
 
 ### Development Installation
 ```bash
@@ -87,6 +103,16 @@ statistics = result["statistics"]
 
 print(f"Processed {statistics['sources_processed']} documents")
 print(f"Success rate: {statistics['success_rate']:.2%}")
+
+# Visualize the knowledge graph
+from semantica.visualization import KGVisualizer
+
+kg_viz = KGVisualizer(layout="force", color_scheme="vibrant")
+fig = kg_viz.visualize_network(knowledge_graph, output="interactive")
+fig.show()  # Display interactive visualization
+
+# Or save to HTML file
+kg_viz.visualize_network(knowledge_graph, output="html", file_path="knowledge_graph.html")
 ```
 
 ### 2. Web Content Processing
@@ -837,6 +863,8 @@ print(f"Total relationships: {len(graph.relationships)}")
 
 ### 9. Visualization Examples
 
+The Semantica visualization module provides comprehensive visualization capabilities for all knowledge artifacts. All visualizers support both interactive (Plotly) and static export formats (HTML, PNG, SVG, PDF).
+
 #### Knowledge Graph Visualization
 ```python
 from semantica.visualization import KGVisualizer
@@ -1109,6 +1137,38 @@ metrics_history = {
 timestamps = ["2023-01-01", "2023-06-01", "2023-09-01", "2023-12-01"]
 temporal_viz.visualize_metrics_evolution(metrics_history, timestamps, 
                                         output="html", file_path="metrics_evolution.html")
+```
+
+#### Quick Visualization Example
+
+```python
+from semantica import Semantica
+from semantica.visualization import KGVisualizer, EmbeddingVisualizer
+import numpy as np
+
+# Initialize framework and build knowledge graph
+semantica = Semantica()
+semantica.initialize()
+result = semantica.build_knowledge_base(["document.pdf"], graph=True, embeddings=True)
+
+# Visualize knowledge graph
+kg_viz = KGVisualizer(layout="force", color_scheme="vibrant")
+kg_viz.visualize_network(
+    result["knowledge_graph"], 
+    output="html", 
+    file_path="kg_visualization.html"
+)
+
+# Visualize embeddings
+if "embeddings" in result:
+    emb_viz = EmbeddingVisualizer()
+    embeddings_array = np.array([e["embedding"] for e in result["embeddings"]])
+    emb_viz.visualize_2d_projection(
+        embeddings_array,
+        method="umap",
+        output="html",
+        file_path="embeddings_2d.html"
+    )
 ```
 
 ## 🔧 Configuration
