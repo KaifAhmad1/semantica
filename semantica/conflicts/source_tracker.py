@@ -1,8 +1,34 @@
 """
 Source Tracker for Conflict Detection
 
-Tracks source information for entities and properties to enable
+This module provides comprehensive source tracking capabilities for the Semantica
+framework, tracking source information for entities and properties to enable
 conflict investigation and source disagreement analysis.
+
+Key Features:
+    - Tracks source documents for each property value
+    - Maintains source provenance for entities
+    - Tracks source disagreements and conflicts
+    - Generates source analysis reports
+    - Supports source credibility scoring
+    - Enables traceability for conflict resolution
+    - Relationship source tracking
+    - Traceability chain generation
+
+Main Classes:
+    - SourceReference: Source reference data structure
+    - PropertySource: Property source information data structure
+    - SourceTracker: Source tracker for conflict detection
+
+Example Usage:
+    >>> from semantica.conflicts import SourceTracker, SourceReference
+    >>> tracker = SourceTracker()
+    >>> source = SourceReference(document="doc1", page=1, confidence=0.9)
+    >>> tracker.track_property_source("entity_1", "name", "Python", source)
+    >>> sources = tracker.get_property_sources("entity_1", "name")
+
+Author: Semantica Contributors
+License: MIT
 """
 
 from typing import Any, Dict, List, Optional, Set

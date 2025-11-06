@@ -1,8 +1,33 @@
 """
-Conflict Detector for Semantica framework.
+Conflict Detector
 
-Detects conflicts from multiple sources and tracks source
-disagreements for compliance and investigation.
+This module provides comprehensive conflict detection capabilities for the
+Semantica framework, detecting conflicts from multiple sources and tracking
+source disagreements for compliance and investigation.
+
+Key Features:
+    - Detects property value conflicts
+    - Identifies relationship conflicts
+    - Tracks source disagreements
+    - Generates conflict reports
+    - Provides investigation guides
+    - Multiple conflict types (value, type, relationship, temporal, logical)
+    - Severity calculation
+    - Confidence scoring
+
+Main Classes:
+    - ConflictType: Conflict type enumeration
+    - Conflict: Conflict information data structure
+    - ConflictDetector: Conflict detector for multi-source conflict identification
+
+Example Usage:
+    >>> from semantica.conflicts import ConflictDetector
+    >>> detector = ConflictDetector()
+    >>> conflicts = detector.detect_value_conflicts(entities, "name")
+    >>> report = detector.get_conflict_report()
+
+Author: Semantica Contributors
+License: MIT
 """
 
 from typing import Any, Dict, List, Optional, Set

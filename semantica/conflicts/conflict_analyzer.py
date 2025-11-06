@@ -1,8 +1,32 @@
 """
-Conflict Analyzer for Semantica framework.
+Conflict Analyzer
 
-Analyzes patterns in conflicts, identifies conflict types, and
-provides insights into conflict sources and trends.
+This module provides comprehensive conflict analysis capabilities for the
+Semantica framework, analyzing patterns in conflicts, identifying conflict types,
+and providing insights into conflict sources and trends.
+
+Key Features:
+    - Analyzes conflict patterns and trends
+    - Classifies conflict types
+    - Identifies high-conflict areas
+    - Generates conflict statistics
+    - Provides conflict insights and recommendations
+    - Supports conflict prevention strategies
+    - Pattern-based conflict identification
+    - Severity-based analysis
+
+Main Classes:
+    - ConflictPattern: Conflict pattern data structure
+    - ConflictAnalyzer: Conflict analyzer for pattern identification
+
+Example Usage:
+    >>> from semantica.conflicts import ConflictAnalyzer
+    >>> analyzer = ConflictAnalyzer()
+    >>> analysis = analyzer.analyze_conflicts(conflicts)
+    >>> report = analyzer.generate_insights_report(conflicts)
+
+Author: Semantica Contributors
+License: MIT
 """
 
 from typing import Any, Dict, List, Optional

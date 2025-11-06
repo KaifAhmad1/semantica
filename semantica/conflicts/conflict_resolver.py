@@ -1,8 +1,32 @@
 """
-Conflict Resolver for Semantica framework.
+Conflict Resolver
 
-Provides strategies for resolving detected conflicts including
-voting mechanisms, credibility-based resolution, and expert review.
+This module provides comprehensive conflict resolution capabilities for the
+Semantica framework, offering multiple strategies for resolving detected conflicts
+including voting mechanisms, credibility-based resolution, and expert review.
+
+Key Features:
+    - Automatic conflict resolution strategies
+    - Voting-based resolution from multiple sources
+    - Credibility-weighted conflict resolution
+    - Manual conflict resolution workflow
+    - Resolution rule configuration
+    - Conflict resolution history tracking
+    - Multiple resolution strategies (voting, credibility, recency, confidence)
+
+Main Classes:
+    - ResolutionStrategy: Conflict resolution strategy enumeration
+    - ResolutionResult: Conflict resolution result data structure
+    - ConflictResolver: Conflict resolver with multiple resolution strategies
+
+Example Usage:
+    >>> from semantica.conflicts import ConflictResolver, ResolutionStrategy
+    >>> resolver = ConflictResolver()
+    >>> result = resolver.resolve_conflict(conflict, ResolutionStrategy.VOTING)
+    >>> results = resolver.resolve_conflicts(conflicts)
+
+Author: Semantica Contributors
+License: MIT
 """
 
 from typing import Any, Dict, List, Optional, Callable

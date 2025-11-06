@@ -1,8 +1,33 @@
 """
 Investigation Guide Generator
 
-Generates investigation guides for detected conflicts to help
-domain experts investigate and resolve discrepancies.
+This module provides comprehensive investigation guide generation capabilities
+for the Semantica framework, generating investigation guides for detected
+conflicts to help domain experts investigate and resolve discrepancies.
+
+Key Features:
+    - Generates conflict investigation checklists
+    - Identifies conflicting source documents
+    - Provides conflict context and history
+    - Suggests investigation steps
+    - Generates conflict summary reports
+    - Supports compliance audit workflows
+    - Export formats (text, markdown)
+    - Severity-based recommendations
+
+Main Classes:
+    - InvestigationStep: Investigation step data structure
+    - InvestigationGuide: Investigation guide data structure
+    - InvestigationGuideGenerator: Investigation guide generator for conflicts
+
+Example Usage:
+    >>> from semantica.conflicts import InvestigationGuideGenerator
+    >>> generator = InvestigationGuideGenerator()
+    >>> guide = generator.generate_guide(conflict)
+    >>> checklist = generator.export_investigation_checklist(guide, format="markdown")
+
+Author: Semantica Contributors
+License: MIT
 """
 
 from typing import Any, Dict, List, Optional
