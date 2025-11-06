@@ -1,15 +1,53 @@
 """
-Validation utilities for Semantica framework.
+Validation Utilities Module
 
-This module provides common validation functions used across the framework
-for data validation, type checking, and constraint enforcement.
+This module provides common validation functions used across the Semantica framework
+for data validation, type checking, constraint enforcement, and schema validation,
+ensuring data quality and consistency throughout the framework.
 
 Key Features:
-    - Input data validation
-    - Type checking utilities
-    - Constraint validation
-    - Schema validation helpers
-    - Data quality checks
+    - Comprehensive data validation against schemas and constraints
+    - Type checking for dictionary fields and values
+    - Constraint validation (min/max length, value ranges, patterns)
+    - Schema validation with required fields and property validation
+    - Entity and relationship structure validation
+    - File path and URL/email format validation
+    - Configuration dictionary validation
+
+Main Functions:
+    - validate_data: Validate data against schema and constraints
+    - validate_config: Validate configuration dictionary
+    - validate_schema: Validate data against JSON-like schema
+    - validate_types: Validate field types in dictionary
+    - validate_required_fields: Validate that all required fields are present
+    - validate_string_constraints: Validate string against constraints
+    - validate_numeric_constraints: Validate numeric value against constraints
+    - validate_list_constraints: Validate list against constraints
+    - validate_entity: Validate entity structure
+    - validate_relationship: Validate relationship structure
+    - validate_file_path: Validate file path with existence and extension checks
+    - validate_url: Validate URL format
+    - validate_email: Validate email address format
+
+Example Usage:
+    >>> from semantica.utils import validate_data, validate_entity
+    >>> is_valid, error = validate_data(
+    ...     {"name": "John", "age": 30},
+    ...     required_fields=["name", "age"],
+    ...     field_types={"name": str, "age": int}
+    ... )
+    >>> 
+    >>> entity = {"id": "e1", "text": "John Doe", "type": "PERSON"}
+    >>> is_valid, error = validate_entity(entity)
+    >>> if not is_valid:
+    ...     raise ValidationError(error)
+    >>> 
+    >>> from semantica.utils import validate_url, validate_file_path
+    >>> is_valid, error = validate_url("https://example.com")
+    >>> is_valid, error = validate_file_path("data.json", must_exist=True)
+
+Author: Semantica Contributors
+License: MIT
 """
 
 import re

@@ -1,15 +1,56 @@
 """
-Type definitions and protocols for Semantica framework.
+Type Definitions and Protocols Module
 
-This module contains type hints, protocols, and data structures
-used throughout the Semantica framework.
+This module contains type hints, protocols, and data structures used throughout
+the Semantica framework, providing type safety, interface definitions, and
+structured data representations for entities, relationships, and processing results.
 
 Key Features:
-    - Type aliases for common data types
-    - Protocol definitions for interfaces
-    - Data classes for structured data
-    - Generic types for reusable components
-    - Union types for flexible parameters
+    - Type aliases for common data types (JSONType, EntityDict, RelationshipDict)
+    - Enumeration types (EntityType, DataType, ProcessingStatus, QualityLevel, RelationshipType)
+    - Data classes for structured data (Entity, Relationship, ProcessingResult, QualityMetrics)
+    - Protocol definitions for interfaces (Processor, Validator, Exporter, Importer)
+    - Generic types for reusable components (Result, BatchResult)
+    - Type guards for runtime type checking
+    - Conversion functions between dataclasses and dictionaries
+
+Main Classes:
+    - EntityType: Entity type enumeration (PERSON, ORGANIZATION, LOCATION, etc.)
+    - DataType: Data type enumeration (TEXT, IMAGE, AUDIO, VIDEO, etc.)
+    - ProcessingStatus: Processing status enumeration (PENDING, PROCESSING, COMPLETED, etc.)
+    - QualityLevel: Quality level enumeration (HIGH, MEDIUM, LOW, POOR)
+    - RelationshipType: Relationship type enumeration (WORKS_FOR, LOCATED_IN, etc.)
+    - Entity: Structured entity data class
+    - Relationship: Structured relationship data class
+    - ProcessingResult: Result of a processing operation
+    - QualityMetrics: Data quality metrics data class
+    - Result: Generic result container with success/error handling
+    - BatchResult: Generic batch result container with success rate tracking
+
+Example Usage:
+    >>> from semantica.utils import Entity, EntityType, Relationship, RelationshipType
+    >>> entity = Entity(
+    ...     id="e1",
+    ...     text="John Doe",
+    ...     type=EntityType.PERSON,
+    ...     confidence=0.95
+    ... )
+    >>> relationship = Relationship(
+    ...     id="r1",
+    ...     source_id="e1",
+    ...     target_id="e2",
+    ...     type=RelationshipType.WORKS_FOR
+    ... )
+    >>> 
+    >>> from semantica.utils import Result, BatchResult
+    >>> result = Result(value=processed_data)
+    >>> if result.success:
+    ...     use_data(result.value)
+    >>> batch = BatchResult([Result(v) for v in values])
+    >>> print(f"Success rate: {batch.success_rate:.2%}")
+
+Author: Semantica Contributors
+License: MIT
 """
 
 from typing import (

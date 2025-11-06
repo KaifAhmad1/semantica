@@ -1,14 +1,48 @@
 """
-Constants and Configuration
+Constants and Configuration Module
 
-This module provides constants and configuration values for the Semantica framework.
+This module provides constants and configuration values for the Semantica framework,
+including supported file formats, default configurations, error codes, performance
+thresholds, and framework-wide constants.
 
 Key Features:
-    - Framework constants and defaults
-    - Supported formats and types
-    - Configuration templates
-    - Error codes and messages
-    - Performance thresholds
+    - Supported file format definitions (documents, images, audio, video, RDF)
+    - Vector store and graph database backends
+    - Default configuration templates
+    - Error code definitions
+    - Performance and quality thresholds
+    - Entity and relationship type definitions
+    - Processing status and data type enumerations
+
+Main Constants:
+    - SUPPORTED_DOCUMENT_FORMATS: List of supported document formats
+    - SUPPORTED_IMAGE_FORMATS: List of supported image formats
+    - SUPPORTED_AUDIO_FORMATS: List of supported audio formats
+    - SUPPORTED_VIDEO_FORMATS: List of supported video formats
+    - SUPPORTED_RDF_FORMATS: List of supported RDF serialization formats
+    - SUPPORTED_VECTOR_STORES: List of supported vector store backends
+    - SUPPORTED_GRAPH_DBS: List of supported graph database backends
+    - DEFAULT_CONFIG: Default framework configuration
+    - ERROR_CODES: Error code mappings
+    - PERFORMANCE_THRESHOLDS: Performance limit definitions
+    - QUALITY_LEVELS: Quality score thresholds
+    - ENTITY_TYPES: Available entity type definitions
+    - RELATIONSHIP_TYPES: Available relationship type definitions
+
+Example Usage:
+    >>> from semantica.utils import SUPPORTED_DOCUMENT_FORMATS, DEFAULT_CONFIG
+    >>> if file_extension in SUPPORTED_DOCUMENT_FORMATS:
+    ...     process_document(file_path)
+    >>> 
+    >>> config = DEFAULT_CONFIG.copy()
+    >>> config["processing"]["batch_size"] = 200
+    >>> 
+    >>> from semantica.utils import ERROR_CODES, PERFORMANCE_THRESHOLDS
+    >>> error_code = ERROR_CODES["VALIDATION_ERROR"]
+    >>> max_time = PERFORMANCE_THRESHOLDS["max_processing_time"]
+
+Author: Semantica Contributors
+License: MIT
 """
 
 # Supported Data Formats

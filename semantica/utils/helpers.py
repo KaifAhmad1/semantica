@@ -1,16 +1,58 @@
 """
-Helper utilities for Semantica framework.
+Helper Utilities Module
 
-This module contains shared utility functions used across different
-modules of the Semantica framework.
+This module contains shared utility functions used across different modules of the
+Semantica framework, providing common data manipulation, file handling, string
+processing, date/time operations, and configuration management capabilities.
 
 Key Features:
-    - Common data manipulation utilities
-    - File handling helpers
-    - String processing utilities
-    - Date/time helpers
-    - Configuration helpers
-    - Error handling utilities
+    - Data formatting and serialization (JSON, YAML)
+    - Text cleaning and normalization
+    - Entity normalization and hashing
+    - File and directory operations
+    - Timestamp formatting and parsing
+    - Dictionary manipulation (merge, flatten, nested access)
+    - List chunking and batch processing
+    - Retry decorators for error handling
+
+Main Functions:
+    - format_data: Format data into JSON, YAML, or other formats
+    - clean_text: Clean and normalize text strings
+    - normalize_entities: Normalize entity dictionaries to consistent format
+    - hash_data: Generate hash for data (string, bytes, or dictionary)
+    - safe_filename: Generate safe filename from string
+    - ensure_directory: Ensure directory exists, create if needed
+    - read_json_file: Read JSON file safely
+    - write_json_file: Write data to JSON file safely
+    - format_timestamp: Format timestamp to string
+    - parse_timestamp: Parse timestamp string to datetime
+    - merge_dicts: Merge multiple dictionaries (deep merge support)
+    - chunk_list: Split list into chunks of specified size
+    - flatten_dict: Flatten nested dictionary
+    - get_nested_value: Get nested dictionary value by dot-separated path
+    - set_nested_value: Set nested dictionary value by dot-separated path
+    - retry_on_error: Decorator for retrying function on error
+
+Example Usage:
+    >>> from semantica.utils import clean_text, normalize_entities
+    >>> cleaned = clean_text("  Hello   World  ")
+    >>> entities = normalize_entities([{"id": "e1", "text": "John", "type": "PERSON"}])
+    >>> 
+    >>> from semantica.utils import hash_data, safe_filename
+    >>> data_hash = hash_data({"key": "value"})
+    >>> safe_name = safe_filename("my file.txt")
+    >>> 
+    >>> from semantica.utils import merge_dicts, get_nested_value
+    >>> merged = merge_dicts({"a": 1}, {"b": 2}, deep=True)
+    >>> value = get_nested_value(config, "database.host", default="localhost")
+    >>> 
+    >>> from semantica.utils import retry_on_error
+    >>> @retry_on_error(max_retries=3, delay=1.0)
+    ... def fetch_data():
+    ...     return api_call()
+
+Author: Semantica Contributors
+License: MIT
 """
 
 import os

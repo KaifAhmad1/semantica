@@ -1,14 +1,47 @@
 """
-Logging Utilities
+Logging Utilities Module
 
-This module provides comprehensive logging utilities for the Semantica framework.
+This module provides comprehensive logging utilities for the Semantica framework,
+including structured logging, log rotation, performance metrics, error logging,
+and data quality tracking with configurable output destinations and formats.
 
 Key Features:
-    - Structured logging with different levels
-    - Log formatting and output configuration
-    - Log rotation and retention management
-    - Performance logging and metrics
-    - Error logging and debugging support
+    - Structured logging with configurable levels and formats
+    - Console and file output with rotation support
+    - Performance logging with execution time and metrics
+    - Error logging with context and traceback support
+    - Data quality metrics logging and threshold alerts
+    - Execution time decorator for automatic function timing
+
+Main Functions:
+    - setup_logging: Setup logging configuration for framework
+    - get_logger: Get logger instance for specified name
+    - log_performance: Log performance metrics for function execution
+    - log_error: Log error with context and details
+    - log_data_quality: Log data quality metrics and statistics
+    - log_execution_time: Decorator to log function execution time
+
+Example Usage:
+    >>> from semantica.utils import setup_logging, get_logger
+    >>> logger = setup_logging(level="INFO", file="app.log")
+    >>> module_logger = get_logger(__name__)
+    >>> module_logger.info("Processing started")
+    >>> 
+    >>> from semantica.utils import log_performance, log_error
+    >>> log_performance("process_data", 2.5, memory_usage=1024*1024*100)
+    >>> try:
+    ...     process_data()
+    ... except Exception as e:
+    ...     log_error(e, context={"stage": "processing"}, include_traceback=True)
+    >>> 
+    >>> from semantica.utils import log_execution_time
+    >>> @log_execution_time
+    ... def my_function():
+    ...     # Function implementation
+    ...     pass
+
+Author: Semantica Contributors
+License: MIT
 """
 
 import logging

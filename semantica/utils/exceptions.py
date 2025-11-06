@@ -1,14 +1,42 @@
 """
-Exception Handling
+Exception Handling Module
 
-This module provides comprehensive exception handling for the Semantica framework.
+This module provides comprehensive exception handling for the Semantica framework,
+including a custom exception hierarchy, error context management, and exception
+handling utilities for robust error reporting and debugging.
 
 Key Features:
-    - Custom exception classes
-    - Exception hierarchy and inheritance
+    - Custom exception hierarchy with base SemanticaError class
+    - Specialized exception types (ValidationError, ProcessingError, ConfigurationError, QualityError)
     - Error context and debugging information
-    - Exception handling utilities
-    - Error reporting and logging
+    - Exception serialization and formatting
+    - Exception handling utilities with recovery support
+    - Error code management
+
+Main Classes:
+    - SemanticaError: Base exception class for all framework errors
+    - ValidationError: Exception for data validation failures
+    - ProcessingError: Exception for data processing failures
+    - ConfigurationError: Exception for configuration validation failures
+    - QualityError: Exception for data quality validation failures
+
+Example Usage:
+    >>> from semantica.utils import ValidationError, ProcessingError
+    >>> try:
+    ...     if not is_valid:
+    ...         raise ValidationError("Invalid data format", field="name", value=value)
+    ... except ValidationError as e:
+    ...     print(f"Error: {e}, Code: {e.error_code}")
+    >>> 
+    >>> from semantica.utils import handle_exception, format_exception
+    >>> try:
+    ...     process_data(data)
+    ... except Exception as e:
+    ...     error_info = handle_exception(e, context={"stage": "processing"})
+    ...     formatted = format_exception(e, include_traceback=True)
+
+Author: Semantica Contributors
+License: MIT
 """
 
 import traceback

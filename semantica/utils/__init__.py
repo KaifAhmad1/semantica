@@ -1,14 +1,40 @@
 """
 Utilities Module
 
-This module provides shared utilities and helper functions for the Semantica framework.
+This module provides shared utilities and helper functions for the Semantica framework,
+including logging, exception handling, data validation, helper functions, constants,
+and type definitions used throughout the framework.
 
-Exports:
-    - Logging utilities
-    - Exception handling
-    - Data validation
-    - Helper functions
-    - Constants and types
+Key Features:
+    - Comprehensive logging utilities with structured output
+    - Custom exception hierarchy with error context
+    - Data validation and type checking
+    - Common helper functions for data manipulation
+    - Framework constants and configuration defaults
+    - Type definitions and protocols
+
+Main Classes:
+    - Logging utilities: setup_logging, get_logger, log_performance, log_error
+    - Exception classes: SemanticaError, ValidationError, ProcessingError, ConfigurationError, QualityError
+    - Validators: validate_data, validate_config, validate_entity, validate_relationship
+    - Helpers: format_data, clean_text, normalize_entities, hash_data, merge_dicts
+    - Types: Entity, Relationship, ProcessingResult, QualityMetrics
+
+Example Usage:
+    >>> from semantica.utils import setup_logging, get_logger
+    >>> logger = setup_logging(level="INFO")
+    >>> module_logger = get_logger(__name__)
+    >>> 
+    >>> from semantica.utils import ValidationError, validate_entity
+    >>> entity = {"id": "e1", "text": "John Doe", "type": "PERSON"}
+    >>> is_valid, error = validate_entity(entity)
+    >>> 
+    >>> from semantica.utils import clean_text, merge_dicts
+    >>> cleaned = clean_text("  Hello   World  ")
+    >>> merged = merge_dicts({"a": 1}, {"b": 2})
+
+Author: Semantica Contributors
+License: MIT
 """
 
 from .logging import (
