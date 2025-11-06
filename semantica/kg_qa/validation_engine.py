@@ -1,7 +1,28 @@
 """
 Validation Engine Module
 
-Validates Knowledge Graphs against rules and constraints.
+This module provides comprehensive validation capabilities for the Semantica
+framework, enabling rule-based and constraint-based validation of knowledge graphs.
+
+Key Features:
+    - Rule-based validation
+    - Constraint-based validation
+    - Custom validation rules
+    - Validation result reporting
+
+Main Classes:
+    - ValidationEngine: Main validation engine
+    - RuleValidator: Rule-based validation
+    - ConstraintValidator: Constraint-based validation
+
+Example Usage:
+    >>> from semantica.kg_qa import ValidationEngine
+    >>> engine = ValidationEngine()
+    >>> result = engine.validate(knowledge_graph, rules=[rule1, rule2])
+    >>> engine.add_rule(custom_rule)
+
+Author: Semantica Contributors
+License: MIT
 """
 
 from typing import Any, Dict, List, Optional, Callable
@@ -13,7 +34,18 @@ from ..utils.logging import get_logger
 
 @dataclass
 class ValidationResult:
-    """Validation result representation."""
+    """
+    Validation result dataclass.
+    
+    This dataclass represents the result of a validation operation, containing
+    validation status, errors, warnings, and optional metadata.
+    
+    Attributes:
+        valid: Whether the validation passed (True if no errors)
+        errors: List of error messages (critical validation failures)
+        warnings: List of warning messages (non-critical issues)
+        metadata: Additional validation metadata dictionary
+    """
     
     valid: bool
     errors: List[str] = field(default_factory=list)
@@ -25,14 +57,37 @@ class ValidationEngine:
     """
     Validation engine.
     
-    Validates Knowledge Graphs against various rules and constraints.
+    This class provides rule-based validation capabilities for knowledge graphs,
+    enabling custom validation rules and constraint checking.
+    
+    Features:
+        - Custom validation rules
+        - Rule management (add, remove)
+        - Validation result reporting
+        - Error and warning collection
+    
+    Example Usage:
+        >>> engine = ValidationEngine()
+        >>> engine.add_rule(custom_validation_rule)
+        >>> result = engine.validate(knowledge_graph)
+        >>> if not result.valid:
+        ...     print(f"Errors: {result.errors}")
     """
     
     def __init__(self, **kwargs):
-        """Initialize validation engine."""
+        """
+        Initialize validation engine.
+        
+        Sets up the engine with configuration and initializes rule storage.
+        
+        Args:
+            **kwargs: Configuration options (currently unused)
+        """
         self.logger = get_logger("validation_engine")
         self.config = kwargs
         self.rules: List[Callable] = []
+        
+        self.logger.debug("Validation engine initialized")
     
     def validate(
         self,
@@ -42,12 +97,23 @@ class ValidationEngine:
         """
         Validate knowledge graph.
         
+        This method validates a knowledge graph against a list of validation
+        rules. Rules can be provided as arguments or use the engine's stored
+        rules. Each rule should return a dict with "error" and/or "warning"
+        keys, or raise an exception.
+        
         Args:
-            knowledge_graph: Knowledge graph instance
-            rules: Optional list of validation rules
+            knowledge_graph: Knowledge graph instance to validate
+            rules: Optional list of validation rule functions (if None, uses
+                  stored rules). Each rule should accept the knowledge graph
+                  as argument and return a dict or raise an exception.
             
         Returns:
-            Validation result
+            ValidationResult: Validation result containing:
+                - valid: True if no errors, False otherwise
+                - errors: List of error messages
+                - warnings: List of warning messages
+                - metadata: Additional validation metadata
         """
         rules_to_use = rules or self.rules
         errors = []
@@ -75,14 +141,20 @@ class ValidationEngine:
         """
         Add validation rule.
         
+        This method adds a validation rule function to the engine's rule list.
+        The rule will be used in subsequent validate() calls.
+        
         Args:
-            rule: Validation rule function
+            rule: Validation rule function (should accept knowledge graph and
+                 return dict with "error"/"warning" keys or raise exception)
         """
         self.rules.append(rule)
     
     def remove_rule(self, rule: Callable) -> None:
         """
         Remove validation rule.
+        
+        This method removes a validation rule function from the engine's rule list.
         
         Args:
             rule: Validation rule function to remove
@@ -93,15 +165,35 @@ class ValidationEngine:
 
 class RuleValidator:
     """
-    Rule validator.
+    Rule-based validation engine.
     
-    Validates Knowledge Graphs against specific rules.
+    This class provides rule-based validation capabilities, enabling validation
+    against specific rule strings or identifiers.
+    
+    Features:
+        - Single rule validation
+        - Multiple rule validation
+        - Rule parsing and execution (planned)
+    
+    Example Usage:
+        >>> validator = RuleValidator()
+        >>> result = validator.validate_rule(knowledge_graph, "rule_name")
+        >>> results = validator.validate_all_rules(knowledge_graph, ["rule1", "rule2"])
     """
     
     def __init__(self, **kwargs):
-        """Initialize rule validator."""
+        """
+        Initialize rule validator.
+        
+        Sets up the validator with configuration options.
+        
+        Args:
+            **kwargs: Configuration options (currently unused)
+        """
         self.logger = get_logger("rule_validator")
         self.config = kwargs
+        
+        self.logger.debug("Rule validator initialized")
     
     def validate_rule(
         self,
@@ -111,12 +203,16 @@ class RuleValidator:
         """
         Validate against a specific rule.
         
+        This method validates a knowledge graph against a specific rule string
+        or identifier. Currently returns a placeholder result. In practice,
+        this would parse and execute the rule.
+        
         Args:
             knowledge_graph: Knowledge graph instance
             rule: Rule string or identifier
             
         Returns:
-            Validation result
+            ValidationResult: Validation result (currently placeholder)
         """
         # In practice, this would parse and execute the rule
         # For now, return a placeholder
@@ -130,12 +226,15 @@ class RuleValidator:
         """
         Validate against multiple rules.
         
+        This method validates a knowledge graph against multiple rules and
+        returns a dictionary mapping each rule name to its validation result.
+        
         Args:
             knowledge_graph: Knowledge graph instance
-            rules: List of rule strings
+            rules: List of rule strings or identifiers
             
         Returns:
-            Dictionary mapping rule names to validation results
+            dict: Dictionary mapping rule names to ValidationResult objects
         """
         results = {}
         for rule in rules:
@@ -146,15 +245,35 @@ class RuleValidator:
 
 class ConstraintValidator:
     """
-    Constraint validator.
+    Constraint-based validation engine.
     
-    Validates Knowledge Graphs against constraints.
+    This class provides constraint-based validation capabilities, enabling
+    validation against schema constraints such as required properties, domain
+    and range constraints for relationships.
+    
+    Features:
+        - Entity constraint validation
+        - Relationship constraint validation
+        - Domain and range validation
+    
+    Example Usage:
+        >>> validator = ConstraintValidator()
+        >>> result = validator.validate_constraints(knowledge_graph, constraints)
     """
     
     def __init__(self, **kwargs):
-        """Initialize constraint validator."""
+        """
+        Initialize constraint validator.
+        
+        Sets up the validator with configuration options.
+        
+        Args:
+            **kwargs: Configuration options (currently unused)
+        """
         self.logger = get_logger("constraint_validator")
         self.config = kwargs
+        
+        self.logger.debug("Constraint validator initialized")
     
     def validate_constraints(
         self,
@@ -164,12 +283,20 @@ class ConstraintValidator:
         """
         Validate against constraints.
         
+        This method validates a knowledge graph against schema constraints,
+        checking entity constraints (required properties) and relationship
+        constraints (domain and range).
+        
         Args:
             knowledge_graph: Knowledge graph instance
-            constraints: Constraints dictionary
+            constraints: Constraints dictionary containing:
+                - entities: Dictionary mapping entity types to constraint dicts
+                          with "required_props" list
+                - relationships: Dictionary mapping relationship types to
+                                constraint dicts with "domain" and "range"
             
         Returns:
-            Validation result
+            ValidationResult: Validation result with errors and warnings
         """
         errors = []
         warnings = []

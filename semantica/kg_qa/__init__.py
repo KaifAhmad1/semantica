@@ -1,19 +1,35 @@
 """
 Knowledge Graph Quality Assurance Module
 
-Comprehensive quality assurance for production-ready Knowledge Graphs.
+This module provides comprehensive quality assurance capabilities for the
+Semantica framework, enabling production-ready knowledge graph quality
+assessment, validation, and automated fixes.
 
 Key Features:
-    - Quality metrics calculation
-    - Consistency checking
-    - Completeness validation
-    - Automated fixes
-    - Quality reporting
+    - Quality metrics calculation (overall, completeness, consistency)
+    - Consistency checking (logical, temporal, hierarchical)
+    - Completeness validation (entity, relationship, property)
+    - Automated fixes (duplicates, inconsistencies, missing properties)
+    - Quality reporting with issue tracking
+    - Validation engine with rules and constraints
 
 Main Classes:
-    - KGQualityAssessor: Overall quality assessment
-    - ConsistencyChecker: Consistency validation
-    - CompletenessValidator: Completeness validation
+    - KGQualityAssessor: Overall quality assessment coordinator
+    - ConsistencyChecker: Consistency validation engine
+    - CompletenessValidator: Completeness validation engine
+    - QualityMetrics: Quality metrics calculator
+    - ValidationEngine: Rule and constraint validation
+    - QualityReporter: Quality report generation
+    - AutomatedFixer: Automated issue fixing
+
+Example Usage:
+    >>> from semantica.kg_qa import KGQualityAssessor
+    >>> assessor = KGQualityAssessor()
+    >>> score = assessor.assess_overall_quality(knowledge_graph)
+    >>> report = assessor.generate_quality_report(knowledge_graph, schema)
+
+Author: Semantica Contributors
+License: MIT
 """
 
 from .kg_quality_assessor import (

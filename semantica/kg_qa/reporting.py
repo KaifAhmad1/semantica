@@ -1,7 +1,30 @@
 """
 Quality Reporting Module
 
-Generates quality reports and tracks issues.
+This module provides comprehensive quality reporting capabilities for the
+Semantica framework, enabling generation of quality reports, issue tracking,
+and improvement suggestions.
+
+Key Features:
+    - Quality report generation
+    - Issue identification and tracking
+    - Improvement suggestions generation
+    - Report export (JSON, YAML, HTML)
+    - Issue management (add, get, list, resolve)
+
+Main Classes:
+    - QualityReporter: Quality report generation engine
+    - IssueTracker: Issue tracking and management
+    - ImprovementSuggestions: Improvement suggestions generator
+
+Example Usage:
+    >>> from semantica.kg_qa import QualityReporter
+    >>> reporter = QualityReporter()
+    >>> report = reporter.generate_report(knowledge_graph, quality_metrics)
+    >>> json_report = reporter.export_report(report, format="json")
+
+Author: Semantica Contributors
+License: MIT
 """
 
 from typing import Any, Dict, List, Optional
@@ -13,7 +36,22 @@ from ..utils.logging import get_logger
 
 @dataclass
 class QualityIssue:
-    """Quality issue representation."""
+    """
+    Quality issue dataclass.
+    
+    This dataclass represents a quality issue found in a knowledge graph,
+    containing issue identification, type, severity, and related entity/relationship
+    information.
+    
+    Attributes:
+        id: Unique issue identifier
+        type: Issue type (e.g., "completeness", "consistency", "quality")
+        severity: Issue severity ("low", "medium", "high")
+        description: Human-readable issue description
+        entity_id: Related entity ID (optional)
+        relationship_id: Related relationship ID (optional)
+        metadata: Additional issue metadata dictionary
+    """
     
     id: str
     type: str
@@ -26,7 +64,21 @@ class QualityIssue:
 
 @dataclass
 class QualityReport:
-    """Quality report representation."""
+    """
+    Quality report dataclass.
+    
+    This dataclass represents a comprehensive quality report for a knowledge graph,
+    containing quality scores, identified issues, recommendations, and metadata.
+    
+    Attributes:
+        timestamp: Report generation timestamp
+        overall_score: Overall quality score (0.0 to 1.0)
+        completeness_score: Completeness score (0.0 to 1.0)
+        consistency_score: Consistency score (0.0 to 1.0)
+        issues: List of identified quality issues
+        recommendations: List of improvement recommendations
+        metadata: Additional report metadata dictionary
+    """
     
     timestamp: datetime
     overall_score: float
@@ -39,15 +91,36 @@ class QualityReport:
 
 class QualityReporter:
     """
-    Quality reporter.
+    Quality report generation engine.
     
-    Generates quality reports for Knowledge Graphs.
+    This class provides quality report generation capabilities, including issue
+    identification, recommendation generation, and report export in various formats.
+    
+    Features:
+        - Quality report generation
+        - Issue identification
+        - Recommendation generation
+        - Report export (JSON, YAML, HTML)
+    
+    Example Usage:
+        >>> reporter = QualityReporter()
+        >>> report = reporter.generate_report(knowledge_graph, quality_metrics)
+        >>> json_report = reporter.export_report(report, format="json")
     """
     
     def __init__(self, **kwargs):
-        """Initialize quality reporter."""
+        """
+        Initialize quality reporter.
+        
+        Sets up the reporter with configuration options.
+        
+        Args:
+            **kwargs: Configuration options (currently unused)
+        """
         self.logger = get_logger("quality_reporter")
         self.config = kwargs
+        
+        self.logger.debug("Quality reporter initialized")
     
     def generate_report(
         self,
@@ -57,12 +130,19 @@ class QualityReporter:
         """
         Generate quality report.
         
+        This method generates a comprehensive quality report by identifying
+        issues based on quality metrics and generating recommendations.
+        
         Args:
             knowledge_graph: Knowledge graph instance
-            quality_metrics: Quality metrics dictionary
+            quality_metrics: Quality metrics dictionary containing:
+                - overall: Overall quality score
+                - completeness: Completeness score
+                - consistency: Consistency score
             
         Returns:
-            Quality report
+            QualityReport: Comprehensive quality report with scores, issues,
+                          and recommendations
         """
         issues = self._identify_issues(knowledge_graph, quality_metrics)
         recommendations = self._generate_recommendations(issues)
@@ -86,12 +166,19 @@ class QualityReporter:
         """
         Export report to specified format.
         
+        This method exports a quality report to the specified format (JSON, YAML,
+        or HTML). For unsupported formats, returns string representation.
+        
         Args:
-            report: Quality report
-            format: Export format (json, yaml, html)
+            report: Quality report to export
+            format: Export format ("json", "yaml", or "html", default: "json")
             
         Returns:
-            Exported report string
+            str: Exported report as string in the specified format
+            
+        Note:
+            YAML export requires the `pyyaml` library. If not available, falls
+            back to string representation.
         """
         if format == "json":
             import json
@@ -113,19 +200,23 @@ class QualityReporter:
             }, indent=2)
         
         elif format == "yaml":
-            import yaml
-            return yaml.dump({
-                "timestamp": report.timestamp.isoformat(),
-                "overall_score": report.overall_score,
-                "issues": [
-                    {
-                        "id": issue.id,
-                        "type": issue.type,
-                        "description": issue.description
-                    }
-                    for issue in report.issues
-                ]
-            })
+            try:
+                import yaml
+                return yaml.dump({
+                    "timestamp": report.timestamp.isoformat(),
+                    "overall_score": report.overall_score,
+                    "issues": [
+                        {
+                            "id": issue.id,
+                            "type": issue.type,
+                            "description": issue.description
+                        }
+                        for issue in report.issues
+                    ]
+                })
+            except ImportError:
+                self.logger.warning("PyYAML not available, falling back to string representation")
+                return str(report)
         
         else:
             return str(report)
@@ -135,7 +226,19 @@ class QualityReporter:
         knowledge_graph: Any,
         metrics: Dict[str, float]
     ) -> List[QualityIssue]:
-        """Identify quality issues."""
+        """
+        Identify quality issues.
+        
+        This method identifies quality issues based on quality metrics,
+        checking for low scores and generating appropriate issue objects.
+        
+        Args:
+            knowledge_graph: Knowledge graph instance
+            metrics: Quality metrics dictionary
+            
+        Returns:
+            list: List of identified quality issues
+        """
         issues = []
         
         # Check for low scores
@@ -161,7 +264,19 @@ class QualityReporter:
         self,
         issues: List[QualityIssue]
     ) -> List[str]:
-        """Generate improvement recommendations."""
+        """
+        Generate improvement recommendations.
+        
+        This method generates improvement recommendations based on identified
+        quality issues, providing actionable suggestions for improving
+        knowledge graph quality.
+        
+        Args:
+            issues: List of quality issues
+            
+        Returns:
+            list: List of improvement recommendation strings
+        """
         recommendations = []
         
         for issue in issues:
@@ -179,23 +294,47 @@ class QualityReporter:
 
 class IssueTracker:
     """
-    Issue tracker.
+    Issue tracking and management engine.
     
-    Tracks and manages quality issues.
+    This class provides issue tracking capabilities, enabling storage, retrieval,
+    filtering, and resolution of quality issues.
+    
+    Features:
+        - Issue storage and retrieval
+        - Issue filtering by severity
+        - Issue resolution tracking
+    
+    Example Usage:
+        >>> tracker = IssueTracker()
+        >>> tracker.add_issue(issue)
+        >>> issues = tracker.list_issues(severity="high")
+        >>> tracker.resolve_issue(issue_id)
     """
     
     def __init__(self, **kwargs):
-        """Initialize issue tracker."""
+        """
+        Initialize issue tracker.
+        
+        Sets up the tracker with configuration and initializes issue storage.
+        
+        Args:
+            **kwargs: Configuration options (currently unused)
+        """
         self.logger = get_logger("issue_tracker")
         self.config = kwargs
         self.issues: Dict[str, QualityIssue] = {}
+        
+        self.logger.debug("Issue tracker initialized")
     
     def add_issue(self, issue: QualityIssue) -> None:
         """
-        Add an issue.
+        Add an issue to the tracker.
+        
+        This method adds a quality issue to the tracker's issue dictionary,
+        using the issue ID as the key.
         
         Args:
-            issue: Quality issue
+            issue: Quality issue to add
         """
         self.issues[issue.id] = issue
     
@@ -203,11 +342,13 @@ class IssueTracker:
         """
         Get issue by ID.
         
+        This method retrieves a quality issue from the tracker by its ID.
+        
         Args:
-            issue_id: Issue ID
+            issue_id: Issue identifier
             
         Returns:
-            Quality issue or None
+            QualityIssue: The issue if found, None otherwise
         """
         return self.issues.get(issue_id)
     
@@ -218,11 +359,14 @@ class IssueTracker:
         """
         List issues, optionally filtered by severity.
         
+        This method returns all tracked issues, optionally filtered by severity
+        level ("low", "medium", "high").
+        
         Args:
-            severity: Optional severity filter
+            severity: Optional severity filter ("low", "medium", "high")
             
         Returns:
-            List of issues
+            list: List of quality issues (filtered by severity if provided)
         """
         issues = list(self.issues.values())
         
@@ -235,11 +379,14 @@ class IssueTracker:
         """
         Mark issue as resolved.
         
+        This method removes an issue from the tracker, effectively marking
+        it as resolved.
+        
         Args:
-            issue_id: Issue ID
+            issue_id: Issue identifier to resolve
             
         Returns:
-            True if resolved, False otherwise
+            bool: True if issue was found and resolved, False otherwise
         """
         if issue_id in self.issues:
             del self.issues[issue_id]
@@ -251,13 +398,33 @@ class ImprovementSuggestions:
     """
     Improvement suggestions generator.
     
-    Generates suggestions for improving Knowledge Graph quality.
+    This class provides improvement suggestions generation capabilities,
+    analyzing quality reports and generating actionable recommendations
+    for improving knowledge graph quality.
+    
+    Features:
+        - Issue-based suggestions
+        - Score-based suggestions
+        - Actionable recommendations
+    
+    Example Usage:
+        >>> generator = ImprovementSuggestions()
+        >>> suggestions = generator.generate_suggestions(quality_report)
     """
     
     def __init__(self, **kwargs):
-        """Initialize improvement suggestions generator."""
+        """
+        Initialize improvement suggestions generator.
+        
+        Sets up the generator with configuration options.
+        
+        Args:
+            **kwargs: Configuration options (currently unused)
+        """
         self.logger = get_logger("improvement_suggestions")
         self.config = kwargs
+        
+        self.logger.debug("Improvement suggestions generator initialized")
     
     def generate_suggestions(
         self,
@@ -266,11 +433,14 @@ class ImprovementSuggestions:
         """
         Generate improvement suggestions.
         
+        This method generates improvement suggestions based on the quality report,
+        analyzing issues and scores to provide actionable recommendations.
+        
         Args:
-            quality_report: Quality report
+            quality_report: Quality report containing scores and issues
             
         Returns:
-            List of improvement suggestions
+            list: List of improvement suggestion strings
         """
         suggestions = []
         

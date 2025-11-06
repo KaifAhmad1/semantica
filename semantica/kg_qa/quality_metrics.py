@@ -1,7 +1,30 @@
 """
 Quality Metrics Module
 
-Calculates quality metrics for Knowledge Graphs.
+This module provides comprehensive quality metrics calculation for the Semantica
+framework, enabling quantitative assessment of knowledge graph quality across
+multiple dimensions.
+
+Key Features:
+    - Overall quality score calculation
+    - Entity quality metrics
+    - Relationship quality metrics
+    - Completeness metrics (entity, relationship, property)
+    - Consistency metrics (logical, temporal, hierarchical)
+
+Main Classes:
+    - QualityMetrics: Overall quality metrics calculator
+    - CompletenessMetrics: Completeness metrics calculator
+    - ConsistencyMetrics: Consistency metrics calculator
+
+Example Usage:
+    >>> from semantica.kg_qa import QualityMetrics
+    >>> metrics = QualityMetrics()
+    >>> score = metrics.calculate_overall_score(knowledge_graph)
+    >>> entity_score = metrics.calculate_entity_quality(entities)
+
+Author: Semantica Contributors
+License: MIT
 """
 
 from typing import Any, Dict, List, Optional
@@ -12,26 +35,60 @@ from ..utils.logging import get_logger
 
 @dataclass
 class QualityScore:
-    """Quality score representation."""
+    """
+    Quality score dataclass.
+    
+    This dataclass represents a comprehensive quality score for a knowledge graph,
+    containing scores for different quality dimensions and optional metadata.
+    
+    Attributes:
+        overall: Overall quality score (0.0 to 1.0)
+        completeness: Completeness score (0.0 to 1.0)
+        consistency: Consistency score (0.0 to 1.0)
+        accuracy: Accuracy score (0.0 to 1.0)
+        metadata: Additional metadata dictionary (optional)
+    """
     
     overall: float
     completeness: float
     consistency: float
     accuracy: float
-    metadata: Dict[str, Any] = None
+    metadata: Optional[Dict[str, Any]] = None
 
 
 class QualityMetrics:
     """
     Quality metrics calculator.
     
-    Calculates overall quality metrics for Knowledge Graphs.
+    This class provides overall quality metrics calculation for knowledge graphs,
+    aggregating entity quality, relationship quality, and consistency into
+    comprehensive quality scores.
+    
+    Features:
+        - Overall quality score calculation
+        - Entity quality assessment
+        - Relationship quality assessment
+        - Weighted aggregation of metrics
+    
+    Example Usage:
+        >>> metrics = QualityMetrics()
+        >>> score = metrics.calculate_overall_score(knowledge_graph)
+        >>> entity_score = metrics.calculate_entity_quality(entities)
     """
     
     def __init__(self, **kwargs):
-        """Initialize quality metrics calculator."""
+        """
+        Initialize quality metrics calculator.
+        
+        Sets up the calculator with configuration options.
+        
+        Args:
+            **kwargs: Configuration options (currently unused)
+        """
         self.logger = get_logger("quality_metrics")
         self.config = kwargs
+        
+        self.logger.debug("Quality metrics calculator initialized")
     
     def calculate_overall_score(
         self,
@@ -40,11 +97,16 @@ class QualityMetrics:
         """
         Calculate overall quality score.
         
+        This method calculates an overall quality score by aggregating entity
+        quality and consistency metrics using weighted averaging (60% completeness,
+        40% consistency).
+        
         Args:
-            knowledge_graph: Knowledge graph instance
+            knowledge_graph: Knowledge graph instance (object with entities and
+                           relationships, or dict with "entities" and "relationships")
             
         Returns:
-            Overall quality score (0.0 to 1.0)
+            float: Overall quality score between 0.0 and 1.0 (higher is better)
         """
         completeness = self.calculate_entity_quality(knowledge_graph)
         consistency = self._calculate_consistency(knowledge_graph)
@@ -61,11 +123,15 @@ class QualityMetrics:
         """
         Calculate entity quality score.
         
+        This method calculates a quality score for entities based on the presence
+        of required fields (ID and type). Each entity is scored, and the average
+        is returned.
+        
         Args:
-            entities: List of entities
+            entities: List of entity dictionaries
             
         Returns:
-            Entity quality score (0.0 to 1.0)
+            float: Entity quality score between 0.0 and 1.0 (average across all entities)
         """
         if not entities:
             return 0.0
@@ -94,11 +160,15 @@ class QualityMetrics:
         """
         Calculate relationship quality score.
         
+        This method calculates a quality score for relationships based on the
+        presence of required fields (source/subject, target/object, type/predicate).
+        Each relationship is scored, and the average is returned.
+        
         Args:
-            relationships: List of relationships
+            relationships: List of relationship dictionaries
             
         Returns:
-            Relationship quality score (0.0 to 1.0)
+            float: Relationship quality score between 0.0 and 1.0 (average across all relationships)
         """
         if not relationships:
             return 0.0
@@ -123,7 +193,18 @@ class QualityMetrics:
         return sum(scores) / len(scores) if scores else 0.0
     
     def _calculate_consistency(self, knowledge_graph: Any) -> float:
-        """Calculate consistency score (simplified)."""
+        """
+        Calculate consistency score (simplified).
+        
+        This is a placeholder method. In practice, this would check for logical
+        inconsistencies in the knowledge graph.
+        
+        Args:
+            knowledge_graph: Knowledge graph instance
+            
+        Returns:
+            float: Consistency score between 0.0 and 1.0 (placeholder: 0.8)
+        """
         # In practice, this would check for logical inconsistencies
         return 0.8  # Placeholder
 
@@ -132,13 +213,35 @@ class CompletenessMetrics:
     """
     Completeness metrics calculator.
     
-    Calculates completeness metrics for Knowledge Graphs.
+    This class provides completeness metrics calculation for knowledge graphs,
+    assessing whether entities, relationships, and properties meet schema
+    requirements for completeness.
+    
+    Features:
+        - Entity completeness calculation
+        - Relationship completeness calculation
+        - Property completeness calculation
+        - Schema-based validation
+    
+    Example Usage:
+        >>> metrics = CompletenessMetrics()
+        >>> score = metrics.calculate_entity_completeness(entities, schema)
+        >>> rel_score = metrics.calculate_relationship_completeness(relationships, schema)
     """
     
     def __init__(self, **kwargs):
-        """Initialize completeness metrics calculator."""
+        """
+        Initialize completeness metrics calculator.
+        
+        Sets up the calculator with configuration options.
+        
+        Args:
+            **kwargs: Configuration options (currently unused)
+        """
         self.logger = get_logger("completeness_metrics")
         self.config = kwargs
+        
+        self.logger.debug("Completeness metrics calculator initialized")
     
     def calculate_entity_completeness(
         self,
@@ -148,12 +251,17 @@ class CompletenessMetrics:
         """
         Calculate entity completeness.
         
+        This method calculates completeness scores for entities by checking
+        whether they have all required properties as defined in the schema.
+        Returns the average completeness score across all entities.
+        
         Args:
-            entities: List of entities
-            schema: Schema definition with required properties
+            entities: List of entity dictionaries
+            schema: Schema definition containing constraints with required_props
+                   for each entity type
             
         Returns:
-            Completeness score (0.0 to 1.0)
+            float: Completeness score between 0.0 and 1.0 (average across entities)
         """
         if not entities:
             return 0.0
@@ -190,12 +298,15 @@ class CompletenessMetrics:
         """
         Calculate property completeness.
         
+        This method calculates completeness scores for properties by checking
+        whether entity types have all required properties as defined in the schema.
+        
         Args:
-            properties: Properties dictionary
-            schema: Schema definition
+            properties: Properties dictionary (mapping entity types to property dictionaries)
+            schema: Schema definition containing constraints with required_props
             
         Returns:
-            Completeness score (0.0 to 1.0)
+            float: Completeness score between 0.0 and 1.0 (average across entity types)
         """
         constraints = schema.get("constraints", {})
         scores = []
@@ -219,12 +330,17 @@ class CompletenessMetrics:
         """
         Calculate relationship completeness.
         
+        This method calculates completeness scores for relationships by checking
+        whether they have all required fields (source/subject, target/object,
+        type/predicate). Returns the average completeness score.
+        
         Args:
-            relationships: List of relationships
-            schema: Schema definition
+            relationships: List of relationship dictionaries
+            schema: Schema definition (currently unused, reserved for future
+                   relationship-specific constraints)
             
         Returns:
-            Completeness score (0.0 to 1.0)
+            float: Completeness score between 0.0 and 1.0 (average across relationships)
         """
         if not relationships:
             return 0.0
@@ -246,13 +362,33 @@ class ConsistencyMetrics:
     """
     Consistency metrics calculator.
     
-    Calculates consistency metrics for Knowledge Graphs.
+    This class provides consistency metrics calculation for knowledge graphs,
+    assessing logical, temporal, and hierarchical consistency.
+    
+    Features:
+        - Logical consistency calculation
+        - Temporal consistency calculation
+        - Hierarchical consistency calculation
+    
+    Example Usage:
+        >>> metrics = ConsistencyMetrics()
+        >>> logical_score = metrics.calculate_logical_consistency(knowledge_graph)
+        >>> temporal_score = metrics.calculate_temporal_consistency(knowledge_graph)
     """
     
     def __init__(self, **kwargs):
-        """Initialize consistency metrics calculator."""
+        """
+        Initialize consistency metrics calculator.
+        
+        Sets up the calculator with configuration options.
+        
+        Args:
+            **kwargs: Configuration options (currently unused)
+        """
         self.logger = get_logger("consistency_metrics")
         self.config = kwargs
+        
+        self.logger.debug("Consistency metrics calculator initialized")
     
     def calculate_logical_consistency(
         self,
@@ -261,11 +397,15 @@ class ConsistencyMetrics:
         """
         Calculate logical consistency.
         
+        This method calculates a logical consistency score by checking for
+        logical contradictions, conflicting relationships, and inconsistent
+        property values. Currently returns a placeholder value.
+        
         Args:
             knowledge_graph: Knowledge graph instance
             
         Returns:
-            Consistency score (0.0 to 1.0)
+            float: Logical consistency score between 0.0 and 1.0 (placeholder: 0.9)
         """
         # In practice, this would use a reasoner
         # For now, return a placeholder
@@ -278,11 +418,15 @@ class ConsistencyMetrics:
         """
         Calculate temporal consistency.
         
+        This method calculates a temporal consistency score by checking for
+        temporal contradictions, invalid time ranges, and conflicting
+        temporal relationships. Currently returns a placeholder value.
+        
         Args:
             knowledge_graph: Knowledge graph instance
             
         Returns:
-            Temporal consistency score (0.0 to 1.0)
+            float: Temporal consistency score between 0.0 and 1.0 (placeholder: 0.85)
         """
         # Check for temporal contradictions
         return 0.85
@@ -294,11 +438,16 @@ class ConsistencyMetrics:
         """
         Calculate hierarchical consistency.
         
+        This method calculates a hierarchical consistency score by checking for
+        hierarchical contradictions such as circular inheritance, invalid
+        parent-child relationships, and conflicting hierarchical structures.
+        Currently returns a placeholder value.
+        
         Args:
             knowledge_graph: Knowledge graph instance
             
         Returns:
-            Hierarchical consistency score (0.0 to 1.0)
+            float: Hierarchical consistency score between 0.0 and 1.0 (placeholder: 0.9)
         """
         # Check for hierarchical contradictions (e.g., circular inheritance)
         return 0.9

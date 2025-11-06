@@ -1,7 +1,29 @@
 """
 Automated Fixes Module
 
-Automatically fixes common Knowledge Graph issues.
+This module provides automated fixing capabilities for the Semantica framework,
+enabling automatic resolution of common knowledge graph quality issues.
+
+Key Features:
+    - Duplicate entity and relationship fixing
+    - Inconsistency resolution
+    - Missing property completion
+    - Conflicting property merging
+    - Conflict and disagreement resolution
+
+Main Classes:
+    - AutomatedFixer: Main automated fixing engine
+    - AutoMerger: Automatic merging of duplicates and conflicts
+    - AutoResolver: Automatic conflict and inconsistency resolution
+
+Example Usage:
+    >>> from semantica.kg_qa import AutomatedFixer
+    >>> fixer = AutomatedFixer()
+    >>> result = fixer.fix_duplicates(knowledge_graph)
+    >>> result = fixer.fix_missing_properties(knowledge_graph, schema)
+
+Author: Semantica Contributors
+License: MIT
 """
 
 from typing import Any, Dict, List, Optional
@@ -13,7 +35,19 @@ from .quality_metrics import QualityMetrics
 
 @dataclass
 class FixResult:
-    """Fix result representation."""
+    """
+    Fix result dataclass.
+    
+    This dataclass represents the result of an automated fix operation,
+    containing success status, number of fixes applied, errors encountered,
+    and additional metadata.
+    
+    Attributes:
+        success: Whether the fix operation was successful
+        fixed_count: Number of issues fixed
+        errors: List of error messages encountered during fixing
+        metadata: Additional metadata about the fix operation
+    """
     
     success: bool
     fixed_count: int
@@ -23,16 +57,39 @@ class FixResult:
 
 class AutomatedFixer:
     """
-    Automated fixer.
+    Automated fixing engine.
     
-    Automatically fixes common Knowledge Graph issues.
+    This class provides automated fixing capabilities for common knowledge
+    graph quality issues, including duplicates, inconsistencies, and
+    missing properties.
+    
+    Features:
+        - Duplicate entity fixing
+        - Inconsistency resolution
+        - Missing property completion
+        - Integration with quality metrics
+    
+    Example Usage:
+        >>> fixer = AutomatedFixer()
+        >>> result = fixer.fix_duplicates(knowledge_graph)
+        >>> if result.success:
+        ...     print(f"Fixed {result.fixed_count} issues")
     """
     
     def __init__(self, **kwargs):
-        """Initialize automated fixer."""
+        """
+        Initialize automated fixer.
+        
+        Sets up the fixer with configuration and quality metrics calculator.
+        
+        Args:
+            **kwargs: Configuration options (currently unused)
+        """
         self.logger = get_logger("automated_fixer")
         self.config = kwargs
         self.quality_metrics = QualityMetrics()
+        
+        self.logger.debug("Automated fixer initialized")
     
     def fix_duplicates(
         self,
@@ -41,11 +98,21 @@ class AutomatedFixer:
         """
         Fix duplicate entities.
         
+        This method identifies and fixes duplicate entities in the knowledge
+        graph. In practice, this would use the deduplication module to detect
+        and merge duplicates.
+        
         Args:
-            knowledge_graph: Knowledge graph instance
+            knowledge_graph: Knowledge graph instance (object with entities
+                           and relationships, or dict with "entities" and
+                           "relationships" keys)
             
         Returns:
-            Fix result
+            FixResult: Fix result containing:
+                - success: Whether fixing was successful
+                - fixed_count: Number of duplicates fixed
+                - errors: List of error messages
+                - metadata: Additional fix metadata
         """
         self.logger.info("Fixing duplicate entities")
         
@@ -65,11 +132,15 @@ class AutomatedFixer:
         """
         Fix inconsistencies.
         
+        This method identifies and fixes logical inconsistencies in the
+        knowledge graph, such as conflicting property values or contradictory
+        relationships.
+        
         Args:
             knowledge_graph: Knowledge graph instance
             
         Returns:
-            Fix result
+            FixResult: Fix result with success status and fix count
         """
         self.logger.info("Fixing inconsistencies")
         
@@ -89,12 +160,16 @@ class AutomatedFixer:
         """
         Fix missing required properties.
         
+        This method identifies entities with missing required properties
+        (as defined in the schema) and attempts to fix them by adding
+        default values or inferring values from context.
+        
         Args:
             knowledge_graph: Knowledge graph instance
-            schema: Schema definition
+            schema: Schema definition containing required property constraints
             
         Returns:
-            Fix result
+            FixResult: Fix result with number of properties added
         """
         self.logger.info("Fixing missing properties")
         
@@ -116,15 +191,35 @@ class AutomatedFixer:
 
 class AutoMerger:
     """
-    Auto merger.
+    Automatic merging engine.
     
-    Automatically merges duplicate entities and relationships.
+    This class provides automatic merging capabilities for duplicate entities,
+    relationships, and conflicting properties in knowledge graphs.
+    
+    Features:
+        - Duplicate entity merging
+        - Duplicate relationship merging
+        - Conflicting property resolution
+    
+    Example Usage:
+        >>> merger = AutoMerger()
+        >>> result = merger.merge_duplicate_entities(knowledge_graph)
+        >>> result = merger.merge_conflicting_properties(knowledge_graph)
     """
     
     def __init__(self, **kwargs):
-        """Initialize auto merger."""
+        """
+        Initialize auto merger.
+        
+        Sets up the merger with configuration options.
+        
+        Args:
+            **kwargs: Configuration options (currently unused)
+        """
         self.logger = get_logger("auto_merger")
         self.config = kwargs
+        
+        self.logger.debug("Auto merger initialized")
     
     def merge_duplicate_entities(
         self,
@@ -133,11 +228,15 @@ class AutoMerger:
         """
         Merge duplicate entities.
         
+        This method identifies duplicate entities and merges them into
+        single entities, combining properties and updating relationships.
+        In practice, this would use the deduplication module.
+        
         Args:
             knowledge_graph: Knowledge graph instance
             
         Returns:
-            Merge result
+            FixResult: Merge result with number of entities merged
         """
         self.logger.info("Merging duplicate entities")
         
@@ -161,11 +260,14 @@ class AutoMerger:
         """
         Merge duplicate relationships.
         
+        This method identifies duplicate relationships (same source, target,
+        and type) and merges them, combining properties and metadata.
+        
         Args:
             knowledge_graph: Knowledge graph instance
             
         Returns:
-            Merge result
+            FixResult: Merge result with number of relationships merged
         """
         self.logger.info("Merging duplicate relationships")
         
@@ -183,11 +285,15 @@ class AutoMerger:
         """
         Merge conflicting properties.
         
+        This method identifies entities with conflicting property values
+        (same property with different values) and resolves conflicts using
+        configurable strategies (e.g., highest confidence, most recent).
+        
         Args:
             knowledge_graph: Knowledge graph instance
             
         Returns:
-            Merge result
+            FixResult: Merge result with number of conflicts resolved
         """
         self.logger.info("Merging conflicting properties")
         
@@ -201,15 +307,35 @@ class AutoMerger:
 
 class AutoResolver:
     """
-    Auto resolver.
+    Automatic resolution engine.
     
-    Automatically resolves conflicts and inconsistencies.
+    This class provides automatic resolution capabilities for conflicts,
+    disagreements, and inconsistencies in knowledge graphs.
+    
+    Features:
+        - Conflict resolution
+        - Disagreement resolution
+        - Inconsistency resolution
+    
+    Example Usage:
+        >>> resolver = AutoResolver()
+        >>> result = resolver.resolve_conflicts(knowledge_graph)
+        >>> result = resolver.resolve_inconsistencies(knowledge_graph)
     """
     
     def __init__(self, **kwargs):
-        """Initialize auto resolver."""
+        """
+        Initialize auto resolver.
+        
+        Sets up the resolver with configuration options.
+        
+        Args:
+            **kwargs: Configuration options (currently unused)
+        """
         self.logger = get_logger("auto_resolver")
         self.config = kwargs
+        
+        self.logger.debug("Auto resolver initialized")
     
     def resolve_conflicts(
         self,
@@ -218,11 +344,15 @@ class AutoResolver:
         """
         Resolve conflicts.
         
+        This method identifies and resolves conflicts in the knowledge graph,
+        such as conflicting property values or contradictory relationships.
+        In practice, this would use the conflict resolution module.
+        
         Args:
             knowledge_graph: Knowledge graph instance
             
         Returns:
-            Resolution result
+            FixResult: Resolution result with number of conflicts resolved
         """
         self.logger.info("Resolving conflicts")
         
@@ -240,11 +370,14 @@ class AutoResolver:
         """
         Resolve disagreements.
         
+        This method identifies and resolves disagreements between different
+        sources or versions of the same information in the knowledge graph.
+        
         Args:
             knowledge_graph: Knowledge graph instance
             
         Returns:
-            Resolution result
+            FixResult: Resolution result with number of disagreements resolved
         """
         self.logger.info("Resolving disagreements")
         
@@ -262,11 +395,15 @@ class AutoResolver:
         """
         Resolve inconsistencies.
         
+        This method identifies and resolves logical inconsistencies in the
+        knowledge graph, such as circular dependencies or contradictory
+        hierarchical relationships.
+        
         Args:
             knowledge_graph: Knowledge graph instance
             
         Returns:
-            Resolution result
+            FixResult: Resolution result with number of inconsistencies resolved
         """
         self.logger.info("Resolving inconsistencies")
         
