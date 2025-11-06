@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="Semantica-Logo.png" alt="Semantica Logo" width="450" height="auto">
+<img src="semantica_logo.png" alt="Semantica Logo" width="450" height="auto">
 
 # 🧠 Semantica
 
