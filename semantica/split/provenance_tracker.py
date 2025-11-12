@@ -33,6 +33,7 @@ from uuid import uuid4
 
 from ..utils.exceptions import ProcessingError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 from .semantic_chunker import Chunk
 
 
@@ -65,6 +66,7 @@ class ProvenanceTracker:
         """
         self.logger = get_logger("provenance_tracker")
         self.config = config
+        self.progress_tracker = get_progress_tracker()
         
         self.store_metadata = config.get("store_metadata", True)
         self.track_versions = config.get("track_versions", False)
@@ -136,21 +138,35 @@ class ProvenanceTracker:
         Returns:
             list: List of provenance IDs
         """
-        provenance_ids = []
-        parent_chunk_id = None
+        tracking_id = self.progress_tracker.start_tracking(
+            module="split",
+            submodule="ProvenanceTracker",
+            message=f"Tracking provenance for {len(chunks)} chunks"
+        )
         
-        for chunk in chunks:
-            provenance_id = self.track_chunk(
-                chunk,
-                source_document,
-                source_path,
-                parent_chunk_id,
-                **metadata
-            )
-            provenance_ids.append(provenance_id)
-            parent_chunk_id = provenance_id
-        
-        return provenance_ids
+        try:
+            provenance_ids = []
+            parent_chunk_id = None
+            
+            for i, chunk in enumerate(chunks):
+                self.progress_tracker.update_tracking(tracking_id, message=f"Tracking chunk {i+1}/{len(chunks)}...")
+                provenance_id = self.track_chunk(
+                    chunk,
+                    source_document,
+                    source_path,
+                    parent_chunk_id,
+                    **metadata
+                )
+                provenance_ids.append(provenance_id)
+                parent_chunk_id = provenance_id
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                              message=f"Tracked {len(provenance_ids)} chunks")
+            return provenance_ids
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def get_provenance(self, chunk_id: str) -> Optional[ProvenanceInfo]:
         """

@@ -37,6 +37,7 @@ from urllib.parse import quote
 
 from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 from .ner_extractor import Entity
 from .relation_extractor import Relation
 
@@ -60,6 +61,7 @@ class TripleExtractor:
         self.logger = get_logger("triple_extractor")
         self.config = config or {}
         self.config.update(kwargs)
+        self.progress_tracker = get_progress_tracker()
         
         self.triple_validator = TripleValidator(**self.config.get("validator", {}))
         self.rdf_serializer = RDFSerializer(**self.config.get("serializer", {}))
@@ -86,39 +88,56 @@ class TripleExtractor:
         Returns:
             list: List of extracted triples
         """
-        from .ner_extractor import NERExtractor
-        from .relation_extractor import RelationExtractor
+        tracking_id = self.progress_tracker.start_tracking(
+            module="semantic_extract",
+            submodule="TripleExtractor",
+            message="Extracting RDF triples from text"
+        )
         
-        # Extract entities if not provided
-        if entities is None:
-            ner = NERExtractor(**self.config.get("ner", {}))
-            entities = ner.extract_entities(text)
-        
-        # Extract relations if not provided
-        if relationships is None:
-            rel_extractor = RelationExtractor(**self.config.get("relation", {}))
-            relationships = rel_extractor.extract_relations(text, entities)
-        
-        # Convert relations to triples
-        triples = []
-        for relation in relationships:
-            triple = Triple(
-                subject=self._format_uri(relation.subject.text),
-                predicate=self._format_uri(relation.predicate),
-                object=self._format_uri(relation.object.text),
-                confidence=relation.confidence,
-                metadata={
-                    "context": relation.context,
-                    **relation.metadata
-                }
-            )
-            triples.append(triple)
-        
-        # Validate triples
-        if options.get("validate", True):
-            triples = self.triple_validator.validate_triples(triples)
-        
-        return triples
+        try:
+            from .ner_extractor import NERExtractor
+            from .relation_extractor import RelationExtractor
+            
+            # Extract entities if not provided
+            if entities is None:
+                self.progress_tracker.update_tracking(tracking_id, message="Extracting entities...")
+                ner = NERExtractor(**self.config.get("ner", {}))
+                entities = ner.extract_entities(text)
+            
+            # Extract relations if not provided
+            if relationships is None:
+                self.progress_tracker.update_tracking(tracking_id, message="Extracting relations...")
+                rel_extractor = RelationExtractor(**self.config.get("relation", {}))
+                relationships = rel_extractor.extract_relations(text, entities)
+            
+            # Convert relations to triples
+            self.progress_tracker.update_tracking(tracking_id, message=f"Converting {len(relationships)} relations to triples...")
+            triples = []
+            for relation in relationships:
+                triple = Triple(
+                    subject=self._format_uri(relation.subject.text),
+                    predicate=self._format_uri(relation.predicate),
+                    object=self._format_uri(relation.object.text),
+                    confidence=relation.confidence,
+                    metadata={
+                        "context": relation.context,
+                        **relation.metadata
+                    }
+                )
+                triples.append(triple)
+            
+            # Validate triples
+            if options.get("validate", True):
+                self.progress_tracker.update_tracking(tracking_id, message="Validating triples...")
+                triples = self.triple_validator.validate_triples(triples)
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                              message=f"Extracted {len(triples)} triples")
+            return triples
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def _format_uri(self, value: str) -> str:
         """Format value as URI."""

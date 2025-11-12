@@ -32,6 +32,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from ..utils.exceptions import ProcessingError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 from .semantic_chunker import Chunk
 
 
@@ -60,6 +61,7 @@ class StructuralChunker:
         """
         self.logger = get_logger("structural_chunker")
         self.config = config
+        self.progress_tracker = get_progress_tracker()
         
         self.respect_headers = config.get("respect_headers", True)
         self.respect_sections = config.get("respect_sections", True)
@@ -76,16 +78,32 @@ class StructuralChunker:
         Returns:
             list: List of chunks
         """
-        if not text:
-            return []
+        tracking_id = self.progress_tracker.start_tracking(
+            module="split",
+            submodule="StructuralChunker",
+            message="Splitting text based on document structure"
+        )
         
-        # Extract structural elements
-        elements = self._extract_structure(text)
-        
-        # Group elements into chunks
-        chunks = self._group_elements(elements, text)
-        
-        return chunks
+        try:
+            if not text:
+                self.progress_tracker.stop_tracking(tracking_id, status="completed", message="No text provided")
+                return []
+            
+            # Extract structural elements
+            self.progress_tracker.update_tracking(tracking_id, message="Extracting structural elements...")
+            elements = self._extract_structure(text)
+            
+            # Group elements into chunks
+            self.progress_tracker.update_tracking(tracking_id, message="Grouping elements into chunks...")
+            chunks = self._group_elements(elements, text)
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                              message=f"Created {len(chunks)} chunks")
+            return chunks
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def _extract_structure(self, text: str) -> List[StructuralElement]:
         """Extract structural elements from text."""

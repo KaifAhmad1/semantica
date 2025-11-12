@@ -31,6 +31,7 @@ from typing import Any, Dict, List, Optional
 
 from ..utils.exceptions import ProcessingError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 from .ner_extractor import Entity
 from .relation_extractor import Relation
 
@@ -61,6 +62,7 @@ class LLMEnhancer:
         """
         self.logger = get_logger("llm_enhancer")
         self.config = config
+        self.progress_tracker = get_progress_tracker()
         
         self.provider = config.get("provider", "openai")
         self.model = config.get("model", "gpt-3.5-turbo")
@@ -106,18 +108,33 @@ class LLMEnhancer:
         Returns:
             list: Enhanced entities
         """
-        if not self.client:
-            self.logger.warning("LLM client not available. Returning original entities.")
-            return entities
-        
-        prompt = self._build_entity_prompt(text, entities)
+        tracking_id = self.progress_tracker.start_tracking(
+            module="semantic_extract",
+            submodule="LLMEnhancer",
+            message="Enhancing entities using LLM"
+        )
         
         try:
+            if not self.client:
+                self.logger.warning("LLM client not available. Returning original entities.")
+                self.progress_tracker.stop_tracking(tracking_id, status="completed", message="LLM client not available")
+                return entities
+            
+            self.progress_tracker.update_tracking(tracking_id, message="Building prompt...")
+            prompt = self._build_entity_prompt(text, entities)
+            
+            self.progress_tracker.update_tracking(tracking_id, message="Calling LLM API...")
             response = self._call_llm(prompt, **options)
+            
+            self.progress_tracker.update_tracking(tracking_id, message="Parsing LLM response...")
             enhanced_entities = self._parse_entity_response(response, entities)
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                              message=f"Enhanced {len(enhanced_entities)} entities")
             return enhanced_entities
         except Exception as e:
             self.logger.error(f"Failed to enhance entities with LLM: {e}")
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
             return entities
     
     def enhance_relations(self, text: str, relations: List[Relation], **options) -> List[Relation]:

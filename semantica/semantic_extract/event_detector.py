@@ -36,6 +36,7 @@ from typing import Any, Dict, List, Optional
 
 from ..utils.exceptions import ProcessingError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 from .ner_extractor import Entity
 
 
@@ -62,6 +63,7 @@ class EventDetector:
         self.logger = get_logger("event_detector")
         self.config = config or {}
         self.config.update(kwargs)
+        self.progress_tracker = get_progress_tracker()
         
         self.event_classifier = EventClassifier(**self.config.get("classifier", {}))
         self.temporal_processor = TemporalEventProcessor(**self.config.get("temporal", {}))
@@ -87,31 +89,45 @@ class EventDetector:
         Returns:
             list: List of detected events
         """
-        events = []
+        tracking_id = self.progress_tracker.start_tracking(
+            module="semantic_extract",
+            submodule="EventDetector",
+            message="Detecting events in text"
+        )
         
-        # Detect events using patterns
-        for event_type, pattern in self.event_patterns.items():
-            for match in re.finditer(pattern, text, re.IGNORECASE):
-                # Extract surrounding context
-                start = max(0, match.start() - 50)
-                end = min(len(text), match.end() + 50)
-                context = text[start:end]
-                
-                # Extract participants (simplified)
-                participants = self._extract_participants(context)
-                
-                event = Event(
-                    text=match.group(0),
-                    event_type=event_type,
-                    start_char=match.start(),
-                    end_char=match.end(),
-                    participants=participants,
-                    confidence=0.7,
-                    metadata={"context": context}
-                )
-                events.append(event)
-        
-        return events
+        try:
+            events = []
+            
+            # Detect events using patterns
+            self.progress_tracker.update_tracking(tracking_id, message="Scanning text for event patterns...")
+            for event_type, pattern in self.event_patterns.items():
+                for match in re.finditer(pattern, text, re.IGNORECASE):
+                    # Extract surrounding context
+                    start = max(0, match.start() - 50)
+                    end = min(len(text), match.end() + 50)
+                    context = text[start:end]
+                    
+                    # Extract participants (simplified)
+                    participants = self._extract_participants(context)
+                    
+                    event = Event(
+                        text=match.group(0),
+                        event_type=event_type,
+                        start_char=match.start(),
+                        end_char=match.end(),
+                        participants=participants,
+                        confidence=0.7,
+                        metadata={"context": context}
+                    )
+                    events.append(event)
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                              message=f"Detected {len(events)} events")
+            return events
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def _extract_participants(self, context: str) -> List[str]:
         """Extract event participants from context."""

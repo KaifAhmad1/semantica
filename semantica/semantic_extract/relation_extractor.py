@@ -33,6 +33,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from ..utils.exceptions import ProcessingError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 from .ner_extractor import Entity
 
 
@@ -62,6 +63,7 @@ class RelationExtractor:
         """
         self.logger = get_logger("relation_extractor")
         self.config = config
+        self.progress_tracker = get_progress_tracker()
         
         self.min_confidence = config.get("min_confidence", 0.5)
         self.use_llm = config.get("use_llm", False)
@@ -98,18 +100,34 @@ class RelationExtractor:
         Returns:
             list: List of extracted relations
         """
-        if not text or not entities:
-            return []
+        tracking_id = self.progress_tracker.start_tracking(
+            module="semantic_extract",
+            submodule="RelationExtractor",
+            message=f"Extracting relations from {len(entities)} entities"
+        )
         
-        min_confidence = options.get("min_confidence", self.min_confidence)
-        
-        # Pattern-based extraction
-        relations = self._extract_with_patterns(text, entities)
-        
-        # Filter by confidence
-        relations = [r for r in relations if r.confidence >= min_confidence]
-        
-        return relations
+        try:
+            if not text or not entities:
+                self.progress_tracker.stop_tracking(tracking_id, status="completed", message="No text or entities provided")
+                return []
+            
+            min_confidence = options.get("min_confidence", self.min_confidence)
+            
+            # Pattern-based extraction
+            self.progress_tracker.update_tracking(tracking_id, message="Extracting relations using patterns...")
+            relations = self._extract_with_patterns(text, entities)
+            
+            # Filter by confidence
+            self.progress_tracker.update_tracking(tracking_id, message=f"Filtering {len(relations)} relations by confidence...")
+            relations = [r for r in relations if r.confidence >= min_confidence]
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                              message=f"Extracted {len(relations)} relations")
+            return relations
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def _extract_with_patterns(self, text: str, entities: List[Entity]) -> List[Relation]:
         """Extract relations using pattern matching."""

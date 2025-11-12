@@ -35,6 +35,7 @@ from typing import Any, Dict, List, Optional
 
 from ..utils.exceptions import ProcessingError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 from .ner_extractor import Entity, NERExtractor
 
 
@@ -55,6 +56,7 @@ class NamedEntityRecognizer:
         self.logger = get_logger("named_entity_recognizer")
         self.config = config or {}
         self.config.update(kwargs)
+        self.progress_tracker = get_progress_tracker()
         
         # Use NERExtractor for actual extraction
         self.ner_extractor = NERExtractor(**self.config.get("ner", {}))
@@ -72,7 +74,20 @@ class NamedEntityRecognizer:
         Returns:
             list: List of extracted entities
         """
-        return self.ner_extractor.extract_entities(text, **options)
+        tracking_id = self.progress_tracker.start_tracking(
+            module="semantic_extract",
+            submodule="NamedEntityRecognizer",
+            message="Extracting named entities"
+        )
+        
+        try:
+            entities = self.ner_extractor.extract_entities(text, **options)
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                              message=f"Extracted {len(entities)} entities")
+            return entities
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def classify_entities(self, entities: List[Entity], **context) -> Dict[str, List[Entity]]:
         """

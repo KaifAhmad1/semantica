@@ -33,6 +33,7 @@ from typing import Any, Dict, List, Optional
 
 from ..utils.exceptions import ProcessingError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 from .semantic_chunker import Chunk
 
 
@@ -62,6 +63,7 @@ class ChunkValidator:
         """
         self.logger = get_logger("chunk_validator")
         self.config = config
+        self.progress_tracker = get_progress_tracker()
         
         self.min_size = config.get("min_size", 10)
         self.max_size = config.get("max_size", 10000)
@@ -78,48 +80,66 @@ class ChunkValidator:
         Returns:
             ValidationResult: Validation result
         """
-        errors = []
-        warnings = []
-        metrics = {}
-        
-        # Size validation
-        chunk_size = len(chunk.text)
-        metrics["size"] = chunk_size
-        
-        if chunk_size < self.min_size:
-            errors.append(f"Chunk too small: {chunk_size} < {self.min_size}")
-        
-        if chunk_size > self.max_size:
-            errors.append(f"Chunk too large: {chunk_size} > {self.max_size}")
-        
-        # Content validation
-        if not chunk.text.strip():
-            errors.append("Chunk is empty or whitespace only")
-        
-        # Coherence validation
-        coherence_score = self._check_coherence(chunk.text)
-        metrics["coherence"] = coherence_score
-        
-        if coherence_score < 0.3:
-            warnings.append(f"Low semantic coherence: {coherence_score:.2f}")
-        
-        # Structure validation
-        structure_score = self._check_structure(chunk.text)
-        metrics["structure"] = structure_score
-        
-        # Calculate overall score
-        score = self._calculate_score(chunk_size, coherence_score, structure_score, errors)
-        metrics["overall_score"] = score
-        
-        valid = len(errors) == 0 and score >= self.min_score
-        
-        return ValidationResult(
-            valid=valid,
-            score=score,
-            errors=errors,
-            warnings=warnings,
-            metrics=metrics
+        tracking_id = self.progress_tracker.start_tracking(
+            module="split",
+            submodule="ChunkValidator",
+            message="Validating chunk"
         )
+        
+        try:
+            errors = []
+            warnings = []
+            metrics = {}
+            
+            # Size validation
+            self.progress_tracker.update_tracking(tracking_id, message="Validating chunk size...")
+            chunk_size = len(chunk.text)
+            metrics["size"] = chunk_size
+            
+            if chunk_size < self.min_size:
+                errors.append(f"Chunk too small: {chunk_size} < {self.min_size}")
+            
+            if chunk_size > self.max_size:
+                errors.append(f"Chunk too large: {chunk_size} > {self.max_size}")
+            
+            # Content validation
+            if not chunk.text.strip():
+                errors.append("Chunk is empty or whitespace only")
+            
+            # Coherence validation
+            self.progress_tracker.update_tracking(tracking_id, message="Checking semantic coherence...")
+            coherence_score = self._check_coherence(chunk.text)
+            metrics["coherence"] = coherence_score
+            
+            if coherence_score < 0.3:
+                warnings.append(f"Low semantic coherence: {coherence_score:.2f}")
+            
+            # Structure validation
+            self.progress_tracker.update_tracking(tracking_id, message="Checking structure...")
+            structure_score = self._check_structure(chunk.text)
+            metrics["structure"] = structure_score
+            
+            # Calculate overall score
+            score = self._calculate_score(chunk_size, coherence_score, structure_score, errors)
+            metrics["overall_score"] = score
+            
+            valid = len(errors) == 0 and score >= self.min_score
+            
+            result = ValidationResult(
+                valid=valid,
+                score=score,
+                errors=errors,
+                warnings=warnings,
+                metrics=metrics
+            )
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                              message=f"Validation complete: {'valid' if valid else 'invalid'}")
+            return result
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def validate_batch(self, chunks: List[Chunk], **options) -> Dict[str, Any]:
         """

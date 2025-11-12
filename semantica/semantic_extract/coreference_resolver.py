@@ -37,6 +37,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from ..utils.exceptions import ProcessingError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 from .ner_extractor import Entity
 
 
@@ -69,6 +70,7 @@ class CoreferenceResolver:
         self.logger = get_logger("coreference_resolver")
         self.config = config or {}
         self.config.update(kwargs)
+        self.progress_tracker = get_progress_tracker()
         
         self.pronoun_resolver = PronounResolver(**self.config.get("pronoun", {}))
         self.entity_detector = EntityCoreferenceDetector(**self.config.get("entity", {}))
@@ -85,19 +87,36 @@ class CoreferenceResolver:
         Returns:
             list: List of coreference chains
         """
-        # Extract mentions
-        mentions = self._extract_mentions(text)
+        tracking_id = self.progress_tracker.start_tracking(
+            module="semantic_extract",
+            submodule="CoreferenceResolver",
+            message="Resolving coreferences in text"
+        )
         
-        # Resolve pronouns
-        pronoun_resolutions = self.pronoun_resolver.resolve_pronouns(text, mentions, **options)
-        
-        # Detect entity coreferences
-        entity_corefs = self.entity_detector.detect_entity_coreferences(text, mentions, **options)
-        
-        # Build chains
-        chains = self.chain_builder.build_coreference_chains(mentions, **options)
-        
-        return chains
+        try:
+            # Extract mentions
+            self.progress_tracker.update_tracking(tracking_id, message="Extracting mentions...")
+            mentions = self._extract_mentions(text)
+            
+            # Resolve pronouns
+            self.progress_tracker.update_tracking(tracking_id, message="Resolving pronouns...")
+            pronoun_resolutions = self.pronoun_resolver.resolve_pronouns(text, mentions, **options)
+            
+            # Detect entity coreferences
+            self.progress_tracker.update_tracking(tracking_id, message="Detecting entity coreferences...")
+            entity_corefs = self.entity_detector.detect_entity_coreferences(text, mentions, **options)
+            
+            # Build chains
+            self.progress_tracker.update_tracking(tracking_id, message="Building coreference chains...")
+            chains = self.chain_builder.build_coreference_chains(mentions, **options)
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                              message=f"Resolved {len(chains)} coreference chains")
+            return chains
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def _extract_mentions(self, text: str) -> List[Mention]:
         """Extract all mentions from text."""

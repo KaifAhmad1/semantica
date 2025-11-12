@@ -35,6 +35,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from ..utils.exceptions import ProcessingError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 
 
 @dataclass
@@ -66,6 +67,7 @@ class SemanticAnalyzer:
         self.logger = get_logger("semantic_analyzer")
         self.config = config or {}
         self.config.update(kwargs)
+        self.progress_tracker = get_progress_tracker()
         
         self.similarity_analyzer = SimilarityAnalyzer(**self.config.get("similarity", {}))
         self.role_labeler = RoleLabeler(**self.config.get("role", {}))
@@ -82,22 +84,36 @@ class SemanticAnalyzer:
         Returns:
             dict: Semantic analysis results
         """
-        results = {
-            "text": text,
-            "length": len(text),
-            "word_count": len(text.split()),
-            "sentence_count": len(text.split('.'))
-        }
+        tracking_id = self.progress_tracker.start_tracking(
+            module="semantic_extract",
+            submodule="SemanticAnalyzer",
+            message="Performing comprehensive semantic analysis"
+        )
         
-        # Semantic role labeling
-        if options.get("label_roles", False):
-            roles = self.label_semantic_roles(text, **options)
-            results["semantic_roles"] = [r.__dict__ for r in roles]
-        
-        # Semantic features
-        results["semantic_features"] = self._extract_features(text)
-        
-        return results
+        try:
+            results = {
+                "text": text,
+                "length": len(text),
+                "word_count": len(text.split()),
+                "sentence_count": len(text.split('.'))
+            }
+            
+            # Semantic role labeling
+            if options.get("label_roles", False):
+                self.progress_tracker.update_tracking(tracking_id, message="Labeling semantic roles...")
+                roles = self.label_semantic_roles(text, **options)
+                results["semantic_roles"] = [r.__dict__ for r in roles]
+            
+            # Semantic features
+            self.progress_tracker.update_tracking(tracking_id, message="Extracting semantic features...")
+            results["semantic_features"] = self._extract_features(text)
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed", message="Semantic analysis complete")
+            return results
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def calculate_similarity(self, text1: str, text2: str, **options) -> float:
         """

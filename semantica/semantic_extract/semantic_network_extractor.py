@@ -36,6 +36,7 @@ import yaml
 
 from ..utils.exceptions import ProcessingError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 from .ner_extractor import Entity
 from .relation_extractor import Relation
 
@@ -83,6 +84,7 @@ class SemanticNetworkExtractor:
         """
         self.logger = get_logger("semantic_network_extractor")
         self.config = config
+        self.progress_tracker = get_progress_tracker()
     
     def extract_network(
         self,
@@ -103,23 +105,39 @@ class SemanticNetworkExtractor:
         Returns:
             SemanticNetwork: Extracted semantic network
         """
-        from .ner_extractor import NERExtractor
-        from .relation_extractor import RelationExtractor
+        tracking_id = self.progress_tracker.start_tracking(
+            module="semantic_extract",
+            submodule="SemanticNetworkExtractor",
+            message="Extracting semantic network from text"
+        )
         
-        # Extract entities if not provided
-        if entities is None:
-            ner = NERExtractor(**self.config.get("ner", {}))
-            entities = ner.extract_entities(text)
-        
-        # Extract relations if not provided
-        if relations is None:
-            rel_extractor = RelationExtractor(**self.config.get("relation", {}))
-            relations = rel_extractor.extract_relations(text, entities)
-        
-        # Build network
-        network = self._build_network(entities, relations)
-        
-        return network
+        try:
+            from .ner_extractor import NERExtractor
+            from .relation_extractor import RelationExtractor
+            
+            # Extract entities if not provided
+            if entities is None:
+                self.progress_tracker.update_tracking(tracking_id, message="Extracting entities...")
+                ner = NERExtractor(**self.config.get("ner", {}))
+                entities = ner.extract_entities(text)
+            
+            # Extract relations if not provided
+            if relations is None:
+                self.progress_tracker.update_tracking(tracking_id, message="Extracting relations...")
+                rel_extractor = RelationExtractor(**self.config.get("relation", {}))
+                relations = rel_extractor.extract_relations(text, entities)
+            
+            # Build network
+            self.progress_tracker.update_tracking(tracking_id, message="Building semantic network...")
+            network = self._build_network(entities, relations)
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                              message=f"Extracted network: {len(network.nodes)} nodes, {len(network.edges)} edges")
+            return network
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def _build_network(self, entities: List[Entity], relations: List[Relation]) -> SemanticNetwork:
         """Build semantic network from entities and relations."""

@@ -42,6 +42,7 @@ from ..utils.exceptions import ValidationError, ProcessingError
 from ..utils.logging import get_logger
 from ..utils.helpers import read_json_file, write_json_file
 from ..utils.types import EntityDict, RelationshipDict
+from ..utils.progress_tracker import get_progress_tracker
 
 
 @dataclass
@@ -122,6 +123,7 @@ class SeedDataManager:
         self.logger = get_logger("seed_manager")
         self.config = config or {}
         self.config.update(kwargs)
+        self.progress_tracker = get_progress_tracker()
         
         self.sources: Dict[str, SeedDataSource] = {}
         self.seed_data: SeedData = SeedData()
@@ -213,13 +215,21 @@ class SeedDataManager:
             >>> records = manager.load_from_csv("data/entities.csv", entity_type="Person")
             >>> print(f"Loaded {len(records)} records")
         """
-        file_path = Path(file_path)
-        if not file_path.exists():
-            raise ProcessingError(f"CSV file not found: {file_path}")
-        
-        records = []
+        tracking_id = self.progress_tracker.start_tracking(
+            module="seed",
+            submodule="SeedDataManager",
+            message=f"Loading seed data from CSV: {file_path}"
+        )
         
         try:
+            file_path = Path(file_path)
+            if not file_path.exists():
+                self.progress_tracker.stop_tracking(tracking_id, status="failed", message=f"CSV file not found: {file_path}")
+                raise ProcessingError(f"CSV file not found: {file_path}")
+            
+            records = []
+            
+            self.progress_tracker.update_tracking(tracking_id, message="Reading CSV file...")
             with open(file_path, 'r', encoding='utf-8') as f:
                 reader = csv.DictReader(f)
                 for row in reader:
@@ -236,9 +246,12 @@ class SeedDataManager:
                     records.append(record)
             
             self.logger.info(f"Loaded {len(records)} records from CSV: {file_path}")
+            self.progress_tracker.stop_tracking(tracking_id, status="completed", 
+                                              message=f"Loaded {len(records)} records from CSV")
             return records
             
         except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
             raise ProcessingError(f"Failed to load CSV: {e}") from e
     
     def load_from_json(
@@ -565,47 +578,62 @@ class SeedDataManager:
             >>> foundation = manager.create_foundation_graph()
             >>> print(f"Created graph with {len(foundation['entities'])} entities")
         """
-        foundation = {
-            "entities": [],
-            "relationships": [],
-            "metadata": {
-                "created_at": datetime.now().isoformat(),
-                "source_count": len(self.sources),
-                "verified": True
-            }
-        }
-        
-        # Load data from all sources
-        for source_name in self.sources:
-            try:
-                records = self.load_source(source_name)
-                
-                for record in records:
-                    # Extract entities
-                    if 'entity_type' in record or 'id' in record:
-                        entity = self._record_to_entity(record)
-                        if entity:
-                            foundation["entities"].append(entity)
-                    
-                    # Extract relationships
-                    if 'relationship_type' in record or ('source_id' in record and 'target_id' in record):
-                        relationship = self._record_to_relationship(record)
-                        if relationship:
-                            foundation["relationships"].append(relationship)
-            
-            except Exception as e:
-                self.logger.warning(f"Failed to load source '{source_name}': {e}")
-        
-        # Validate against schema template if provided
-        if schema_template:
-            foundation = self._validate_against_template(foundation, schema_template)
-        
-        self.logger.info(
-            f"Created foundation graph: {len(foundation['entities'])} entities, "
-            f"{len(foundation['relationships'])} relationships"
+        tracking_id = self.progress_tracker.start_tracking(
+            module="seed",
+            submodule="SeedDataManager",
+            message="Creating foundation graph from seed data"
         )
         
-        return foundation
+        try:
+            foundation = {
+                "entities": [],
+                "relationships": [],
+                "metadata": {
+                    "created_at": datetime.now().isoformat(),
+                    "source_count": len(self.sources),
+                    "verified": True
+                }
+            }
+            
+            # Load data from all sources
+            self.progress_tracker.update_tracking(tracking_id, message=f"Loading data from {len(self.sources)} sources...")
+            for source_name in self.sources:
+                try:
+                    self.progress_tracker.update_tracking(tracking_id, message=f"Loading source: {source_name}")
+                    records = self.load_source(source_name)
+                    
+                    for record in records:
+                        # Extract entities
+                        if 'entity_type' in record or 'id' in record:
+                            entity = self._record_to_entity(record)
+                            if entity:
+                                foundation["entities"].append(entity)
+                        
+                        # Extract relationships
+                        if 'relationship_type' in record or ('source_id' in record and 'target_id' in record):
+                            relationship = self._record_to_relationship(record)
+                            if relationship:
+                                foundation["relationships"].append(relationship)
+                
+                except Exception as e:
+                    self.logger.warning(f"Failed to load source '{source_name}': {e}")
+            
+            # Validate against schema template if provided
+            if schema_template:
+                self.progress_tracker.update_tracking(tracking_id, message="Validating against schema template...")
+                foundation = self._validate_against_template(foundation, schema_template)
+            
+            self.logger.info(
+                f"Created foundation graph: {len(foundation['entities'])} entities, "
+                f"{len(foundation['relationships'])} relationships"
+            )
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                              message=f"Created foundation graph: {len(foundation['entities'])} entities, {len(foundation['relationships'])} relationships")
+            return foundation
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def integrate_with_extracted(
         self,
@@ -733,48 +761,63 @@ class SeedDataManager:
             >>> if not validation["valid"]:
             ...     print(f"Found {len(validation['errors'])} errors")
         """
-        results = {
-            "valid": True,
-            "errors": [],
-            "warnings": [],
-            "metrics": {}
-        }
+        tracking_id = self.progress_tracker.start_tracking(
+            module="seed",
+            submodule="SeedDataManager",
+            message="Validating seed data quality"
+        )
         
-        entities = seed_data.get("entities", [])
-        relationships = seed_data.get("relationships", [])
-        
-        # Check entities
-        entity_ids = []
-        for entity in entities:
-            if "id" not in entity:
-                results["errors"].append("Entity missing 'id' field")
-                results["valid"] = False
-            else:
-                if entity["id"] in entity_ids:
-                    results["warnings"].append(f"Duplicate entity ID: {entity['id']}")
-                entity_ids.append(entity["id"])
+        try:
+            results = {
+                "valid": True,
+                "errors": [],
+                "warnings": [],
+                "metrics": {}
+            }
             
-            if "type" not in entity:
-                results["warnings"].append(f"Entity {entity.get('id')} missing 'type' field")
-        
-        # Check relationships
-        for rel in relationships:
-            if "source_id" not in rel or "target_id" not in rel:
-                results["errors"].append("Relationship missing source_id or target_id")
-                results["valid"] = False
+            entities = seed_data.get("entities", [])
+            relationships = seed_data.get("relationships", [])
             
-            if "type" not in rel:
-                results["warnings"].append("Relationship missing 'type' field")
-        
-        # Calculate metrics
-        results["metrics"] = {
-            "entity_count": len(entities),
-            "relationship_count": len(relationships),
-            "unique_entity_ids": len(set(entity_ids)),
-            "duplicate_entities": len(entities) - len(set(entity_ids))
-        }
-        
-        return results
+            # Check entities
+            self.progress_tracker.update_tracking(tracking_id, message=f"Validating {len(entities)} entities...")
+            entity_ids = []
+            for entity in entities:
+                if "id" not in entity:
+                    results["errors"].append("Entity missing 'id' field")
+                    results["valid"] = False
+                else:
+                    if entity["id"] in entity_ids:
+                        results["warnings"].append(f"Duplicate entity ID: {entity['id']}")
+                    entity_ids.append(entity["id"])
+                
+                if "type" not in entity:
+                    results["warnings"].append(f"Entity {entity.get('id')} missing 'type' field")
+            
+            # Check relationships
+            self.progress_tracker.update_tracking(tracking_id, message=f"Validating {len(relationships)} relationships...")
+            for rel in relationships:
+                if "source_id" not in rel or "target_id" not in rel:
+                    results["errors"].append("Relationship missing source_id or target_id")
+                    results["valid"] = False
+                
+                if "type" not in rel:
+                    results["warnings"].append("Relationship missing 'type' field")
+            
+            # Calculate metrics
+            results["metrics"] = {
+                "entity_count": len(entities),
+                "relationship_count": len(relationships),
+                "unique_entity_ids": len(set(entity_ids)),
+                "duplicate_entities": len(entities) - len(set(entity_ids))
+            }
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                              message=f"Validation complete: {len(results['errors'])} errors, {len(results['warnings'])} warnings")
+            return results
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def _record_to_entity(self, record: Dict[str, Any]) -> Optional[EntityDict]:
         """

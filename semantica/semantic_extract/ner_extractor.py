@@ -31,6 +31,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from ..utils.exceptions import ProcessingError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 
 try:
     import spacy
@@ -70,6 +71,7 @@ class NERExtractor:
         self.model_name = config.get("model", "en_core_web_sm")
         self.language = config.get("language", "en")
         self.min_confidence = config.get("min_confidence", 0.5)
+        self.progress_tracker = get_progress_tracker()
         
         # Initialize spaCy model if available
         self.nlp = None
@@ -92,16 +94,34 @@ class NERExtractor:
         Returns:
             list: List of extracted entities
         """
-        if not text:
-            return []
+        tracking_id = self.progress_tracker.start_tracking(
+            module="semantic_extract",
+            submodule="NERExtractor",
+            message="Extracting named entities from text"
+        )
         
-        min_confidence = options.get("min_confidence", self.min_confidence)
-        entity_types = options.get("entity_types")
-        
-        if self.nlp:
-            return self._extract_with_spacy(text, min_confidence, entity_types)
-        else:
-            return self._extract_fallback(text)
+        try:
+            if not text:
+                self.progress_tracker.stop_tracking(tracking_id, status="completed", message="No text provided")
+                return []
+            
+            min_confidence = options.get("min_confidence", self.min_confidence)
+            entity_types = options.get("entity_types")
+            
+            if self.nlp:
+                self.progress_tracker.update_tracking(tracking_id, message="Extracting entities using spaCy...")
+                entities = self._extract_with_spacy(text, min_confidence, entity_types)
+            else:
+                self.progress_tracker.update_tracking(tracking_id, message="Extracting entities using fallback method...")
+                entities = self._extract_fallback(text)
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                              message=f"Extracted {len(entities)} entities")
+            return entities
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def _extract_with_spacy(self, text: str, min_confidence: float, entity_types: Optional[List[str]]) -> List[Entity]:
         """Extract entities using spaCy."""

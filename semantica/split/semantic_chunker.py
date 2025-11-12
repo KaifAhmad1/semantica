@@ -33,6 +33,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from ..utils.exceptions import ProcessingError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 
 try:
     import spacy
@@ -71,6 +72,7 @@ class SemanticChunker:
         self.chunk_size = config.get("chunk_size", 1000)
         self.chunk_overlap = config.get("chunk_overlap", 200)
         self.language = config.get("language", "en")
+        self.progress_tracker = get_progress_tracker()
         
         # Initialize spaCy model if available
         self.nlp = None
@@ -94,14 +96,32 @@ class SemanticChunker:
         Returns:
             list: List of chunks
         """
-        if not text:
-            return []
+        tracking_id = self.progress_tracker.start_tracking(
+            module="split",
+            submodule="SemanticChunker",
+            message="Splitting text into semantic chunks"
+        )
         
-        # Use spaCy if available
-        if self.nlp:
-            return self._chunk_with_spacy(text, **options)
-        else:
-            return self._chunk_fallback(text, **options)
+        try:
+            if not text:
+                self.progress_tracker.stop_tracking(tracking_id, status="completed", message="No text provided")
+                return []
+            
+            # Use spaCy if available
+            if self.nlp:
+                self.progress_tracker.update_tracking(tracking_id, message="Chunking with spaCy...")
+                chunks = self._chunk_with_spacy(text, **options)
+            else:
+                self.progress_tracker.update_tracking(tracking_id, message="Chunking with fallback method...")
+                chunks = self._chunk_fallback(text, **options)
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                              message=f"Created {len(chunks)} chunks")
+            return chunks
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def _chunk_with_spacy(self, text: str, **options) -> List[Chunk]:
         """Chunk text using spaCy."""

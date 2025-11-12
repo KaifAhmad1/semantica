@@ -32,6 +32,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 from .semantic_chunker import Chunk
 
 
@@ -61,6 +62,7 @@ class TableChunker:
         """
         self.logger = get_logger("table_chunker")
         self.config = config
+        self.progress_tracker = get_progress_tracker()
         
         self.max_rows = config.get("max_rows", 100)
         self.preserve_headers = config.get("preserve_headers", True)
@@ -77,25 +79,44 @@ class TableChunker:
         Returns:
             list: List of table chunks
         """
-        # Parse table data
-        if isinstance(table_data, dict):
-            headers = table_data.get("headers", [])
-            rows = table_data.get("rows", [])
-        elif isinstance(table_data, list) and len(table_data) > 0:
-            # First row as headers if not provided
-            if options.get("first_row_as_header", True):
-                headers = table_data[0]
-                rows = table_data[1:]
-            else:
-                headers = [f"Column_{i+1}" for i in range(len(table_data[0]))]
-                rows = table_data
-        else:
-            raise ValidationError("Invalid table data format")
+        tracking_id = self.progress_tracker.start_tracking(
+            module="split",
+            submodule="TableChunker",
+            message="Chunking table data"
+        )
         
-        if self.chunk_by_columns:
-            return self._chunk_by_columns(headers, rows, **options)
-        else:
-            return self._chunk_by_rows(headers, rows, **options)
+        try:
+            # Parse table data
+            self.progress_tracker.update_tracking(tracking_id, message="Parsing table data...")
+            if isinstance(table_data, dict):
+                headers = table_data.get("headers", [])
+                rows = table_data.get("rows", [])
+            elif isinstance(table_data, list) and len(table_data) > 0:
+                # First row as headers if not provided
+                if options.get("first_row_as_header", True):
+                    headers = table_data[0]
+                    rows = table_data[1:]
+                else:
+                    headers = [f"Column_{i+1}" for i in range(len(table_data[0]))]
+                    rows = table_data
+            else:
+                self.progress_tracker.stop_tracking(tracking_id, status="failed", message="Invalid table data format")
+                raise ValidationError("Invalid table data format")
+            
+            if self.chunk_by_columns:
+                self.progress_tracker.update_tracking(tracking_id, message="Chunking by columns...")
+                chunks = self._chunk_by_columns(headers, rows, **options)
+            else:
+                self.progress_tracker.update_tracking(tracking_id, message="Chunking by rows...")
+                chunks = self._chunk_by_rows(headers, rows, **options)
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                              message=f"Created {len(chunks)} table chunks")
+            return chunks
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def _chunk_by_rows(self, headers: List[str], rows: List[List[str]], **options) -> List[TableChunk]:
         """Chunk table by rows."""

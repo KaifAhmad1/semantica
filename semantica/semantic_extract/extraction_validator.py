@@ -33,6 +33,7 @@ from typing import Any, Dict, List, Optional
 
 from ..utils.exceptions import ProcessingError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 from .ner_extractor import Entity
 from .relation_extractor import Relation
 
@@ -62,6 +63,7 @@ class ExtractionValidator:
         """
         self.logger = get_logger("extraction_validator")
         self.config = config
+        self.progress_tracker = get_progress_tracker()
         
         self.min_confidence = config.get("min_confidence", 0.5)
         self.validate_consistency = config.get("validate_consistency", True)
@@ -77,52 +79,69 @@ class ExtractionValidator:
         Returns:
             ValidationResult: Validation result
         """
-        errors = []
-        warnings = []
-        metrics = {}
-        
-        min_confidence = options.get("min_confidence", self.min_confidence)
-        
-        # Check confidence scores
-        low_confidence = [e for e in entities if e.confidence < min_confidence]
-        if low_confidence:
-            warnings.append(f"{len(low_confidence)} entities below confidence threshold")
-        
-        # Check for duplicates
-        entity_texts = [e.text.lower() for e in entities]
-        duplicates = len(entity_texts) - len(set(entity_texts))
-        if duplicates > 0:
-            warnings.append(f"{duplicates} duplicate entities found")
-        
-        # Check for empty entities
-        empty_entities = [e for e in entities if not e.text.strip()]
-        if empty_entities:
-            errors.append(f"{len(empty_entities)} empty entities found")
-        
-        # Calculate metrics
-        metrics = {
-            "total_entities": len(entities),
-            "high_confidence": len([e for e in entities if e.confidence >= 0.8]),
-            "medium_confidence": len([e for e in entities if min_confidence <= e.confidence < 0.8]),
-            "low_confidence": len(low_confidence),
-            "unique_entities": len(set(entity_texts)),
-            "duplicates": duplicates,
-            "entity_types": len(set(e.label for e in entities)),
-            "average_confidence": sum(e.confidence for e in entities) / len(entities) if entities else 0.0
-        }
-        
-        # Calculate score
-        score = self._calculate_entity_score(entities, metrics)
-        
-        valid = len(errors) == 0
-        
-        return ValidationResult(
-            valid=valid,
-            score=score,
-            errors=errors,
-            warnings=warnings,
-            metrics=metrics
+        tracking_id = self.progress_tracker.start_tracking(
+            module="semantic_extract",
+            submodule="ExtractionValidator",
+            message=f"Validating {len(entities)} entities"
         )
+        
+        try:
+            errors = []
+            warnings = []
+            metrics = {}
+            
+            min_confidence = options.get("min_confidence", self.min_confidence)
+            
+            # Check confidence scores
+            self.progress_tracker.update_tracking(tracking_id, message="Checking confidence scores...")
+            low_confidence = [e for e in entities if e.confidence < min_confidence]
+            if low_confidence:
+                warnings.append(f"{len(low_confidence)} entities below confidence threshold")
+            
+            # Check for duplicates
+            self.progress_tracker.update_tracking(tracking_id, message="Checking for duplicates...")
+            entity_texts = [e.text.lower() for e in entities]
+            duplicates = len(entity_texts) - len(set(entity_texts))
+            if duplicates > 0:
+                warnings.append(f"{duplicates} duplicate entities found")
+            
+            # Check for empty entities
+            empty_entities = [e for e in entities if not e.text.strip()]
+            if empty_entities:
+                errors.append(f"{len(empty_entities)} empty entities found")
+            
+            # Calculate metrics
+            metrics = {
+                "total_entities": len(entities),
+                "high_confidence": len([e for e in entities if e.confidence >= 0.8]),
+                "medium_confidence": len([e for e in entities if min_confidence <= e.confidence < 0.8]),
+                "low_confidence": len(low_confidence),
+                "unique_entities": len(set(entity_texts)),
+                "duplicates": duplicates,
+                "entity_types": len(set(e.label for e in entities)),
+                "average_confidence": sum(e.confidence for e in entities) / len(entities) if entities else 0.0
+            }
+            
+            # Calculate score
+            score = self._calculate_entity_score(entities, metrics)
+            
+            valid = len(errors) == 0
+            
+            result = ValidationResult(
+                valid=valid,
+                score=score,
+                errors=errors,
+                warnings=warnings,
+                metrics=metrics
+            )
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                              message=f"Validation complete: {len(errors)} errors, {len(warnings)} warnings")
+            return result
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def validate_relations(self, relations: List[Relation], **options) -> ValidationResult:
         """
