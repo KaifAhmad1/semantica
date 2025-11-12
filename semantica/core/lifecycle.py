@@ -30,6 +30,7 @@ from collections import defaultdict
 
 from ..utils.exceptions import SemanticaError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 
 
 class SystemState(str, Enum):
@@ -102,6 +103,9 @@ class LifecycleManager:
         self.startup_hooks: List[Tuple[Callable[[], None], int]] = []
         self.shutdown_hooks: List[Tuple[Callable[[], None], int]] = []
         
+        # Initialize progress tracker
+        self.progress_tracker = get_progress_tracker()
+        
         self.logger.debug("Lifecycle manager initialized")
     
     def startup(self) -> None:
@@ -121,14 +125,24 @@ class LifecycleManager:
             >>> manager.register_startup_hook(init_database, priority=20)
             >>> manager.startup()  # Hooks execute in order: init_config, then init_database
         """
-        # Check if already started
-        if self.state in (SystemState.READY, SystemState.RUNNING):
-            self.logger.warning(
-                f"System already in {self.state.value} state, skipping startup"
-            )
-            return
+        # Track system startup
+        tracking_id = self.progress_tracker.start_tracking(
+            file=None,
+            module="core",
+            submodule="LifecycleManager",
+            message="Starting system lifecycle"
+        )
         
         try:
+            # Check if already started
+            if self.state in (SystemState.READY, SystemState.RUNNING):
+                self.logger.warning(
+                    f"System already in {self.state.value} state, skipping startup"
+                )
+                self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                                   message="System already started")
+                return
+            
             # Transition to initializing state
             self.state = SystemState.INITIALIZING
             self.logger.info("Starting system lifecycle")
@@ -173,10 +187,14 @@ class LifecycleManager:
             self.state = SystemState.READY
             self.logger.info("System startup completed successfully")
             
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                               message="System startup completed successfully")
+            
         except Exception as e:
             # Transition to error state on failure
             self.state = SystemState.ERROR
             self.logger.error(f"System startup failed: {e}")
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
             raise
     
     def shutdown(self, graceful: bool = True) -> None:
@@ -199,12 +217,22 @@ class LifecycleManager:
             >>> manager.shutdown(graceful=True)  # Continue even if cleanup fails
             >>> manager.shutdown(graceful=False)  # Stop on first error
         """
-        # Check if already stopped
-        if self.state == SystemState.STOPPED:
-            self.logger.warning("System already in STOPPED state")
-            return
+        # Track system shutdown
+        tracking_id = self.progress_tracker.start_tracking(
+            file=None,
+            module="core",
+            submodule="LifecycleManager",
+            message=f"Shutting down system (graceful={graceful})"
+        )
         
         try:
+            # Check if already stopped
+            if self.state == SystemState.STOPPED:
+                self.logger.warning("System already in STOPPED state")
+                self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                                   message="System already stopped")
+                return
+            
             # Transition to stopping state
             self.state = SystemState.STOPPING
             self.logger.info(f"Shutting down system (graceful={graceful})")
@@ -240,12 +268,14 @@ class LifecycleManager:
             self.state = SystemState.STOPPED
             self.logger.info("System shutdown completed successfully")
             
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                               message="System shutdown completed successfully")
+            
         except Exception as e:
             # Transition to error state on failure
             self.state = SystemState.ERROR
             self.logger.error(f"System shutdown failed: {e}")
-            
-            # Re-raise if not graceful shutdown
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
             if not graceful:
                 raise
     

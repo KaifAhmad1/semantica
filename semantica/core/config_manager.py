@@ -38,6 +38,7 @@ from ..utils.helpers import (
 )
 from ..utils.validators import validate_config
 from ..utils.constants import DEFAULT_CONFIG
+from ..utils.progress_tracker import get_progress_tracker
 
 
 class Config:
@@ -333,6 +334,7 @@ class ConfigManager:
         """
         self._config: Optional[Config] = None
         self._last_file_path: Optional[Path] = None
+        self.progress_tracker = get_progress_tracker()
     
     def load_from_file(
         self,
@@ -355,9 +357,18 @@ class ConfigManager:
         Raises:
             ConfigurationError: If file cannot be loaded or is invalid
         """
-        file_path = Path(file_path)
+        # Track configuration loading
+        tracking_id = self.progress_tracker.start_tracking(
+            file=str(file_path),
+            module="core",
+            submodule="ConfigManager",
+            message=f"Loading configuration from: {file_path}"
+        )
         
-        if not file_path.exists():
+        try:
+            file_path = Path(file_path)
+            
+            if not file_path.exists():
             raise ConfigurationError(
                 f"Configuration file not found: {file_path}",
                 config_context={"file_path": str(file_path)}
@@ -390,9 +401,12 @@ class ConfigManager:
             self._config = config
             self._last_file_path = file_path
             
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                               message="Configuration loaded successfully")
             return config
             
         except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
             if isinstance(e, ConfigurationError):
                 raise
             raise ConfigurationError(

@@ -35,6 +35,7 @@ import numpy as np
 
 from ..utils.exceptions import ProcessingError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 from .text_embedder import TextEmbedder
 from .image_embedder import ImageEmbedder
 from .audio_embedder import AudioEmbedder
@@ -107,6 +108,9 @@ class MultimodalEmbedder:
         self.text_embedder = TextEmbedder(**text_config)
         self.image_embedder = ImageEmbedder(**image_config)
         self.audio_embedder = AudioEmbedder(**audio_config)
+        
+        # Initialize progress tracker
+        self.progress_tracker = get_progress_tracker()
         
         self.logger.debug(
             f"Multimodal embedder initialized "
@@ -205,69 +209,100 @@ class MultimodalEmbedder:
             ...     audio_path="speech.wav"
             ... )
         """
-        embeddings = []
-        
-        # Embed each provided modality
+        # Track multimodal embedding
+        modalities = []
         if text:
-            self.logger.debug("Embedding text modality")
-            text_emb = self.embed_text(text, **options)
-            embeddings.append(text_emb)
-        
+            modalities.append("text")
         if image_path:
-            self.logger.debug(f"Embedding image modality: {image_path}")
-            img_emb = self.embed_image(image_path, **options)
-            embeddings.append(img_emb)
-        
+            modalities.append("image")
         if audio_path:
-            self.logger.debug(f"Embedding audio modality: {audio_path}")
-            audio_emb = self.embed_audio(audio_path, **options)
-            embeddings.append(audio_emb)
+            modalities.append("audio")
         
-        # Validate at least one input provided
-        if not embeddings:
-            raise ProcessingError(
-                "At least one input (text, image, or audio) is required "
-                "for multimodal embedding"
-            )
+        tracking_id = self.progress_tracker.start_tracking(
+            file=None,
+            module="embeddings",
+            submodule="MultimodalEmbedder",
+            message=f"Generating multimodal embedding ({', '.join(modalities)})"
+        )
         
-        # If only one modality, return it directly
-        if len(embeddings) == 1:
-            self.logger.debug("Single modality provided, returning directly")
-            return embeddings[0]
-        
-        # Align dimensions if needed (ensures all embeddings have same dimension)
-        if self.align_modalities:
-            self.logger.debug("Aligning embedding dimensions across modalities")
-            embeddings = self._align_dimensions(embeddings)
-        
-        # Combine embeddings using specified method
-        if combine_method == "concat":
-            # Concatenate: preserves all information, larger dimension
-            combined = np.concatenate(embeddings)
-            self.logger.debug(
-                f"Combined {len(embeddings)} embeddings via concatenation: "
-                f"shape {combined.shape}"
-            )
-        elif combine_method == "mean":
-            # Average: compact representation, same dimension as inputs
-            combined = np.mean(embeddings, axis=0)
-            self.logger.debug(
-                f"Combined {len(embeddings)} embeddings via averaging: "
-                f"shape {combined.shape}"
-            )
-        else:
-            raise ProcessingError(
-                f"Unsupported combine_method: {combine_method}. "
-                "Use 'concat' or 'mean'."
-            )
-        
-        # Normalize if requested
-        if self.normalize:
-            norm = np.linalg.norm(combined)
-            if norm > 0:
-                combined = combined / norm
-        
-        return combined
+        try:
+            embeddings = []
+            
+            # Embed each provided modality
+            if text:
+                self.logger.debug("Embedding text modality")
+                self.progress_tracker.update_tracking(tracking_id, message="Generating text embedding...")
+                text_emb = self.embed_text(text, **options)
+                embeddings.append(text_emb)
+            
+            if image_path:
+                self.logger.debug(f"Embedding image modality: {image_path}")
+                self.progress_tracker.update_tracking(tracking_id, message="Generating image embedding...")
+                img_emb = self.embed_image(image_path, **options)
+                embeddings.append(img_emb)
+            
+            if audio_path:
+                self.logger.debug(f"Embedding audio modality: {audio_path}")
+                self.progress_tracker.update_tracking(tracking_id, message="Generating audio embedding...")
+                audio_emb = self.embed_audio(audio_path, **options)
+                embeddings.append(audio_emb)
+            
+            # Validate at least one input provided
+            if not embeddings:
+                raise ProcessingError(
+                    "At least one input (text, image, or audio) is required "
+                    "for multimodal embedding"
+                )
+            
+            # If only one modality, return it directly
+            if len(embeddings) == 1:
+                self.logger.debug("Single modality provided, returning directly")
+                self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                                   message=f"Generated {modalities[0]} embedding")
+                return embeddings[0]
+            
+            # Align dimensions if needed (ensures all embeddings have same dimension)
+            if self.align_modalities:
+                self.logger.debug("Aligning embedding dimensions across modalities")
+                self.progress_tracker.update_tracking(tracking_id, message="Aligning embedding dimensions...")
+                embeddings = self._align_dimensions(embeddings)
+            
+            # Combine embeddings using specified method
+            self.progress_tracker.update_tracking(tracking_id, message=f"Combining embeddings using {combine_method}...")
+            if combine_method == "concat":
+                # Concatenate: preserves all information, larger dimension
+                combined = np.concatenate(embeddings)
+                self.logger.debug(
+                    f"Combined {len(embeddings)} embeddings via concatenation: "
+                    f"shape {combined.shape}"
+                )
+            elif combine_method == "mean":
+                # Average: compact representation, same dimension as inputs
+                combined = np.mean(embeddings, axis=0)
+                self.logger.debug(
+                    f"Combined {len(embeddings)} embeddings via averaging: "
+                    f"shape {combined.shape}"
+                )
+            else:
+                raise ProcessingError(
+                    f"Unsupported combine_method: {combine_method}. "
+                    "Use 'concat' or 'mean'."
+                )
+            
+            # Normalize if requested
+            if self.normalize:
+                self.progress_tracker.update_tracking(tracking_id, message="Normalizing embedding...")
+                norm = np.linalg.norm(combined)
+                if norm > 0:
+                    combined = combined / norm
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                               message=f"Generated multimodal embedding (dim: {len(combined)})")
+            return combined
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def _align_dimensions(self, embeddings: List[np.ndarray]) -> List[np.ndarray]:
         """

@@ -28,6 +28,7 @@ import numpy as np
 
 from ..utils.exceptions import ProcessingError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 
 try:
     from sentence_transformers import SentenceTransformer
@@ -92,6 +93,10 @@ class TextEmbedder:
         
         # Initialize model (will be None if sentence-transformers unavailable)
         self.model = None
+        
+        # Initialize progress tracker
+        self.progress_tracker = get_progress_tracker()
+        
         self._initialize_model()
     
     def _initialize_model(self) -> None:
@@ -150,14 +155,33 @@ class TextEmbedder:
             >>> print(f"Embedding shape: {embedding.shape}")
             >>> print(f"Embedding dimension: {len(embedding)}")
         """
-        if not text or not text.strip():
-            raise ProcessingError("Text cannot be empty or whitespace-only")
+        # Track text embedding
+        tracking_id = self.progress_tracker.start_tracking(
+            file=None,
+            module="embeddings",
+            submodule="TextEmbedder",
+            message=f"Generating text embedding: {text[:50]}..."
+        )
         
-        # Use model if available, otherwise fallback
-        if self.model:
-            return self._embed_with_model(text, **options)
-        else:
-            return self._embed_fallback(text, **options)
+        try:
+            if not text or not text.strip():
+                raise ProcessingError("Text cannot be empty or whitespace-only")
+            
+            # Use model if available, otherwise fallback
+            if self.model:
+                self.progress_tracker.update_tracking(tracking_id, message="Using sentence-transformers model...")
+                result = self._embed_with_model(text, **options)
+            else:
+                self.progress_tracker.update_tracking(tracking_id, message="Using fallback embedding method...")
+                result = self._embed_fallback(text, **options)
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                               message=f"Generated embedding (dim: {len(result)})")
+            return result
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def _embed_with_model(self, text: str, **options) -> np.ndarray:
         """

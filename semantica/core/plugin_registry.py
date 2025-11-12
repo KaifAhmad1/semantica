@@ -105,6 +105,9 @@ class PluginRegistry:
         self.loaded_plugins: Dict[str, LoadedPlugin] = {}  # Currently loaded plugins
         self._discovered_plugins: Dict[str, Path] = {}  # Discovery cache
         
+        # Initialize progress tracker
+        self.progress_tracker = get_progress_tracker()
+        
         # Discover available plugins from paths
         if self.plugin_paths:
             self.logger.info(f"Discovering plugins from {len(self.plugin_paths)} path(s)")
@@ -199,6 +202,14 @@ class PluginRegistry:
             >>> plugin = registry.load_plugin("database_plugin", host="localhost")
             >>> # Dependencies are automatically loaded first
         """
+        # Track plugin loading
+        tracking_id = self.progress_tracker.start_tracking(
+            file=None,
+            module="core",
+            submodule="PluginRegistry",
+            message=f"Loading plugin: {plugin_name}"
+        )
+        
         try:
             # Check if plugin is already loaded (return existing instance)
             if plugin_name in self.loaded_plugins:
@@ -277,15 +288,20 @@ class PluginRegistry:
                 f"Successfully loaded plugin '{plugin_name}' v{plugin_info.version}"
             )
             
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                               message=f"Plugin '{plugin_name}' loaded successfully")
             return plugin_instance
             
         except ConfigurationError:
             # Re-raise configuration errors as-is
+            self.progress_tracker.stop_tracking(tracking_id, status="failed",
+                                               message=f"Configuration error loading plugin '{plugin_name}'")
             raise
         except Exception as e:
             # Wrap other exceptions
             error_msg = f"Failed to load plugin '{plugin_name}': {e}"
             self.logger.error(error_msg)
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=error_msg)
             raise ConfigurationError(error_msg) from e
     
     def unload_plugin(self, plugin_name: str) -> None:

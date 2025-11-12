@@ -28,6 +28,7 @@ import numpy as np
 
 from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 
 try:
     import librosa
@@ -86,6 +87,9 @@ class AudioEmbedder:
         self.sample_rate = sample_rate
         self.normalize = normalize
         
+        # Initialize progress tracker
+        self.progress_tracker = get_progress_tracker()
+        
         self.logger.debug(
             f"Audio embedder initialized (sample_rate: {sample_rate} Hz)"
         )
@@ -116,25 +120,48 @@ class AudioEmbedder:
             >>> embedding = embedder.embed_audio("speech.wav")
             >>> print(f"Embedding shape: {embedding.shape}")
         """
-        audio_path = Path(audio_path)
+        # Track audio embedding
+        tracking_id = self.progress_tracker.start_tracking(
+            file=str(audio_path),
+            module="embeddings",
+            submodule="AudioEmbedder",
+            message=f"Generating audio embedding: {audio_path}"
+        )
         
-        # Validate audio file exists
-        if not audio_path.exists():
-            raise ValidationError(
-                f"Audio file not found: {audio_path}. "
-                "Please provide a valid audio file path."
-            )
-        
-        if not audio_path.is_file():
-            raise ValidationError(f"Path is not a file: {audio_path}")
-        
-        self.logger.debug(f"Generating embedding for audio: {audio_path}")
-        
-        # Use librosa if available, otherwise fallback
-        if LIBROSA_AVAILABLE:
-            return self._embed_with_librosa(audio_path, **options)
-        else:
-            return self._embed_fallback(audio_path, **options)
+        try:
+            audio_path = Path(audio_path)
+            
+            # Validate audio file exists
+            if not audio_path.exists():
+                self.progress_tracker.stop_tracking(tracking_id, status="failed",
+                                                   message=f"File not found: {audio_path}")
+                raise ValidationError(
+                    f"Audio file not found: {audio_path}. "
+                    "Please provide a valid audio file path."
+                )
+            
+            if not audio_path.is_file():
+                self.progress_tracker.stop_tracking(tracking_id, status="failed",
+                                                   message=f"Path is not a file: {audio_path}")
+                raise ValidationError(f"Path is not a file: {audio_path}")
+            
+            self.logger.debug(f"Generating embedding for audio: {audio_path}")
+            
+            # Use librosa if available, otherwise fallback
+            if LIBROSA_AVAILABLE:
+                self.progress_tracker.update_tracking(tracking_id, message="Using librosa for feature extraction...")
+                result = self._embed_with_librosa(audio_path, **options)
+            else:
+                self.progress_tracker.update_tracking(tracking_id, message="Using fallback method...")
+                result = self._embed_fallback(audio_path, **options)
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                               message=f"Generated embedding (dim: {len(result)})")
+            return result
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def _embed_with_librosa(self, audio_path: Path, **options) -> np.ndarray:
         """

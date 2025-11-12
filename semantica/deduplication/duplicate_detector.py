@@ -28,6 +28,7 @@ from dataclasses import dataclass, field
 
 from ..utils.exceptions import ProcessingError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 from .similarity_calculator import SimilarityCalculator, SimilarityResult
 
 
@@ -115,6 +116,9 @@ class DuplicateDetector:
         self.confidence_threshold = confidence_threshold
         self.use_clustering = use_clustering
         
+        # Initialize progress tracker
+        self.progress_tracker = get_progress_tracker()
+        
         self.logger.debug(
             f"Duplicate detector initialized: similarity_threshold={similarity_threshold}, "
             f"confidence_threshold={confidence_threshold}"
@@ -157,40 +161,57 @@ class DuplicateDetector:
             >>> candidates = detector.detect_duplicates(entities, threshold=0.8)
             >>> # Returns candidates for Apple Inc. and Apple
         """
-        # Use provided threshold or instance default
-        detection_threshold = threshold if threshold is not None else self.similarity_threshold
-        
-        self.logger.info(
-            f"Detecting duplicates in {len(entities)} entities "
-            f"(threshold: {detection_threshold})"
+        # Track duplicate detection
+        tracking_id = self.progress_tracker.start_tracking(
+            file=None,
+            module="deduplication",
+            submodule="DuplicateDetector",
+            message=f"Detecting duplicates in {len(entities)} entities"
         )
         
-        # Calculate similarity for all entity pairs
-        similarities = self.similarity_calculator.batch_calculate_similarity(
-            entities,
-            threshold=detection_threshold
-        )
-        
-        self.logger.debug(f"Found {len(similarities)} similar pairs above threshold")
-        
-        # Create duplicate candidates from similar pairs
-        candidates = []
-        for entity1, entity2, score in similarities:
-            candidate = self._create_duplicate_candidate(entity1, entity2, score)
+        try:
+            # Use provided threshold or instance default
+            detection_threshold = threshold if threshold is not None else self.similarity_threshold
             
-            # Filter by confidence threshold
-            if candidate.confidence >= self.confidence_threshold:
-                candidates.append(candidate)
-        
-        # Sort by confidence (highest first)
-        candidates.sort(key=lambda c: c.confidence, reverse=True)
-        
-        self.logger.info(
-            f"Detected {len(candidates)} duplicate candidate(s) "
-            f"(confidence >= {self.confidence_threshold})"
-        )
-        
-        return candidates
+            self.logger.info(
+                f"Detecting duplicates in {len(entities)} entities "
+                f"(threshold: {detection_threshold})"
+            )
+            
+            self.progress_tracker.update_tracking(tracking_id, message="Calculating similarities...")
+            # Calculate similarity for all entity pairs
+            similarities = self.similarity_calculator.batch_calculate_similarity(
+                entities,
+                threshold=detection_threshold
+            )
+            
+            self.logger.debug(f"Found {len(similarities)} similar pairs above threshold")
+            
+            self.progress_tracker.update_tracking(tracking_id, message="Creating duplicate candidates...")
+            # Create duplicate candidates from similar pairs
+            candidates = []
+            for entity1, entity2, score in similarities:
+                candidate = self._create_duplicate_candidate(entity1, entity2, score)
+                
+                # Filter by confidence threshold
+                if candidate.confidence >= self.confidence_threshold:
+                    candidates.append(candidate)
+            
+            # Sort by confidence (highest first)
+            candidates.sort(key=lambda c: c.confidence, reverse=True)
+            
+            self.logger.info(
+                f"Detected {len(candidates)} duplicate candidate(s) "
+                f"(confidence >= {self.confidence_threshold})"
+            )
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                               message=f"Detected {len(candidates)} duplicate candidates")
+            return candidates
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def detect_duplicate_groups(
         self,
@@ -230,28 +251,45 @@ class DuplicateDetector:
             ...     print(f"Group: {len(group.entities)} entities, "
             ...           f"confidence: {group.confidence:.2f}")
         """
-        self.logger.info(f"Detecting duplicate groups from {len(entities)} entities")
-        
-        # Detect duplicate candidates
-        candidates = self.detect_duplicates(entities, threshold=threshold, **options)
-        
-        # Build groups using union-find approach
-        # This connects entities that are duplicates into groups
-        groups = self._build_duplicate_groups(candidates)
-        
-        self.logger.debug(f"Built {len(groups)} duplicate group(s)")
-        
-        # Calculate group metrics for each group
-        for group in groups:
-            group.confidence = self._calculate_group_confidence(group)
-            group.representative = self._select_representative(group)
-        
-        self.logger.info(
-            f"Detected {len(groups)} duplicate group(s) with "
-            f"{sum(len(g.entities) for g in groups)} total entities"
+        # Track duplicate group detection
+        tracking_id = self.progress_tracker.start_tracking(
+            file=None,
+            module="deduplication",
+            submodule="DuplicateDetector",
+            message=f"Detecting duplicate groups from {len(entities)} entities"
         )
         
-        return groups
+        try:
+            self.logger.info(f"Detecting duplicate groups from {len(entities)} entities")
+            
+            # Detect duplicate candidates
+            candidates = self.detect_duplicates(entities, threshold=threshold, **options)
+            
+            self.progress_tracker.update_tracking(tracking_id, message="Building duplicate groups...")
+            # Build groups using union-find approach
+            # This connects entities that are duplicates into groups
+            groups = self._build_duplicate_groups(candidates)
+            
+            self.logger.debug(f"Built {len(groups)} duplicate group(s)")
+            
+            self.progress_tracker.update_tracking(tracking_id, message="Calculating group metrics...")
+            # Calculate group metrics for each group
+            for group in groups:
+                group.confidence = self._calculate_group_confidence(group)
+                group.representative = self._select_representative(group)
+            
+            self.logger.info(
+                f"Detected {len(groups)} duplicate group(s) with "
+                f"{sum(len(g.entities) for g in groups)} total entities"
+            )
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                               message=f"Detected {len(groups)} duplicate groups")
+            return groups
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def detect_relationship_duplicates(
         self,

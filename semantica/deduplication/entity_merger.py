@@ -26,6 +26,7 @@ from dataclasses import dataclass
 
 from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 from .duplicate_detector import DuplicateDetector, DuplicateGroup
 from .merge_strategy import MergeStrategyManager, MergeStrategy, MergeResult
 
@@ -100,6 +101,9 @@ class EntityMerger:
         self.merge_history: List[MergeOperation] = []
         self.preserve_provenance = preserve_provenance
         
+        # Initialize progress tracker
+        self.progress_tracker = get_progress_tracker()
+        
         self.logger.debug(
             f"Entity merger initialized (preserve_provenance: {preserve_provenance})"
         )
@@ -154,63 +158,80 @@ class EntityMerger:
             ... )
             >>> merged = operations[0].merged_entity
         """
-        self.logger.info(f"Merging duplicates from {len(entities)} entities")
-        
-        # Detect duplicate groups using similarity
-        duplicate_groups = self.duplicate_detector.detect_duplicate_groups(
-            entities,
-            **options
+        # Track entity merging
+        tracking_id = self.progress_tracker.start_tracking(
+            file=None,
+            module="deduplication",
+            submodule="EntityMerger",
+            message=f"Merging duplicates from {len(entities)} entities"
         )
         
-        self.logger.debug(f"Found {len(duplicate_groups)} duplicate group(s)")
-        
-        merge_operations = []
-        
-        # Merge each duplicate group
-        for group in duplicate_groups:
-            # Skip groups with less than 2 entities (not duplicates)
-            if len(group.entities) < 2:
-                continue
+        try:
+            self.logger.info(f"Merging duplicates from {len(entities)} entities")
             
-            self.logger.debug(
-                f"Merging group of {len(group.entities)} entities "
-                f"(confidence: {group.confidence:.2f})"
-            )
-            
-            # Apply merge strategy to combine entities
-            merge_result = self.merge_strategy_manager.merge_entities(
-                group.entities,
-                strategy=strategy,
+            self.progress_tracker.update_tracking(tracking_id, message="Detecting duplicate groups...")
+            # Detect duplicate groups using similarity
+            duplicate_groups = self.duplicate_detector.detect_duplicate_groups(
+                entities,
                 **options
             )
             
-            # Add provenance information if enabled
-            if self.preserve_provenance:
-                merge_result.merged_entity = self._add_provenance(
-                    merge_result.merged_entity,
-                    group.entities
-                )
+            self.logger.debug(f"Found {len(duplicate_groups)} duplicate group(s)")
             
-            # Create merge operation record
-            operation = MergeOperation(
-                source_entities=group.entities,
-                merged_entity=merge_result.merged_entity,
-                merge_result=merge_result,
-                metadata={
-                    "group_confidence": group.confidence,
-                    "similarity_scores": group.similarity_scores,
-                    "strategy": strategy.value if strategy else "default"
-                }
+            self.progress_tracker.update_tracking(tracking_id, message=f"Merging {len(duplicate_groups)} groups...")
+            merge_operations = []
+            
+            # Merge each duplicate group
+            for group in duplicate_groups:
+                # Skip groups with less than 2 entities (not duplicates)
+                if len(group.entities) < 2:
+                    continue
+                
+                self.logger.debug(
+                    f"Merging group of {len(group.entities)} entities "
+                    f"(confidence: {group.confidence:.2f})"
+                )
+                
+                # Apply merge strategy to combine entities
+                merge_result = self.merge_strategy_manager.merge_entities(
+                    group.entities,
+                    strategy=strategy,
+                    **options
+                )
+                
+                # Add provenance information if enabled
+                if self.preserve_provenance:
+                    merge_result.merged_entity = self._add_provenance(
+                        merge_result.merged_entity,
+                        group.entities
+                    )
+                
+                # Create merge operation record
+                operation = MergeOperation(
+                    source_entities=group.entities,
+                    merged_entity=merge_result.merged_entity,
+                    merge_result=merge_result,
+                    metadata={
+                        "group_confidence": group.confidence,
+                        "similarity_scores": group.similarity_scores,
+                        "strategy": strategy.value if strategy else "default"
+                    }
+                )
+                
+                merge_operations.append(operation)
+                self.merge_history.append(operation)
+            
+            self.logger.info(
+                f"Completed merging: {len(merge_operations)} merge operation(s) performed"
             )
             
-            merge_operations.append(operation)
-            self.merge_history.append(operation)
-        
-        self.logger.info(
-            f"Completed merging: {len(merge_operations)} merge operation(s) performed"
-        )
-        
-        return merge_operations
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                               message=f"Completed {len(merge_operations)} merge operations")
+            return merge_operations
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def merge_entity_group(
         self,

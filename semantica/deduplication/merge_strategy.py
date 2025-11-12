@@ -27,6 +27,7 @@ from enum import Enum
 
 from ..utils.exceptions import ValidationError, ProcessingError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 
 
 class MergeStrategy(Enum):
@@ -123,6 +124,9 @@ class MergeStrategyManager:
         # Custom merge strategies (callable functions)
         self.custom_strategies: Dict[str, Callable] = {}
         
+        # Initialize progress tracker
+        self.progress_tracker = get_progress_tracker()
+        
         self.logger.debug(
             f"Merge strategy manager initialized (default: {self.default_strategy.value})"
         )
@@ -169,48 +173,69 @@ class MergeStrategyManager:
         Returns:
             MergeResult with merged entity
         """
-        if not entities:
-            raise ValidationError("No entities to merge")
+        # Track entity merging
+        tracking_id = self.progress_tracker.start_tracking(
+            file=None,
+            module="deduplication",
+            submodule="MergeStrategyManager",
+            message=f"Merging {len(entities)} entities"
+        )
         
-        if len(entities) == 1:
-            return MergeResult(
-                merged_entity=entities[0],
-                merged_entities=entities
+        try:
+            if not entities:
+                raise ValidationError("No entities to merge")
+            
+            if len(entities) == 1:
+                self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                                   message="Single entity, no merge needed")
+                return MergeResult(
+                    merged_entity=entities[0],
+                    merged_entities=entities
+                )
+            
+            strategy = strategy or self.default_strategy
+            
+            self.progress_tracker.update_tracking(tracking_id, message=f"Selecting base entity using {strategy.value}...")
+            # Select base entity
+            base_entity = self._select_base_entity(entities, strategy)
+            
+            self.progress_tracker.update_tracking(tracking_id, message="Merging properties...")
+            # Merge properties
+            merged_properties, property_conflicts = self._merge_properties(
+                entities,
+                base_entity,
+                strategy
             )
-        
-        strategy = strategy or self.default_strategy
-        
-        # Select base entity
-        base_entity = self._select_base_entity(entities, strategy)
-        
-        # Merge properties
-        merged_properties, property_conflicts = self._merge_properties(
-            entities,
-            base_entity,
-            strategy
-        )
-        
-        # Merge relationships
-        merged_relationships = self._merge_relationships(entities, base_entity)
-        
-        # Build merged entity
-        merged_entity = {
-            "id": base_entity.get("id"),
-            "name": base_entity.get("name"),
-            "type": base_entity.get("type"),
-            "properties": merged_properties,
-            "relationships": merged_relationships,
-            "metadata": self._merge_metadata(entities, base_entity),
-            "merged_from": [e.get("id") for e in entities if e.get("id")],
-            "merge_strategy": strategy.value
-        }
-        
-        return MergeResult(
-            merged_entity=merged_entity,
-            merged_entities=entities,
-            conflicts=property_conflicts,
-            metadata={"strategy": strategy.value}
-        )
+            
+            self.progress_tracker.update_tracking(tracking_id, message="Merging relationships...")
+            # Merge relationships
+            merged_relationships = self._merge_relationships(entities, base_entity)
+            
+            self.progress_tracker.update_tracking(tracking_id, message="Building merged entity...")
+            # Build merged entity
+            merged_entity = {
+                "id": base_entity.get("id"),
+                "name": base_entity.get("name"),
+                "type": base_entity.get("type"),
+                "properties": merged_properties,
+                "relationships": merged_relationships,
+                "metadata": self._merge_metadata(entities, base_entity),
+                "merged_from": [e.get("id") for e in entities if e.get("id")],
+                "merge_strategy": strategy.value
+            }
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                               message="Entity merge completed")
+            return MergeResult(
+                merged_entity=merged_entity,
+                merged_entities=entities,
+                conflicts=property_conflicts,
+                metadata={"strategy": strategy.value}
+            )
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def _select_base_entity(
         self,

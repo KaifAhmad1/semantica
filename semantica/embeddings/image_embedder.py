@@ -93,6 +93,10 @@ class ImageEmbedder:
         # Initialize model (will be None if CLIP unavailable)
         self.model = None
         self.preprocess = None
+        
+        # Initialize progress tracker
+        self.progress_tracker = get_progress_tracker()
+        
         self._initialize_model()
     
     def _initialize_model(self) -> None:
@@ -150,25 +154,48 @@ class ImageEmbedder:
             >>> embedding = embedder.embed_image("photo.jpg")
             >>> print(f"Embedding shape: {embedding.shape}")
         """
-        image_path = Path(image_path)
+        # Track image embedding
+        tracking_id = self.progress_tracker.start_tracking(
+            file=str(image_path),
+            module="embeddings",
+            submodule="ImageEmbedder",
+            message=f"Generating image embedding: {image_path}"
+        )
         
-        # Validate image file exists
-        if not image_path.exists():
-            raise ValidationError(
-                f"Image file not found: {image_path}. "
-                "Please provide a valid image file path."
-            )
-        
-        if not image_path.is_file():
-            raise ValidationError(f"Path is not a file: {image_path}")
-        
-        self.logger.debug(f"Generating embedding for image: {image_path}")
-        
-        # Use CLIP if available, otherwise fallback
-        if self.model and self.preprocess:
-            return self._embed_with_clip(image_path, **options)
-        else:
-            return self._embed_fallback(image_path, **options)
+        try:
+            image_path = Path(image_path)
+            
+            # Validate image file exists
+            if not image_path.exists():
+                self.progress_tracker.stop_tracking(tracking_id, status="failed",
+                                                   message=f"File not found: {image_path}")
+                raise ValidationError(
+                    f"Image file not found: {image_path}. "
+                    "Please provide a valid image file path."
+                )
+            
+            if not image_path.is_file():
+                self.progress_tracker.stop_tracking(tracking_id, status="failed",
+                                                   message=f"Path is not a file: {image_path}")
+                raise ValidationError(f"Path is not a file: {image_path}")
+            
+            self.logger.debug(f"Generating embedding for image: {image_path}")
+            
+            # Use CLIP if available, otherwise fallback
+            if self.model and self.preprocess:
+                self.progress_tracker.update_tracking(tracking_id, message="Using CLIP model...")
+                result = self._embed_with_clip(image_path, **options)
+            else:
+                self.progress_tracker.update_tracking(tracking_id, message="Using fallback method...")
+                result = self._embed_fallback(image_path, **options)
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                               message=f"Generated embedding (dim: {len(result)})")
+            return result
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def _embed_with_clip(self, image_path: Path, **options) -> np.ndarray:
         """

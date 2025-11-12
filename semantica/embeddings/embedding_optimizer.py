@@ -27,6 +27,7 @@ import numpy as np
 
 from ..utils.exceptions import ProcessingError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 
 try:
     from sklearn.decomposition import PCA
@@ -83,6 +84,9 @@ class EmbeddingOptimizer:
         self.compression_method = compression_method
         self.target_dimension = target_dimension
         
+        # Initialize progress tracker
+        self.progress_tracker = get_progress_tracker()
+        
         self.logger.debug(
             f"Embedding optimizer initialized "
             f"(method: {compression_method}, target_dim: {target_dimension})"
@@ -124,23 +128,44 @@ class EmbeddingOptimizer:
             >>> # Quantization
             >>> quantized = optimizer.compress(embeddings, method="quantization", bits=8)
         """
-        target_dim = target_dim or self.target_dimension
-        method = method or self.compression_method
-        
-        self.logger.debug(
-            f"Compressing embeddings: shape {embeddings.shape}, "
-            f"method={method}, target_dim={target_dim}"
+        # Track embedding compression
+        tracking_id = self.progress_tracker.start_tracking(
+            file=None,
+            module="embeddings",
+            submodule="EmbeddingOptimizer",
+            message=f"Compressing embeddings: {embeddings.shape}"
         )
         
-        if method == "pca":
-            return self._compress_pca(embeddings, target_dim)
-        elif method == "quantization":
-            return self._compress_quantization(embeddings, **options)
-        else:
-            self.logger.warning(
-                f"Unknown compression method: {method}. Returning original embeddings."
+        try:
+            target_dim = target_dim or self.target_dimension
+            method = method or self.compression_method
+            
+            self.logger.debug(
+                f"Compressing embeddings: shape {embeddings.shape}, "
+                f"method={method}, target_dim={target_dim}"
             )
-            return embeddings
+            
+            if method == "pca":
+                self.progress_tracker.update_tracking(tracking_id, message="Applying PCA compression...")
+                result = self._compress_pca(embeddings, target_dim)
+            elif method == "quantization":
+                self.progress_tracker.update_tracking(tracking_id, message="Applying quantization...")
+                result = self._compress_quantization(embeddings, **options)
+            else:
+                self.logger.warning(
+                    f"Unknown compression method: {method}. Returning original embeddings."
+                )
+                self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                                   message="Unknown method, returning original")
+                return embeddings
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                               message=f"Compressed to shape: {result.shape}")
+            return result
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def _compress_pca(self, embeddings: np.ndarray, target_dim: int) -> np.ndarray:
         """

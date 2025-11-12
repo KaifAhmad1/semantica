@@ -26,6 +26,7 @@ from typing import Any, Dict, List, Optional
 
 from ..utils.exceptions import ProcessingError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 
 
 @dataclass
@@ -114,6 +115,9 @@ class ContextManager:
         
         # Store contexts (context_id -> ContextWindow)
         self.contexts: Dict[str, ContextWindow] = {}
+        
+        # Initialize progress tracker
+        self.progress_tracker = get_progress_tracker()
         
         self.logger.debug(
             f"Context manager initialized: window_size={window_size}, "
@@ -219,50 +223,68 @@ class ContextManager:
             >>> windows = manager.split_into_windows(long_text, preserve_sentences=True)
             >>> print(f"Created {len(windows)} context windows")
         """
-        if not text:
-            self.logger.debug("Empty text provided, returning empty window list")
-            return []
-        
-        windows = []
-        text_length = len(text)
-        start = 0
-        
-        self.logger.debug(
-            f"Splitting text into windows: length={text_length}, "
-            f"window_size={self.window_size}, overlap={self.overlap}, "
-            f"preserve_sentences={preserve_sentences}"
+        # Track context window splitting
+        tracking_id = self.progress_tracker.start_tracking(
+            file=None,
+            module="embeddings",
+            submodule="ContextManager",
+            message=f"Splitting text into windows (length: {len(text)})"
         )
         
-        while start < text_length:
-            # Calculate end position
-            end = min(start + self.window_size, text_length)
+        try:
+            if not text:
+                self.logger.debug("Empty text provided, returning empty window list")
+                self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                                   message="Empty text, no windows created")
+                return []
             
-            # Try to preserve sentence boundaries if requested
-            if preserve_sentences and end < text_length:
-                # Look for sentence boundaries (., !, ?, newline)
-                for boundary in ['.', '!', '?', '\n']:
-                    last_boundary = text.rfind(boundary, start, end)
-                    # Only use boundary if it's at least 50% into the window
-                    # (ensures minimum window size)
-                    if last_boundary > start + self.window_size * 0.5:
-                        end = last_boundary + 1
-                        break
+            windows = []
+            text_length = len(text)
+            start = 0
             
-            # Extract window text
-            window_text = text[start:end]
+            self.logger.debug(
+                f"Splitting text into windows: length={text_length}, "
+                f"window_size={self.window_size}, overlap={self.overlap}, "
+                f"preserve_sentences={preserve_sentences}"
+            )
             
-            # Create and store context window
-            window = self.create_context_window(window_text, start, **options)
-            windows.append(window)
+            self.progress_tracker.update_tracking(tracking_id, message="Creating context windows...")
+            while start < text_length:
+                # Calculate end position
+                end = min(start + self.window_size, text_length)
+                
+                # Try to preserve sentence boundaries if requested
+                if preserve_sentences and end < text_length:
+                    # Look for sentence boundaries (., !, ?, newline)
+                    for boundary in ['.', '!', '?', '\n']:
+                        last_boundary = text.rfind(boundary, start, end)
+                        # Only use boundary if it's at least 50% into the window
+                        # (ensures minimum window size)
+                        if last_boundary > start + self.window_size * 0.5:
+                            end = last_boundary + 1
+                            break
+                
+                # Extract window text
+                window_text = text[start:end]
+                
+                # Create and store context window
+                window = self.create_context_window(window_text, start, **options)
+                windows.append(window)
+                
+                # Move to next window position with overlap
+                start += (self.window_size - self.overlap)
             
-            # Move to next window position with overlap
-            start += (self.window_size - self.overlap)
-        
-        self.logger.info(
-            f"Split text into {len(windows)} context window(s)"
-        )
-        
-        return windows
+            self.logger.info(
+                f"Split text into {len(windows)} context window(s)"
+            )
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                               message=f"Created {len(windows)} context windows")
+            return windows
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def get_context(self, context_id: str) -> Optional[ContextWindow]:
         """

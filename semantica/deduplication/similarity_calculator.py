@@ -113,6 +113,9 @@ class SimilarityCalculator:
                 f"Weights sum to {total_weight:.2f}, will be normalized during calculation"
             )
         
+        # Initialize progress tracker
+        self.progress_tracker = get_progress_tracker()
+        
         self.logger.debug("Similarity calculator initialized")
     
     def calculate_similarity(
@@ -155,56 +158,76 @@ class SimilarityCalculator:
             >>> print(f"Similarity: {result.score:.2f}")
             >>> print(f"Components: {result.components}")
         """
-        components = {}
-        
-        # String similarity
-        string_score = self.calculate_string_similarity(
-            entity1.get("name", ""),
-            entity2.get("name", "")
+        # Track similarity calculation
+        tracking_id = self.progress_tracker.start_tracking(
+            file=None,
+            module="deduplication",
+            submodule="SimilarityCalculator",
+            message="Calculating similarity between entities"
         )
-        components["string"] = string_score
         
-        # Property similarity
-        property_score = self.calculate_property_similarity(entity1, entity2)
-        components["property"] = property_score
-        
-        # Relationship similarity
-        relationship_score = self.calculate_relationship_similarity(entity1, entity2)
-        components["relationship"] = relationship_score
-        
-        # Embedding similarity (if available)
-        embedding_score = 0.0
-        if "embedding" in entity1 and "embedding" in entity2:
-            embedding_score = self.calculate_embedding_similarity(
-                entity1["embedding"],
-                entity2["embedding"]
+        try:
+            components = {}
+            
+            # String similarity
+            self.progress_tracker.update_tracking(tracking_id, message="Calculating string similarity...")
+            string_score = self.calculate_string_similarity(
+                entity1.get("name", ""),
+                entity2.get("name", "")
             )
-            components["embedding"] = embedding_score
-        
-        # Weighted aggregation
-        weights = {
-            "string": self.string_weight,
-            "property": self.property_weight,
-            "relationship": self.relationship_weight,
-            "embedding": self.embedding_weight if embedding_score > 0 else 0.0
-        }
-        
-        # Normalize weights
-        total_weight = sum(w for k, w in weights.items() if k in components)
-        if total_weight > 0:
-            weights = {k: w / total_weight for k, w in weights.items() if k in components}
-        
-        overall_score = sum(
-            components.get(key, 0.0) * weight
-            for key, weight in weights.items()
-        )
-        
-        return SimilarityResult(
-            score=overall_score,
-            method="multi_factor",
-            components=components,
-            metadata={"weights": weights}
-        )
+            components["string"] = string_score
+            
+            # Property similarity
+            self.progress_tracker.update_tracking(tracking_id, message="Calculating property similarity...")
+            property_score = self.calculate_property_similarity(entity1, entity2)
+            components["property"] = property_score
+            
+            # Relationship similarity
+            self.progress_tracker.update_tracking(tracking_id, message="Calculating relationship similarity...")
+            relationship_score = self.calculate_relationship_similarity(entity1, entity2)
+            components["relationship"] = relationship_score
+            
+            # Embedding similarity (if available)
+            embedding_score = 0.0
+            if "embedding" in entity1 and "embedding" in entity2:
+                self.progress_tracker.update_tracking(tracking_id, message="Calculating embedding similarity...")
+                embedding_score = self.calculate_embedding_similarity(
+                    entity1["embedding"],
+                    entity2["embedding"]
+                )
+                components["embedding"] = embedding_score
+            
+            # Weighted aggregation
+            self.progress_tracker.update_tracking(tracking_id, message="Aggregating similarity scores...")
+            weights = {
+                "string": self.string_weight,
+                "property": self.property_weight,
+                "relationship": self.relationship_weight,
+                "embedding": self.embedding_weight if embedding_score > 0 else 0.0
+            }
+            
+            # Normalize weights
+            total_weight = sum(w for k, w in weights.items() if k in components)
+            if total_weight > 0:
+                weights = {k: w / total_weight for k, w in weights.items() if k in components}
+            
+            overall_score = sum(
+                components.get(key, 0.0) * weight
+                for key, weight in weights.items()
+            )
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                               message=f"Similarity score: {overall_score:.2f}")
+            return SimilarityResult(
+                score=overall_score,
+                method="multi_factor",
+                components=components,
+                metadata={"weights": weights}
+            )
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def calculate_string_similarity(
         self,

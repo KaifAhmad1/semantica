@@ -26,6 +26,7 @@ from dataclasses import dataclass, field
 
 from ..utils.exceptions import ProcessingError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 from .similarity_calculator import SimilarityCalculator
 
 
@@ -116,6 +117,9 @@ class ClusterBuilder:
         self.min_cluster_size = min_cluster_size
         self.max_cluster_size = max_cluster_size
         self.use_hierarchical = use_hierarchical
+        
+        # Initialize progress tracker
+        self.progress_tracker = get_progress_tracker()
         
         self.logger.debug(
             f"Cluster builder initialized: threshold={similarity_threshold}, "
