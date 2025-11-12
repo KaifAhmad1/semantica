@@ -41,6 +41,7 @@ from bs4 import BeautifulSoup
 
 from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 
 
 @dataclass
@@ -573,6 +574,9 @@ class FeedIngestor:
         # Update intervals
         self.update_intervals = self.config.get("update_intervals", {})
         
+        # Initialize progress tracker
+        self.progress_tracker = get_progress_tracker()
+        
         self.logger.debug("Feed ingestor initialized")
     
     def ingest_feed(
@@ -601,34 +605,51 @@ class FeedIngestor:
             ValidationError: If feed URL is invalid
             ProcessingError: If feed fetching or parsing fails
         """
-        # Validate feed URL
+        # Track feed ingestion
+        tracking_id = self.progress_tracker.start_tracking(
+            file=feed_url,
+            module="ingest",
+            submodule="FeedIngestor",
+            message=f"Feed: {feed_url}"
+        )
+        
         try:
-            parsed = urlparse(feed_url)
-            if not parsed.scheme or not parsed.netloc:
-                raise ValidationError(f"Invalid feed URL: {feed_url}")
+            # Validate feed URL
+            try:
+                parsed = urlparse(feed_url)
+                if not parsed.scheme or not parsed.netloc:
+                    raise ValidationError(f"Invalid feed URL: {feed_url}")
+            except Exception as e:
+                raise ValidationError(f"Invalid feed URL: {feed_url}") from e
+            
+            # Fetch feed content
+            try:
+                request_timeout = timeout or options.get("timeout", self.config.get("timeout", 30))
+                response = requests.get(feed_url, timeout=request_timeout)
+                response.raise_for_status()
+                self.logger.debug(f"Fetched feed from {feed_url}: {len(response.text)} bytes")
+            except requests.RequestException as e:
+                self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+                self.logger.error(f"Failed to fetch feed {feed_url}: {e}")
+                raise ProcessingError(f"Failed to fetch feed: {e}") from e
+            
+            # Parse feed format
+            feed_data = self.parser.parse_feed(response.text, feed_url)
+            
+            # Validate feed
+            if validate or options.get("validate", True):
+                if not self.parser.validate_feed(feed_data):
+                    self.logger.warning(f"Feed {feed_url} validation failed")
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                               message=f"Ingested {len(feed_data.items)} items")
+            self.logger.info(f"Ingested feed {feed_url}: {len(feed_data.items)} item(s)")
+            
+            return feed_data
+            
         except Exception as e:
-            raise ValidationError(f"Invalid feed URL: {feed_url}") from e
-        
-        # Fetch feed content
-        try:
-            request_timeout = timeout or options.get("timeout", self.config.get("timeout", 30))
-            response = requests.get(feed_url, timeout=request_timeout)
-            response.raise_for_status()
-            self.logger.debug(f"Fetched feed from {feed_url}: {len(response.text)} bytes")
-        except requests.RequestException as e:
-            self.logger.error(f"Failed to fetch feed {feed_url}: {e}")
-            raise ProcessingError(f"Failed to fetch feed: {e}") from e
-        
-        # Parse feed format
-        feed_data = self.parser.parse_feed(response.text, feed_url)
-        
-        # Validate feed
-        if validate or options.get("validate", True):
-            if not self.parser.validate_feed(feed_data):
-                self.logger.warning(f"Feed {feed_url} validation failed")
-        
-        self.logger.info(f"Ingested feed {feed_url}: {len(feed_data.items)} item(s)")
-        return feed_data
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def discover_feeds(self, website_url: str) -> List[str]:
         """

@@ -140,6 +140,17 @@ from .types import (
     relationship_to_dict,
     dict_to_relationship,
 )
+from .progress_tracker import (
+    ProgressTracker,
+    ProgressDisplay,
+    ConsoleProgressDisplay,
+    JupyterProgressDisplay,
+    FileProgressDisplay,
+    ProgressItem,
+    ModuleDetector,
+    get_progress_tracker,
+    track_progress,
+)
 
 __all__ = [
     # Logging
@@ -233,4 +244,14 @@ __all__ = [
     "dict_to_entity",
     "relationship_to_dict",
     "dict_to_relationship",
+    # Progress Tracking
+    "ProgressTracker",
+    "ProgressDisplay",
+    "ConsoleProgressDisplay",
+    "JupyterProgressDisplay",
+    "FileProgressDisplay",
+    "ProgressItem",
+    "ModuleDetector",
+    "get_progress_tracker",
+    "track_progress",
 ]

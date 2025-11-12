@@ -32,6 +32,7 @@ from .lifecycle import LifecycleManager, SystemState
 from .plugin_registry import PluginRegistry
 from ..utils.exceptions import ConfigurationError, ProcessingError
 from ..utils.logging import get_logger, log_execution_time
+from ..utils.progress_tracker import get_progress_tracker
 
 
 class Semantica:
@@ -86,6 +87,9 @@ class Semantica:
         # Module placeholders (to be initialized)
         self._modules: Dict[str, Any] = {}
         self._initialized: bool = False
+        
+        # Initialize progress tracker (automatic, zero configuration)
+        self.progress_tracker = get_progress_tracker()
         
         self.logger.info("Semantica framework initialized")
     
@@ -169,6 +173,13 @@ class Semantica:
         # Auto-initialize if not already initialized
         self._ensure_initialized()
         
+        # Start overall progress tracking
+        overall_tracking_id = self.progress_tracker.start_tracking(
+            module="core",
+            submodule="Semantica",
+            message=f"Building knowledge base from {len(sources)} sources"
+        )
+        
         try:
             self.logger.info(f"Building knowledge base from {len(sources)} sources")
             
@@ -183,8 +194,23 @@ class Semantica:
             results = []
             for source in validated_sources:
                 try:
-                    result = self.run_pipeline(pipeline, source)
-                    results.append(result)
+                    # Track file processing
+                    file_str = str(source)
+                    file_tracking_id = self.progress_tracker.start_tracking(
+                        file=file_str,
+                        module="core",
+                        submodule="build_knowledge_base",
+                        message=f"Processing {Path(file_str).name if file_str else 'source'}"
+                    )
+                    try:
+                        result = self.run_pipeline(pipeline, source)
+                        results.append(result)
+                        self.progress_tracker.stop_tracking(file_tracking_id, status="completed")
+                    except Exception as e:
+                        self.progress_tracker.stop_tracking(file_tracking_id, status="failed", message=str(e))
+                        self.logger.error(f"Failed to process source {source}: {e}")
+                        if kwargs.get("fail_fast", False):
+                            raise ProcessingError(f"Failed to process source {source}: {e}")
                 except Exception as e:
                     self.logger.error(f"Failed to process source {source}: {e}")
                     if kwargs.get("fail_fast", False):
@@ -207,6 +233,13 @@ class Semantica:
                 "success_rate": len([r for r in results if r.get("success")]) / len(results) if results else 0.0,
             }
             
+            # Stop overall tracking
+            self.progress_tracker.stop_tracking(overall_tracking_id, status="completed", 
+                                               message=f"Processed {len(results)} sources")
+            
+            # Show summary
+            self.progress_tracker.show_summary()
+            
             return {
                 "knowledge_graph": knowledge_graph,
                 "embeddings": embeddings,
@@ -219,6 +252,7 @@ class Semantica:
             }
             
         except Exception as e:
+            self.progress_tracker.stop_tracking(overall_tracking_id, status="failed", message=str(e))
             self.logger.error(f"Failed to build knowledge base: {e}")
             raise ProcessingError(f"Failed to build knowledge base: {e}")
     
@@ -240,8 +274,17 @@ class Semantica:
         Raises:
             ProcessingError: If pipeline execution fails
         """
+        pipeline_tracking_id = None
         try:
             self.logger.info("Executing processing pipeline")
+            
+            # Track pipeline execution
+            pipeline_tracking_id = self.progress_tracker.start_tracking(
+                file=str(data) if isinstance(data, (str, Path)) else None,
+                module="pipeline",
+                submodule="ExecutionEngine",
+                message="Executing pipeline"
+            )
             
             # Validate pipeline
             if isinstance(pipeline, dict):
@@ -261,6 +304,9 @@ class Semantica:
                 # Collect metrics
                 metrics = self._collect_metrics(pipeline)
                 
+                if pipeline_tracking_id:
+                    self.progress_tracker.stop_tracking(pipeline_tracking_id, status="completed")
+                
                 return {
                     "success": True,
                     "output": result,
@@ -276,6 +322,8 @@ class Semantica:
                 self._release_resources(resources)
                 
         except Exception as e:
+            if pipeline_tracking_id:
+                self.progress_tracker.stop_tracking(pipeline_tracking_id, status="failed", message=str(e))
             self.logger.error(f"Pipeline execution failed: {e}")
             raise ProcessingError(f"Pipeline execution failed: {e}")
     
@@ -538,11 +586,22 @@ class Semantica:
                 self.logger.warning("No entities or relationships found in results")
                 return {"entities": [], "relationships": [], "metadata": {}}
             
-            # Build knowledge graph
-            graph_builder = GraphBuilder(merge_entities=True, resolve_conflicts=True)
-            knowledge_graph = graph_builder.build(graph_sources)
+            # Track knowledge graph building
+            kg_tracking_id = self.progress_tracker.start_tracking(
+                module="kg",
+                submodule="GraphBuilder",
+                message="Building knowledge graph"
+            )
             
-            return knowledge_graph
+            try:
+                # Build knowledge graph
+                graph_builder = GraphBuilder(merge_entities=True, resolve_conflicts=True)
+                knowledge_graph = graph_builder.build(graph_sources)
+                self.progress_tracker.stop_tracking(kg_tracking_id, status="completed")
+                return knowledge_graph
+            except Exception as e:
+                self.progress_tracker.stop_tracking(kg_tracking_id, status="failed", message=str(e))
+                raise
             
         except ImportError:
             self.logger.warning("KG module not available, returning placeholder")
@@ -581,18 +640,31 @@ class Semantica:
                 self.logger.warning("No text content found in results for embedding")
                 return {"embeddings": [], "metadata": {}}
             
-            # Generate embeddings
-            embedding_generator = EmbeddingGenerator()
-            embeddings_result = embedding_generator.process_batch(texts_to_embed)
+            # Track embedding generation
+            embed_tracking_id = self.progress_tracker.start_tracking(
+                module="embeddings",
+                submodule="EmbeddingGenerator",
+                message=f"Generating embeddings for {len(texts_to_embed)} texts"
+            )
             
-            return {
-                "embeddings": embeddings_result["embeddings"],
-                "metadata": {
-                    "total_texts": len(texts_to_embed),
-                    "successful": embeddings_result["success_count"],
-                    "failed": embeddings_result["failure_count"]
+            try:
+                # Generate embeddings
+                embedding_generator = EmbeddingGenerator()
+                embeddings_result = embedding_generator.process_batch(texts_to_embed)
+                self.progress_tracker.stop_tracking(embed_tracking_id, status="completed",
+                                                   message=f"Generated {embeddings_result.get('success_count', 0)} embeddings")
+                
+                return {
+                    "embeddings": embeddings_result["embeddings"],
+                    "metadata": {
+                        "total_texts": len(texts_to_embed),
+                        "successful": embeddings_result["success_count"],
+                        "failed": embeddings_result["failure_count"]
+                    }
                 }
-            }
+            except Exception as e:
+                self.progress_tracker.stop_tracking(embed_tracking_id, status="failed", message=str(e))
+                raise
             
         except ImportError:
             self.logger.warning("Embeddings module not available, returning placeholder")

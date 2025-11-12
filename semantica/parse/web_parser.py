@@ -37,6 +37,7 @@ from bs4 import BeautifulSoup
 
 from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 from .html_parser import HTMLParser
 from .xml_parser import XMLParser
 

@@ -47,6 +47,7 @@ from urllib3.util.retry import Retry
 
 from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 
 
 @dataclass
@@ -544,6 +545,9 @@ class WebIngestor:
         else:
             self.robots_checker = None
         
+        # Initialize progress tracker
+        self.progress_tracker = get_progress_tracker()
+        
         self.logger.debug(
             f"Web ingestor initialized: user_agent={user_agent}, "
             f"delay={delay}, respect_robots={respect_robots}"
@@ -573,45 +577,61 @@ class WebIngestor:
             ValidationError: If URL is invalid
             ProcessingError: If URL is blocked by robots.txt or fetch fails
         """
-        # Validate URL format
-        try:
-            parsed = urlparse(url)
-            if not parsed.scheme or not parsed.netloc:
-                raise ValidationError(
-                    f"Invalid URL format: {url}. "
-                    "URL must include scheme (http/https) and netloc (domain)."
-                )
-        except Exception as e:
-            raise ValidationError(f"Invalid URL: {url}") from e
-        
-        # Check robots.txt compliance
-        if self.robots_checker and not self.robots_checker.can_fetch(url):
-            self.logger.warning(f"URL {url} blocked by robots.txt")
-            raise ProcessingError(f"URL blocked by robots.txt: {url}")
-        
-        # Apply rate limiting (wait if necessary)
-        self.rate_limiter.wait_if_needed()
-        
-        # Fetch content with retry logic
-        try:
-            request_timeout = timeout or self.config.get('timeout', 30)
-            response = self.session.get(url, timeout=request_timeout)
-            response.raise_for_status()
-        except requests.RequestException as e:
-            self.logger.error(f"Failed to fetch URL {url}: {e}")
-            raise ProcessingError(f"Failed to fetch URL: {e}") from e
-        
-        # Extract content and metadata
-        html_content = response.text
-        web_content = self.extract_content(html_content, url=url)
-        web_content.status_code = response.status_code
-        
-        self.logger.debug(
-            f"Ingested URL: {url}, status={response.status_code}, "
-            f"text_length={len(web_content.text)}, links={len(web_content.links)}"
+        # Track URL ingestion
+        tracking_id = self.progress_tracker.start_tracking(
+            file=url,
+            module="ingest",
+            submodule="WebIngestor",
+            message=f"URL: {url}"
         )
         
-        return web_content
+        try:
+            # Validate URL format
+            try:
+                parsed = urlparse(url)
+                if not parsed.scheme or not parsed.netloc:
+                    raise ValidationError(
+                        f"Invalid URL format: {url}. "
+                        "URL must include scheme (http/https) and netloc (domain)."
+                    )
+            except Exception as e:
+                raise ValidationError(f"Invalid URL: {url}") from e
+            
+            # Check robots.txt compliance
+            if self.robots_checker and not self.robots_checker.can_fetch(url):
+                self.logger.warning(f"URL {url} blocked by robots.txt")
+                raise ProcessingError(f"URL blocked by robots.txt: {url}")
+            
+            # Apply rate limiting (wait if necessary)
+            self.rate_limiter.wait_if_needed()
+            
+            # Fetch content with retry logic
+            try:
+                request_timeout = timeout or self.config.get('timeout', 30)
+                response = self.session.get(url, timeout=request_timeout)
+                response.raise_for_status()
+            except requests.RequestException as e:
+                self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+                self.logger.error(f"Failed to fetch URL {url}: {e}")
+                raise ProcessingError(f"Failed to fetch URL: {e}") from e
+            
+            # Extract content and metadata
+            html_content = response.text
+            web_content = self.extract_content(html_content, url=url)
+            web_content.status_code = response.status_code
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                               message=f"Ingested {url} ({response.status_code})")
+            self.logger.debug(
+                f"Ingested URL: {url}, status={response.status_code}, "
+                f"text_length={len(web_content.text)}, links={len(web_content.links)}"
+            )
+            
+            return web_content
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def crawl_sitemap(
         self,
@@ -642,48 +662,65 @@ class WebIngestor:
         Raises:
             ProcessingError: If sitemap cannot be parsed or fail_fast=True and error occurs
         """
-        crawler = SitemapCrawler(**self.config)
-        
-        # Parse sitemap (try as regular sitemap first, then as index)
-        try:
-            urls = crawler.parse_sitemap(sitemap_url)
-        except Exception as e:
-            # Try as sitemap index
-            try:
-                urls = crawler.crawl_sitemap_index(sitemap_url)
-            except Exception:
-                raise ProcessingError(f"Failed to parse sitemap: {e}") from e
-        
-        self.logger.debug(f"Found {len(urls)} URL(s) in sitemap: {sitemap_url}")
-        
-        # Apply URL filters
-        if filters:
-            urls = self._apply_url_filters(urls, filters)
-            self.logger.debug(f"After filtering: {len(urls)} URL(s)")
-        
-        # Process each URL
-        web_contents = []
-        max_urls = max_urls or filters.get('max_urls') or self.config.get('max_urls')
-        
-        for idx, url in enumerate(urls):
-            if max_urls and idx >= max_urls:
-                self.logger.debug(f"Reached max_urls limit ({max_urls}), stopping crawl")
-                break
-            
-            try:
-                web_content = self.ingest_url(url)
-                web_contents.append(web_content)
-                self.logger.debug(f"Crawled URL {idx+1}/{min(len(urls), max_urls or len(urls))}: {url}")
-            except Exception as e:
-                self.logger.error(f"Failed to crawl URL {url}: {e}")
-                if fail_fast or self.config.get('fail_fast', False):
-                    raise ProcessingError(f"Failed to crawl URL: {e}") from e
-        
-        self.logger.info(
-            f"Crawled {len(web_contents)}/{len(urls)} URL(s) from sitemap: {sitemap_url}"
+        # Track sitemap crawling
+        tracking_id = self.progress_tracker.start_tracking(
+            file=sitemap_url,
+            module="ingest",
+            submodule="WebIngestor",
+            message=f"Sitemap: {sitemap_url}"
         )
         
-        return web_contents
+        try:
+            crawler = SitemapCrawler(**self.config)
+            
+            # Parse sitemap (try as regular sitemap first, then as index)
+            try:
+                urls = crawler.parse_sitemap(sitemap_url)
+            except Exception as e:
+                # Try as sitemap index
+                try:
+                    urls = crawler.crawl_sitemap_index(sitemap_url)
+                except Exception:
+                    raise ProcessingError(f"Failed to parse sitemap: {e}") from e
+            
+            self.logger.debug(f"Found {len(urls)} URL(s) in sitemap: {sitemap_url}")
+            
+            # Apply URL filters
+            if filters:
+                urls = self._apply_url_filters(urls, filters)
+                self.logger.debug(f"After filtering: {len(urls)} URL(s)")
+            
+            # Process each URL
+            web_contents = []
+            max_urls = max_urls or filters.get('max_urls') or self.config.get('max_urls')
+            
+            self.progress_tracker.update_tracking(tracking_id, message=f"Crawling {len(urls)} URLs")
+            
+            for idx, url in enumerate(urls):
+                if max_urls and idx >= max_urls:
+                    self.logger.debug(f"Reached max_urls limit ({max_urls}), stopping crawl")
+                    break
+                
+                try:
+                    web_content = self.ingest_url(url)
+                    web_contents.append(web_content)
+                    self.logger.debug(f"Crawled URL {idx+1}/{min(len(urls), max_urls or len(urls))}: {url}")
+                except Exception as e:
+                    self.logger.error(f"Failed to crawl URL {url}: {e}")
+                    if fail_fast or self.config.get('fail_fast', False):
+                        raise ProcessingError(f"Failed to crawl URL: {e}") from e
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                               message=f"Crawled {len(web_contents)}/{len(urls)} URLs")
+            self.logger.info(
+                f"Crawled {len(web_contents)}/{len(urls)} URL(s) from sitemap: {sitemap_url}"
+            )
+            
+            return web_contents
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def crawl_domain(
         self,

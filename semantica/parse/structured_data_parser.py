@@ -34,6 +34,7 @@ import yaml
 
 from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 from .csv_parser import CSVParser
 from .json_parser import JSONParser
 from .xml_parser import XMLParser
@@ -74,21 +75,44 @@ class StructuredDataParser:
         Returns:
             dict: Parsed data
         """
-        # Detect format if not specified
-        if data_format is None:
-            data_format = self._detect_format(data)
+        # Track structured data parsing
+        file_path = None
+        if isinstance(data, Path) or (isinstance(data, str) and Path(data).exists()):
+            file_path = Path(data)
         
-        # Route to appropriate parser
-        if data_format == "json":
-            return self.json_parser.parse(data, **options).__dict__
-        elif data_format == "csv":
-            return self.csv_parser.parse(data, **options).__dict__
-        elif data_format == "xml":
-            return self.xml_parser.parse(data, **options).__dict__
-        elif data_format == "yaml":
-            return self._parse_yaml(data, **options)
-        else:
-            raise ValidationError(f"Unsupported data format: {data_format}")
+        tracking_id = self.progress_tracker.start_tracking(
+            file=str(file_path) if file_path else None,
+            module="parse",
+            submodule="StructuredDataParser",
+            message=f"Structured data: {file_path.name if file_path else 'content'}"
+        )
+        
+        try:
+            # Detect format if not specified
+            if data_format is None:
+                data_format = self._detect_format(data)
+            
+            self.progress_tracker.update_tracking(tracking_id, message=f"Parsing {data_format}...")
+            
+            # Route to appropriate parser
+            if data_format == "json":
+                result = self.json_parser.parse(data, **options).__dict__
+            elif data_format == "csv":
+                result = self.csv_parser.parse(data, **options).__dict__
+            elif data_format == "xml":
+                result = self.xml_parser.parse(data, **options).__dict__
+            elif data_format == "yaml":
+                result = self._parse_yaml(data, **options)
+            else:
+                raise ValidationError(f"Unsupported data format: {data_format}")
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                               message=f"Parsed {data_format} successfully")
+            return result
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def validate_data(self, data: Any, schema: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """

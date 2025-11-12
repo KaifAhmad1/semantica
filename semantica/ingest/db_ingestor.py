@@ -40,6 +40,7 @@ from sqlalchemy.engine import Engine
 
 from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 
 
 @dataclass
@@ -528,6 +529,9 @@ class DBIngestor:
         # Supported databases
         self.supported_databases = list(DatabaseConnector.SUPPORTED_DATABASES.keys())
         
+        # Initialize progress tracker
+        self.progress_tracker = get_progress_tracker()
+        
         self.logger.debug(
             f"DB ingestor initialized with support for: {', '.join(self.supported_databases)}"
         )
@@ -564,65 +568,86 @@ class DBIngestor:
                 - total_tables: Total number of tables exported
                 - connection_string: Connection string used
         """
-        # Connect to database
-        connector = DatabaseConnector("", **self.config)
-        engine = connector.connect(connection_string)
+        # Track database ingestion
+        tracking_id = self.progress_tracker.start_tracking(
+            file=connection_string.split('@')[-1] if '@' in connection_string else connection_string,
+            module="ingest",
+            submodule="DBIngestor",
+            message=f"Database: {connection_string.split('@')[-1] if '@' in connection_string else 'database'}"
+        )
         
         try:
-            # Analyze schema first
-            schema = self.analyze_schema(connection_string)
+            # Connect to database
+            connector = DatabaseConnector("", **self.config)
+            engine = connector.connect(connection_string)
             
-            # Get all table names
-            inspector = inspect(engine)
-            all_tables = inspector.get_table_names()
-            
-            self.logger.debug(f"Found {len(all_tables)} table(s) in database")
-            
-            # Apply table filters
-            if include_tables:
-                tables = [t for t in all_tables if t in include_tables]
-                self.logger.debug(f"Filtered to {len(tables)} table(s) via include_tables")
-            else:
-                exclude_tables = exclude_tables or []
-                tables = [t for t in all_tables if t not in exclude_tables]
-                if exclude_tables:
-                    self.logger.debug(f"Filtered to {len(tables)} table(s) via exclude_tables")
-            
-            # Export data from each table
-            table_data = {}
-            
-            for table_name in tables:
-                try:
-                    # Export table with optional row limit
-                    table_info = self.exporter.export_table_data(
-                        engine,
-                        table_name,
-                        limit=max_rows_per_table
-                    )
-                    table_data[table_name] = {
-                        "columns": table_info.columns,
-                        "row_count": table_info.row_count,
-                        "rows": table_info.rows
-                    }
-                    self.logger.debug(
-                        f"Exported table {table_name}: {table_info.row_count} row(s)"
-                    )
-                except Exception as e:
-                    self.logger.error(f"Failed to export table {table_name}: {e}")
-                    if self.config.get('fail_fast', False):
-                        raise ProcessingError(f"Failed to export table {table_name}: {e}") from e
-            
-            self.logger.info(
-                f"Database ingestion completed: {len(table_data)} table(s) exported"
-            )
-            
-            return {
-                "schema": schema,
-                "tables": table_data,
-                "total_tables": len(tables),
-                "connection_string": connection_string
-            }
-            
+            try:
+                # Analyze schema first
+                self.progress_tracker.update_tracking(tracking_id, message="Analyzing schema...")
+                schema = self.analyze_schema(connection_string)
+                
+                # Get all table names
+                inspector = inspect(engine)
+                all_tables = inspector.get_table_names()
+                
+                self.logger.debug(f"Found {len(all_tables)} table(s) in database")
+                
+                # Apply table filters
+                if include_tables:
+                    tables = [t for t in all_tables if t in include_tables]
+                    self.logger.debug(f"Filtered to {len(tables)} table(s) via include_tables")
+                else:
+                    exclude_tables = exclude_tables or []
+                    tables = [t for t in all_tables if t not in exclude_tables]
+                    if exclude_tables:
+                        self.logger.debug(f"Filtered to {len(tables)} table(s) via exclude_tables")
+                
+                self.progress_tracker.update_tracking(tracking_id, message=f"Exporting {len(tables)} tables...")
+                
+                # Export data from each table
+                table_data = {}
+                
+                for table_name in tables:
+                    try:
+                        # Export table with optional row limit
+                        table_info = self.exporter.export_table_data(
+                            engine,
+                            table_name,
+                            limit=max_rows_per_table
+                        )
+                        table_data[table_name] = {
+                            "columns": table_info.columns,
+                            "row_count": table_info.row_count,
+                            "rows": table_info.rows
+                        }
+                        self.logger.debug(
+                            f"Exported table {table_name}: {table_info.row_count} row(s)"
+                        )
+                    except Exception as e:
+                        self.logger.error(f"Failed to export table {table_name}: {e}")
+                        if self.config.get('fail_fast', False):
+                            raise ProcessingError(f"Failed to export table {table_name}: {e}") from e
+                
+                self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                                   message=f"Exported {len(table_data)} tables")
+                self.logger.info(
+                    f"Database ingestion completed: {len(table_data)} table(s) exported"
+                )
+                
+                return {
+                    "schema": schema,
+                    "tables": table_data,
+                    "total_tables": len(table_data),
+                    "connection_string": connection_string
+                }
+                
+            except Exception as e:
+                self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+                raise
+                
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
         finally:
             connector.disconnect()
     

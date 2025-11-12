@@ -519,45 +519,66 @@ class RepoIngestor:
         Returns:
             dict: Processed repository data
         """
-        # Validate repository URL
+        # Track repository ingestion
+        tracking_id = self.progress_tracker.start_tracking(
+            file=repo_url,
+            module="ingest",
+            submodule="RepoIngestor",
+            message=f"Repository: {repo_url}"
+        )
+        
         try:
-            parsed = git.Repo.clone_from(repo_url, self._get_temp_dir(), **options)
-        except Exception as e:
-            raise ProcessingError(f"Failed to clone repository: {e}")
-        
-        repo_path = Path(self.temp_dir)
-        repo = git.Repo(repo_path)
-        
-        # Checkout specific branch if requested
-        if options.get("branch"):
+            # Validate repository URL
             try:
-                repo.git.checkout(options["branch"])
+                parsed = git.Repo.clone_from(repo_url, self._get_temp_dir(), **options)
             except Exception as e:
-                self.logger.warning(f"Failed to checkout branch {options['branch']}: {e}")
-        
-        # Extract repository information
-        repo_info = self.get_repository_info(repo_url, repo)
-        
-        # Process code files
-        code_files = self.extract_code_files(repo_path, **options.get("file_filters", {}))
-        
-        # Analyze commits if requested
-        commits = []
-        if options.get("include_history", True):
-            commits = self.analyze_commits(repo_path, **options.get("commit_filters", {}))
-        
-        # Analyze structure
-        structure = self.analyzer.analyze_structure(repo_path)
-        metrics = self.analyzer.calculate_metrics(repo_path)
-        
-        return {
-            "repository_info": repo_info,
-            "code_files": [f.__dict__ for f in code_files],
-            "commits": [c.__dict__ for c in commits],
-            "structure": structure,
-            "metrics": metrics,
-            "temp_path": str(repo_path)
-        }
+                self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+                raise ProcessingError(f"Failed to clone repository: {e}") from e
+            
+            repo_path = Path(self.temp_dir)
+            repo = git.Repo(repo_path)
+            
+            self.progress_tracker.update_tracking(tracking_id, message="Cloning repository...")
+            
+            # Checkout specific branch if requested
+            if options.get("branch"):
+                try:
+                    repo.git.checkout(options["branch"])
+                except Exception as e:
+                    self.logger.warning(f"Failed to checkout branch {options['branch']}: {e}")
+            
+            # Extract repository information
+            repo_info = self.get_repository_info(repo_url, repo)
+            
+            # Process code files
+            self.progress_tracker.update_tracking(tracking_id, message="Extracting code files...")
+            code_files = self.extract_code_files(repo_path, **options.get("file_filters", {}))
+            
+            # Analyze commits if requested
+            commits = []
+            if options.get("include_history", True):
+                self.progress_tracker.update_tracking(tracking_id, message="Analyzing commits...")
+                commits = self.analyze_commits(repo_path, **options.get("commit_filters", {}))
+            
+            # Analyze structure
+            self.progress_tracker.update_tracking(tracking_id, message="Analyzing structure...")
+            structure = self.analyzer.analyze_structure(repo_path)
+            metrics = self.analyzer.calculate_metrics(repo_path)
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                               message=f"Processed {len(code_files)} files, {len(commits)} commits")
+            return {
+                "repository_info": repo_info,
+                "code_files": [f.__dict__ for f in code_files],
+                "commits": [c.__dict__ for c in commits],
+                "structure": structure,
+                "metrics": metrics,
+                "temp_path": str(repo_path)
+            }
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def analyze_commits(self, repo_path: Path, **filters) -> List[CommitInfo]:
         """

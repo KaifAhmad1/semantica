@@ -38,6 +38,7 @@ from lxml import etree
 
 from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 
 
 @dataclass
@@ -72,6 +73,7 @@ class XMLParser:
         """
         self.logger = get_logger("xml_parser")
         self.config = config
+        self.progress_tracker = get_progress_tracker()
     
     def parse(
         self,
@@ -92,30 +94,51 @@ class XMLParser:
         Returns:
             XMLData: Parsed XML data
         """
-        engine = options.get("engine", "lxml")
-        
-        # Load XML content
+        # Track XML parsing
+        file_path_obj = None
         if isinstance(file_path, Path) or (isinstance(file_path, str) and Path(file_path).exists()):
             file_path_obj = Path(file_path)
-            if not file_path_obj.exists():
-                raise ValidationError(f"XML file not found: {file_path_obj}")
-            
-            with open(file_path_obj, 'r', encoding='utf-8', errors='ignore') as f:
-                xml_string = f.read()
-            source = str(file_path_obj)
-        else:
-            xml_string = file_path
-            source = "string"
+        
+        tracking_id = self.progress_tracker.start_tracking(
+            file=str(file_path_obj) if file_path_obj else None,
+            module="parse",
+            submodule="XMLParser",
+            message=f"XML: {file_path_obj.name if file_path_obj else 'content'}"
+        )
         
         try:
-            if engine == "lxml":
-                return self._parse_with_lxml(xml_string, source, options)
+            engine = options.get("engine", "lxml")
+            
+            # Load XML content
+            if file_path_obj:
+                if not file_path_obj.exists():
+                    raise ValidationError(f"XML file not found: {file_path_obj}")
+                
+                with open(file_path_obj, 'r', encoding='utf-8', errors='ignore') as f:
+                    xml_string = f.read()
+                source = str(file_path_obj)
             else:
-                return self._parse_with_etree(xml_string, source, options)
+                xml_string = file_path
+                source = "string"
+            
+            try:
+                if engine == "lxml":
+                    result = self._parse_with_lxml(xml_string, source, options)
+                else:
+                    result = self._parse_with_etree(xml_string, source, options)
+                
+                self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                                   message="Parsed XML successfully")
+                return result
+                    
+            except Exception as e:
+                self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+                self.logger.error(f"Failed to parse XML: {e}")
+                raise ProcessingError(f"Failed to parse XML: {e}")
                 
         except Exception as e:
-            self.logger.error(f"Failed to parse XML: {e}")
-            raise ProcessingError(f"Failed to parse XML: {e}")
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def _parse_with_lxml(self, xml_string: str, source: str, options: Dict[str, Any]) -> XMLData:
         """Parse XML using lxml."""

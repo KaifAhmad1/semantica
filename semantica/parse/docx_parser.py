@@ -41,6 +41,7 @@ from docx.text.paragraph import Paragraph
 
 from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 
 
 @dataclass
@@ -81,6 +82,7 @@ class DOCXParser:
         """
         self.logger = get_logger("docx_parser")
         self.config = config
+        self.progress_tracker = get_progress_tracker()
     
     def parse(self, file_path: Union[str, Path], **options) -> Dict[str, Any]:
         """
@@ -98,59 +100,75 @@ class DOCXParser:
         """
         file_path = Path(file_path)
         
-        if not file_path.exists():
-            raise ValidationError(f"DOCX file not found: {file_path}")
-        
-        if not file_path.suffix.lower() in ['.docx', '.doc']:
-            raise ValidationError(f"File is not a DOCX: {file_path}")
+        # Track DOCX parsing
+        tracking_id = self.progress_tracker.start_tracking(
+            file=str(file_path),
+            module="parse",
+            submodule="DOCXParser",
+            message=f"DOCX: {file_path.name}"
+        )
         
         try:
-            doc = Document(str(file_path))
+            if not file_path.exists():
+                raise ValidationError(f"DOCX file not found: {file_path}")
             
-            # Extract metadata
-            metadata = self._extract_metadata(doc)
+            if not file_path.suffix.lower() in ['.docx', '.doc']:
+                raise ValidationError(f"File is not a DOCX: {file_path}")
             
-            # Extract paragraphs
-            paragraphs = []
-            for para in doc.paragraphs:
-                if para.text.strip():
-                    paragraphs.append(para.text.strip())
-            
-            # Extract tables
-            tables = []
-            if options.get("extract_tables", True):
-                for table in doc.tables:
-                    table_data = self._extract_table(table)
-                    tables.append(table_data)
-            
-            # Extract structure
-            sections = self._extract_sections(doc, options)
-            
-            # Extract comments if requested
-            comments = []
-            if options.get("extract_comments", False):
-                comments = self._extract_comments(doc)
-            
-            # Extract formatting if requested
-            formatting_info = None
-            if options.get("extract_formatting", False):
-                formatting_info = self._extract_formatting(doc)
-            
-            return {
-                "metadata": metadata.__dict__,
-                "full_text": "\n\n".join(paragraphs),
-                "paragraphs": paragraphs,
-                "tables": tables,
-                "sections": [s.__dict__ for s in sections],
-                "comments": comments,
-                "formatting": formatting_info,
-                "total_paragraphs": len(paragraphs),
-                "total_tables": len(tables)
-            }
-            
+            try:
+                doc = Document(str(file_path))
+                
+                # Extract metadata
+                metadata = self._extract_metadata(doc)
+                
+                # Extract paragraphs
+                paragraphs = []
+                for para in doc.paragraphs:
+                    if para.text.strip():
+                        paragraphs.append(para.text.strip())
+                
+                # Extract tables
+                tables = []
+                if options.get("extract_tables", True):
+                    for table in doc.tables:
+                        table_data = self._extract_table(table)
+                        tables.append(table_data)
+                
+                # Extract structure
+                sections = self._extract_sections(doc, options)
+                
+                # Extract comments if requested
+                comments = []
+                if options.get("extract_comments", False):
+                    comments = self._extract_comments(doc)
+                
+                # Extract formatting if requested
+                formatting_info = None
+                if options.get("extract_formatting", False):
+                    formatting_info = self._extract_formatting(doc)
+                
+                self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                                   message=f"Parsed {len(paragraphs)} paragraphs, {len(tables)} tables")
+                return {
+                    "metadata": metadata.__dict__,
+                    "full_text": "\n\n".join(paragraphs),
+                    "paragraphs": paragraphs,
+                    "tables": tables,
+                    "sections": [s.__dict__ for s in sections],
+                    "comments": comments,
+                    "formatting": formatting_info,
+                    "total_paragraphs": len(paragraphs),
+                    "total_tables": len(tables)
+                }
+                
+            except Exception as e:
+                self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+                self.logger.error(f"Failed to parse DOCX {file_path}: {e}")
+                raise ProcessingError(f"Failed to parse DOCX: {e}")
+                
         except Exception as e:
-            self.logger.error(f"Failed to parse DOCX {file_path}: {e}")
-            raise ProcessingError(f"Failed to parse DOCX: {e}")
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def extract_text(self, file_path: Union[str, Path]) -> str:
         """

@@ -32,6 +32,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 from .image_parser import ImageParser
 
 
@@ -93,21 +94,40 @@ class MediaParser:
         """
         file_path = Path(file_path)
         
-        if not file_path.exists():
-            raise ValidationError(f"Media file not found: {file_path}")
+        # Track media parsing
+        tracking_id = self.progress_tracker.start_tracking(
+            file=str(file_path),
+            module="parse",
+            submodule="MediaParser",
+            message=f"Media: {file_path.name}"
+        )
         
-        # Detect media type if not specified
-        if media_type is None:
-            media_type = self._detect_media_type(file_path)
-        
-        if media_type == "image":
-            return self.image_parser.parse(file_path, **options)
-        elif media_type == "audio":
-            return self._parse_audio(file_path, **options)
-        elif media_type == "video":
-            return self._parse_video(file_path, **options)
-        else:
-            raise ValidationError(f"Unsupported media type: {media_type}")
+        try:
+            if not file_path.exists():
+                raise ValidationError(f"Media file not found: {file_path}")
+            
+            # Detect media type if not specified
+            if media_type is None:
+                media_type = self._detect_media_type(file_path)
+            
+            self.progress_tracker.update_tracking(tracking_id, message=f"Parsing {media_type}...")
+            
+            if media_type == "image":
+                result = self.image_parser.parse(file_path, **options)
+            elif media_type == "audio":
+                result = self._parse_audio(file_path, **options)
+            elif media_type == "video":
+                result = self._parse_video(file_path, **options)
+            else:
+                raise ValidationError(f"Unsupported media type: {media_type}")
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                               message=f"Parsed {media_type} successfully")
+            return result
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def extract_metadata(self, file_path: Union[str, Path], media_type: Optional[str] = None) -> Dict[str, Any]:
         """

@@ -41,6 +41,7 @@ import time
 
 from ..utils.exceptions import ValidationError, ProcessingError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 from .pipeline_builder import Pipeline, PipelineStep, StepStatus
 from .failure_handler import FailureHandler
 from .parallelism_manager import ParallelismManager
@@ -100,6 +101,9 @@ class ExecutionEngine:
         self.running_pipelines: Dict[str, Pipeline] = {}
         self.pipeline_status: Dict[str, PipelineStatus] = {}
         self.pipeline_lock = threading.Lock()
+        
+        # Initialize progress tracker
+        self.progress_tracker = get_progress_tracker()
     
     def execute_pipeline(
         self,
@@ -120,6 +124,13 @@ class ExecutionEngine:
         """
         pipeline_id = pipeline.name
         start_time = time.time()
+        
+        # Track pipeline execution
+        pipeline_tracking_id = self.progress_tracker.start_tracking(
+            module="pipeline",
+            submodule="ExecutionEngine",
+            message=f"Executing pipeline: {pipeline_id}"
+        )
         
         try:
             self.logger.info(f"Executing pipeline: {pipeline_id}")
@@ -151,6 +162,13 @@ class ExecutionEngine:
                     else:
                         self.pipeline_status[pipeline_id] = PipelineStatus.FAILED
                 
+                # Update progress tracking
+                self.progress_tracker.stop_tracking(
+                    pipeline_tracking_id,
+                    status="completed" if metrics["steps_failed"] == 0 else "failed",
+                    message=f"Executed {metrics['steps_executed']} steps in {execution_time:.2f}s"
+                )
+                
                 return ExecutionResult(
                     success=metrics["steps_failed"] == 0,
                     output=result,
@@ -166,6 +184,7 @@ class ExecutionEngine:
                 self.resource_scheduler.release_resources(resources)
                 
         except Exception as e:
+            self.progress_tracker.stop_tracking(pipeline_tracking_id, status="failed", message=str(e))
             self.logger.error(f"Pipeline execution failed: {e}")
             with self.pipeline_lock:
                 self.pipeline_status[pipeline_id] = PipelineStatus.FAILED
@@ -188,13 +207,22 @@ class ExecutionEngine:
         
         # Execute steps
         current_data = data
-        for step in sorted_steps:
+        total_steps = len(sorted_steps)
+        
+        for step_idx, step in enumerate(sorted_steps):
             if self.pipeline_status.get(pipeline.name) == PipelineStatus.STOPPED:
                 break
             
             # Wait if paused
             while self.pipeline_status.get(pipeline.name) == PipelineStatus.PAUSED:
                 time.sleep(0.1)
+            
+            # Track step execution
+            step_tracking_id = self.progress_tracker.start_tracking(
+                module="pipeline",
+                submodule=step.step_type or step.name,
+                message=f"Step {step_idx + 1}/{total_steps}: {step.name}"
+            )
             
             try:
                 # Execute step
@@ -204,6 +232,9 @@ class ExecutionEngine:
                 step.result = step_result
                 current_data = step_result
                 
+                self.progress_tracker.stop_tracking(step_tracking_id, status="completed",
+                                                   message=f"Completed step: {step.name}")
+                
             except Exception as e:
                 step.status = StepStatus.FAILED
                 step.error = e
@@ -211,14 +242,19 @@ class ExecutionEngine:
                 # Handle failure
                 recovery_result = self.failure_handler.handle_step_failure(step, e)
                 if not recovery_result.get("retry", False):
+                    self.progress_tracker.stop_tracking(step_tracking_id, status="failed", message=str(e))
                     raise
                 else:
                     # Retry step
+                    self.progress_tracker.update_tracking(step_tracking_id, status="running",
+                                                        message=f"Retrying step: {step.name}")
                     step.status = StepStatus.RUNNING
                     step_result = self._execute_step(step, current_data, **options)
                     step.status = StepStatus.COMPLETED
                     step.result = step_result
                     current_data = step_result
+                    self.progress_tracker.stop_tracking(step_tracking_id, status="completed",
+                                                       message=f"Retry successful: {step.name}")
         
         return current_data
     

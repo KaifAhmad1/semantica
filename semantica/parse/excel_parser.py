@@ -71,6 +71,7 @@ class ExcelParser:
         """
         self.logger = get_logger("excel_parser")
         self.config = config
+        self.progress_tracker = get_progress_tracker()
     
     def parse(
         self,
@@ -95,23 +96,44 @@ class ExcelParser:
         """
         file_path = Path(file_path)
         
-        if not file_path.exists():
-            raise ValidationError(f"Excel file not found: {file_path}")
-        
-        if not file_path.suffix.lower() in ['.xlsx', '.xls', '.xlsm']:
-            raise ValidationError(f"File is not an Excel file: {file_path}")
+        # Track Excel parsing
+        tracking_id = self.progress_tracker.start_tracking(
+            file=str(file_path),
+            module="parse",
+            submodule="ExcelParser",
+            message=f"Excel: {file_path.name}"
+        )
         
         try:
-            engine = options.get("engine", "pandas")
+            if not file_path.exists():
+                raise ValidationError(f"Excel file not found: {file_path}")
             
-            if engine == "pandas":
-                return self._parse_with_pandas(file_path, sheet_name, **options)
-            else:
-                return self._parse_with_openpyxl(file_path, sheet_name, **options)
+            if not file_path.suffix.lower() in ['.xlsx', '.xls', '.xlsm']:
+                raise ValidationError(f"File is not an Excel file: {file_path}")
+            
+            try:
+                engine = options.get("engine", "pandas")
+                
+                self.progress_tracker.update_tracking(tracking_id, message=f"Parsing with {engine}...")
+                
+                if engine == "pandas":
+                    result = self._parse_with_pandas(file_path, sheet_name, **options)
+                else:
+                    result = self._parse_with_openpyxl(file_path, sheet_name, **options)
+                
+                sheet_count = len(result.sheets) if hasattr(result, 'sheets') else 1
+                self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                                   message=f"Parsed {sheet_count} sheet(s)")
+                return result
+                    
+            except Exception as e:
+                self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+                self.logger.error(f"Failed to parse Excel {file_path}: {e}")
+                raise ProcessingError(f"Failed to parse Excel: {e}")
                 
         except Exception as e:
-            self.logger.error(f"Failed to parse Excel {file_path}: {e}")
-            raise ProcessingError(f"Failed to parse Excel: {e}")
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def _parse_with_pandas(
         self,

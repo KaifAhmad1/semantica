@@ -31,6 +31,7 @@ from datetime import datetime
 
 from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 from ..utils.constants import (
     SUPPORTED_DOCUMENT_FORMATS,
     SUPPORTED_IMAGE_FORMATS,
@@ -391,6 +392,9 @@ class FileIngestor:
         # Progress tracking callback (can be set by user)
         self._progress_callback: Optional[callable] = None
         
+        # Initialize progress tracker
+        self.progress_tracker = get_progress_tracker()
+        
         self.logger.info("File ingestor initialized")
     
     def ingest_directory(
@@ -412,37 +416,54 @@ class FileIngestor:
         """
         directory_path = Path(directory_path)
         
-        # Validate directory path
-        if not directory_path.exists():
-            raise ValidationError(f"Directory not found: {directory_path}")
+        # Track directory ingestion
+        tracking_id = self.progress_tracker.start_tracking(
+            file=str(directory_path),
+            module="ingest",
+            submodule="FileIngestor",
+            message=f"Directory: {directory_path.name}"
+        )
         
-        if not directory_path.is_dir():
-            raise ValidationError(f"Path is not a directory: {directory_path}")
-        
-        # Scan directory for files
-        files = self.scan_directory(directory_path, recursive=recursive, **filters)
-        
-        # Process each file
-        file_objects = []
-        total_files = len(files)
-        
-        for idx, file_info in enumerate(files, 1):
-            try:
-                file_obj = self.ingest_file(file_info['path'], **file_info)
-                file_objects.append(file_obj)
-                
-                # Track progress
-                if self._progress_callback:
-                    self._progress_callback(idx, total_files, file_obj)
-                
-                self.logger.debug(f"Ingested file {idx}/{total_files}: {file_info['path']}")
-                
-            except Exception as e:
-                self.logger.error(f"Failed to ingest file {file_info['path']}: {e}")
-                if self.config.get('fail_fast', False):
-                    raise ProcessingError(f"Failed to ingest file: {e}")
-        
-        return file_objects
+        try:
+            # Validate directory path
+            if not directory_path.exists():
+                raise ValidationError(f"Directory not found: {directory_path}")
+            
+            if not directory_path.is_dir():
+                raise ValidationError(f"Path is not a directory: {directory_path}")
+            
+            # Scan directory for files
+            files = self.scan_directory(directory_path, recursive=recursive, **filters)
+            
+            # Process each file
+            file_objects = []
+            total_files = len(files)
+            
+            self.progress_tracker.update_tracking(tracking_id, message=f"Processing {total_files} files")
+            
+            for idx, file_info in enumerate(files, 1):
+                try:
+                    file_obj = self.ingest_file(file_info['path'], **file_info)
+                    file_objects.append(file_obj)
+                    
+                    # Track progress
+                    if self._progress_callback:
+                        self._progress_callback(idx, total_files, file_obj)
+                    
+                    self.logger.debug(f"Ingested file {idx}/{total_files}: {file_info['path']}")
+                    
+                except Exception as e:
+                    self.logger.error(f"Failed to ingest file {file_info['path']}: {e}")
+                    if self.config.get('fail_fast', False):
+                        raise ProcessingError(f"Failed to ingest file: {e}")
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                               message=f"Ingested {len(file_objects)} files")
+            return file_objects
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def ingest_file(self, file_path: Union[str, Path], **options) -> FileObject:
         """
@@ -466,67 +487,82 @@ class FileIngestor:
         """
         file_path = Path(file_path)
         
-        # Validate file exists
-        if not file_path.exists():
-            raise ValidationError(f"File not found: {file_path}")
-        
-        # Validate it's actually a file (not a directory)
-        if not file_path.is_file():
-            raise ValidationError(f"Path is not a file: {file_path}")
-        
-        # Check file size against limits
-        file_size = file_path.stat().st_size
-        max_size = FILE_SIZE_LIMITS.get('MAX_DOCUMENT_SIZE', 104857600)  # 100MB default
-        if file_size > max_size:
-            raise ValidationError(
-                f"File size {file_size:,} bytes exceeds maximum {max_size:,} bytes "
-                f"({file_path.name})"
-            )
-        
-        # Detect file type using multiple methods
-        file_type = self.type_detector.detect_type(file_path)
-        
-        # Warn if file type is not in supported formats list
-        if not self.type_detector.is_supported(file_type):
-            self.logger.warning(
-                f"Unsupported file type '{file_type}' for file: {file_path}. "
-                "Processing may be limited."
-            )
-        
-        # Read file content if requested (default: True)
-        content = None
-        read_content = options.get('read_content', True)
-        if read_content:
-            try:
-                with open(file_path, 'rb') as file_handle:
-                    content = file_handle.read()
-                self.logger.debug(f"Read {len(content):,} bytes from {file_path.name}")
-            except Exception as e:
-                self.logger.error(f"Failed to read file content from {file_path}: {e}")
-                raise ProcessingError(f"Failed to read file: {e}") from e
-        
-        # Detect MIME type for additional metadata
-        mime_type, _ = mimetypes.guess_type(str(file_path))
-        
-        # Create and return FileObject with all metadata
-        file_obj = FileObject(
-            path=str(file_path.absolute()),
-            name=file_path.name,
-            size=file_size,
-            file_type=file_type,
-            mime_type=mime_type,
-            content=content,
-            metadata={
-                'extension': file_path.suffix,
-                'parent': str(file_path.parent),
-                'is_supported': self.type_detector.is_supported(file_type),
-                'read_content': read_content,
-                **options  # Include any additional options as metadata
-            }
+        # Track file ingestion
+        tracking_id = self.progress_tracker.start_tracking(
+            file=str(file_path),
+            module="ingest",
+            submodule="FileIngestor",
+            message=f"File: {file_path.name}"
         )
         
-        self.logger.debug(f"Successfully ingested file: {file_path.name} ({file_type})")
-        return file_obj
+        try:
+            # Validate file exists
+            if not file_path.exists():
+                raise ValidationError(f"File not found: {file_path}")
+            
+            # Validate it's actually a file (not a directory)
+            if not file_path.is_file():
+                raise ValidationError(f"Path is not a file: {file_path}")
+            
+            # Check file size against limits
+            file_size = file_path.stat().st_size
+            max_size = FILE_SIZE_LIMITS.get('MAX_DOCUMENT_SIZE', 104857600)  # 100MB default
+            if file_size > max_size:
+                raise ValidationError(
+                    f"File size {file_size:,} bytes exceeds maximum {max_size:,} bytes "
+                    f"({file_path.name})"
+                )
+            
+            # Detect file type using multiple methods
+            file_type = self.type_detector.detect_type(file_path)
+            
+            # Warn if file type is not in supported formats list
+            if not self.type_detector.is_supported(file_type):
+                self.logger.warning(
+                    f"Unsupported file type '{file_type}' for file: {file_path}. "
+                    "Processing may be limited."
+                )
+            
+            # Read file content if requested (default: True)
+            content = None
+            read_content = options.get('read_content', True)
+            if read_content:
+                try:
+                    with open(file_path, 'rb') as file_handle:
+                        content = file_handle.read()
+                    self.logger.debug(f"Read {len(content):,} bytes from {file_path.name}")
+                except Exception as e:
+                    self.logger.error(f"Failed to read file content from {file_path}: {e}")
+                    raise ProcessingError(f"Failed to read file: {e}") from e
+            
+            # Detect MIME type for additional metadata
+            mime_type, _ = mimetypes.guess_type(str(file_path))
+            
+            # Create and return FileObject with all metadata
+            file_obj = FileObject(
+                path=str(file_path.absolute()),
+                name=file_path.name,
+                size=file_size,
+                file_type=file_type,
+                mime_type=mime_type,
+                content=content,
+                metadata={
+                    'extension': file_path.suffix,
+                    'parent': str(file_path.parent),
+                    'is_supported': self.type_detector.is_supported(file_type),
+                    'read_content': read_content,
+                    **options  # Include any additional options as metadata
+                }
+            )
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                               message=f"Ingested {file_path.name} ({file_type})")
+            self.logger.debug(f"Successfully ingested file: {file_path.name} ({file_type})")
+            return file_obj
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def ingest_cloud(
         self,

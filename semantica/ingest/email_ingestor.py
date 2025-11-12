@@ -44,6 +44,7 @@ from bs4 import BeautifulSoup
 
 from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 
 
 @dataclass
@@ -444,6 +445,9 @@ class EmailIngestor:
         # Connection objects (initialized on connect)
         self.imap_client: Optional[imaplib.IMAP4_SSL] = None
         self.pop3_client: Optional[poplib.POP3_SSL] = None
+        
+        # Initialize progress tracker
+        self.progress_tracker = get_progress_tracker()
         
         self.logger.debug("Email ingestor initialized")
     

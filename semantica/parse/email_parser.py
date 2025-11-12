@@ -42,6 +42,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 
 
 @dataclass
@@ -98,6 +99,7 @@ class EmailParser:
         
         self.mime_parser = MIMEParser(**self.config.get("mime", {}))
         self.thread_analyzer = EmailThreadAnalyzer(**self.config.get("thread", {}))
+        self.progress_tracker = get_progress_tracker()
     
     def parse_email(self, email_content: Union[str, bytes, Path], **options) -> EmailData:
         """
@@ -111,39 +113,58 @@ class EmailParser:
         Returns:
             EmailData: Parsed email data
         """
-        # Load email content
+        # Track email parsing
+        file_path = None
         if isinstance(email_content, Path) or (isinstance(email_content, str) and Path(email_content).exists()):
             file_path = Path(email_content)
-            if not file_path.exists():
-                raise ValidationError(f"Email file not found: {file_path}")
-            
-            with open(file_path, 'rb') as f:
-                email_bytes = f.read()
-            email_msg = message_from_bytes(email_bytes)
-        elif isinstance(email_content, bytes):
-            email_msg = message_from_bytes(email_content)
-        else:
-            email_msg = message_from_string(email_content)
+        
+        tracking_id = self.progress_tracker.start_tracking(
+            file=str(file_path) if file_path else None,
+            module="parse",
+            submodule="EmailParser",
+            message=f"Email: {file_path.name if file_path else 'content'}"
+        )
         
         try:
-            # Extract headers
-            headers = self.extract_headers(email_msg)
+            # Load email content
+            if file_path:
+                if not file_path.exists():
+                    raise ValidationError(f"Email file not found: {file_path}")
+                
+                with open(file_path, 'rb') as f:
+                    email_bytes = f.read()
+                email_msg = message_from_bytes(email_bytes)
+            elif isinstance(email_content, bytes):
+                email_msg = message_from_bytes(email_content)
+            else:
+                email_msg = message_from_string(email_content)
             
-            # Extract body
-            body = self.extract_body(email_msg, extract_attachments=options.get("extract_attachments", True))
-            
-            return EmailData(
-                headers=headers,
-                body=body,
-                metadata={
-                    "message_id": headers.message_id,
-                    "date": headers.date
-                }
-            )
-            
+            try:
+                # Extract headers
+                headers = self.extract_headers(email_msg)
+                
+                # Extract body
+                body = self.extract_body(email_msg, extract_attachments=options.get("extract_attachments", True))
+                
+                self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                                   message=f"Parsed email: {headers.subject or 'No subject'}")
+                return EmailData(
+                    headers=headers,
+                    body=body,
+                    metadata={
+                        "message_id": headers.message_id,
+                        "date": headers.date
+                    }
+                )
+                
+            except Exception as e:
+                self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+                self.logger.error(f"Failed to parse email: {e}")
+                raise ProcessingError(f"Failed to parse email: {e}")
+                
         except Exception as e:
-            self.logger.error(f"Failed to parse email: {e}")
-            raise ProcessingError(f"Failed to parse email: {e}")
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def extract_headers(self, email_message: email.message.Message) -> EmailHeaders:
         """

@@ -34,6 +34,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 
 
 @dataclass
@@ -58,6 +59,7 @@ class CSVParser:
         """
         self.logger = get_logger("csv_parser")
         self.config = config
+        self.progress_tracker = get_progress_tracker()
     
     def parse(
         self,
@@ -133,24 +135,31 @@ class CSVParser:
                         rows.append(row)
                     else:
                         rows.append(dict(zip(headers, row if isinstance(row, list) else [row])))
-            
-            metadata = {
-                "file_path": str(file_path),
-                "delimiter": delimiter,
-                "encoding": encoding,
-                "has_header": has_header
-            }
-            
-            return CSVData(
-                headers=headers,
-                rows=rows,
-                row_count=len(rows),
-                metadata=metadata
-            )
-            
+                
+                metadata = {
+                    "file_path": str(file_path),
+                    "delimiter": delimiter,
+                    "encoding": encoding,
+                    "has_header": has_header
+                }
+                
+                self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                                   message=f"Parsed {len(rows)} rows")
+                return CSVData(
+                    headers=headers,
+                    rows=rows,
+                    row_count=len(rows),
+                    metadata=metadata
+                )
+                
+            except Exception as e:
+                self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+                self.logger.error(f"Failed to parse CSV {file_path}: {e}")
+                raise ProcessingError(f"Failed to parse CSV: {e}")
+                
         except Exception as e:
-            self.logger.error(f"Failed to parse CSV {file_path}: {e}")
-            raise ProcessingError(f"Failed to parse CSV: {e}")
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def parse_to_dict(self, file_path: Union[str, Path], **options) -> List[Dict[str, Any]]:
         """

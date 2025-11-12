@@ -36,6 +36,7 @@ from pptx import Presentation
 
 from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 
 
 @dataclass
@@ -71,6 +72,7 @@ class PPTXParser:
         """
         self.logger = get_logger("pptx_parser")
         self.config = config
+        self.progress_tracker = get_progress_tracker()
     
     def parse(self, file_path: Union[str, Path], **options) -> PPTXData:
         """

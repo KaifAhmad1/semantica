@@ -33,6 +33,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 from .pdf_parser import PDFParser
 from .docx_parser import DOCXParser
 from .html_parser import HTMLParser
@@ -92,6 +93,9 @@ class DocumentParser:
             '.txt': 'text',
             '.text': 'text'
         }
+        
+        # Initialize progress tracker
+        self.progress_tracker = get_progress_tracker()
     
     def parse_document(self, file_path: Union[str, Path], file_type: Optional[str] = None, **options) -> Dict[str, Any]:
         """
@@ -114,29 +118,49 @@ class DocumentParser:
         """
         file_path = Path(file_path)
         
-        if not file_path.exists():
-            raise ValidationError(f"Document file not found: {file_path}")
+        # Track document parsing
+        tracking_id = self.progress_tracker.start_tracking(
+            file=str(file_path),
+            module="parse",
+            submodule="DocumentParser",
+            message=f"Document: {file_path.name}"
+        )
         
-        # Detect file type if not specified
-        if file_type is None:
-            file_type = self._detect_file_type(file_path)
-        
-        # Route to appropriate parser
         try:
-            if file_type == 'pdf':
-                return self.pdf_parser.parse(file_path, **options)
-            elif file_type == 'docx':
-                return self.docx_parser.parse(file_path, **options)
-            elif file_type == 'html':
-                return self.html_parser.parse(file_path, **options)
-            elif file_type == 'text':
-                return self._parse_text(file_path, **options)
-            else:
-                raise ValidationError(f"Unsupported document format: {file_type}")
+            if not file_path.exists():
+                raise ValidationError(f"Document file not found: {file_path}")
+            
+            # Detect file type if not specified
+            if file_type is None:
+                file_type = self._detect_file_type(file_path)
+            
+            self.progress_tracker.update_tracking(tracking_id, message=f"Parsing {file_type} document")
+            
+            # Route to appropriate parser
+            try:
+                if file_type == 'pdf':
+                    result = self.pdf_parser.parse(file_path, **options)
+                elif file_type == 'docx':
+                    result = self.docx_parser.parse(file_path, **options)
+                elif file_type == 'html':
+                    result = self.html_parser.parse(file_path, **options)
+                elif file_type == 'text':
+                    result = self._parse_text(file_path, **options)
+                else:
+                    raise ValidationError(f"Unsupported document format: {file_type}")
+                
+                self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                                   message=f"Parsed {file_path.name} ({file_type})")
+                return result
+                    
+            except Exception as e:
+                self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+                self.logger.error(f"Failed to parse document {file_path}: {e}")
+                raise ProcessingError(f"Failed to parse document: {e}")
                 
         except Exception as e:
-            self.logger.error(f"Failed to parse document {file_path}: {e}")
-            raise ProcessingError(f"Failed to parse document: {e}")
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def extract_text(self, file_path: Union[str, Path], **options) -> str:
         """

@@ -34,6 +34,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 
 
 @dataclass
@@ -57,6 +58,7 @@ class JSONParser:
         """
         self.logger = get_logger("json_parser")
         self.config = config
+        self.progress_tracker = get_progress_tracker()
     
     def parse(self, file_path: Union[str, Path], **options) -> JSONData:
         """
@@ -72,51 +74,69 @@ class JSONParser:
         Returns:
             JSONData: Parsed JSON data
         """
-        encoding = options.get("encoding", "utf-8")
-        
-        # Check if input is a file path or JSON string
+        # Track JSON parsing
+        file_path_obj = None
         if isinstance(file_path, Path) or (isinstance(file_path, str) and Path(file_path).exists()):
             file_path_obj = Path(file_path)
-            if not file_path_obj.exists():
-                raise ValidationError(f"JSON file not found: {file_path_obj}")
-            
-            try:
-                with open(file_path_obj, 'r', encoding=encoding) as f:
-                    data = json.load(f)
-                source = str(file_path_obj)
-            except json.JSONDecodeError as e:
-                raise ValidationError(f"Invalid JSON file: {e}")
-        else:
-            # Assume it's a JSON string
-            try:
-                data = json.loads(file_path)
-                source = "string"
-            except json.JSONDecodeError as e:
-                raise ValidationError(f"Invalid JSON string: {e}")
         
-        # Determine data type
-        data_type = self._determine_type(data)
-        
-        # Flatten if requested
-        if options.get("flatten", False):
-            data = self._flatten(data)
-        
-        # Extract paths if requested
-        paths = None
-        if options.get("extract_paths", False):
-            paths = self._extract_paths(data)
-        
-        metadata = {
-            "source": source,
-            "type": data_type,
-            "paths": paths
-        }
-        
-        return JSONData(
-            data=data,
-            type=data_type,
-            metadata=metadata
+        tracking_id = self.progress_tracker.start_tracking(
+            file=str(file_path_obj) if file_path_obj else None,
+            module="parse",
+            submodule="JSONParser",
+            message=f"JSON: {file_path_obj.name if file_path_obj else 'content'}"
         )
+        
+        try:
+            encoding = options.get("encoding", "utf-8")
+            
+            # Check if input is a file path or JSON string
+            if file_path_obj:
+                if not file_path_obj.exists():
+                    raise ValidationError(f"JSON file not found: {file_path_obj}")
+                
+                try:
+                    with open(file_path_obj, 'r', encoding=encoding) as f:
+                        data = json.load(f)
+                    source = str(file_path_obj)
+                except json.JSONDecodeError as e:
+                    raise ValidationError(f"Invalid JSON file: {e}")
+            else:
+                # Assume it's a JSON string
+                try:
+                    data = json.loads(file_path)
+                    source = "string"
+                except json.JSONDecodeError as e:
+                    raise ValidationError(f"Invalid JSON string: {e}")
+            
+            # Determine data type
+            data_type = self._determine_type(data)
+            
+            # Flatten if requested
+            if options.get("flatten", False):
+                data = self._flatten(data)
+            
+            # Extract paths if requested
+            paths = None
+            if options.get("extract_paths", False):
+                paths = self._extract_paths(data)
+            
+            metadata = {
+                "source": source,
+                "type": data_type,
+                "paths": paths
+            }
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                               message=f"Parsed JSON ({data_type})")
+            return JSONData(
+                data=data,
+                type=data_type,
+                metadata=metadata
+            )
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def parse_to_dict(self, file_path: Union[str, Path], **options) -> Dict[str, Any]:
         """

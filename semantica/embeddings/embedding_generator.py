@@ -99,6 +99,10 @@ class EmbeddingGenerator:
         # List of supported embedding models
         self.supported_models = ["sentence-transformers", "openai", "bge", "clip"]
         
+        # Initialize progress tracker
+        from ..utils.progress_tracker import get_progress_tracker
+        self.progress_tracker = get_progress_tracker()
+        
         self.logger.info("Embedding generator initialized")
     
     def generate_embeddings(
@@ -280,28 +284,44 @@ class EmbeddingGenerator:
         Returns:
             dict: Batch processing results
         """
-        results = {
-            "embeddings": [],
-            "successful": [],
-            "failed": []
-        }
+        # Track batch processing
+        tracking_id = self.progress_tracker.start_tracking(
+            module="embeddings",
+            submodule="EmbeddingGenerator",
+            message=f"Batch of {len(data_items)} items"
+        )
         
-        for item in data_items:
-            try:
-                embedding = self.generate_embeddings(item, **options)
-                results["embeddings"].append(embedding)
-                results["successful"].append(str(item))
-            except Exception as e:
-                results["failed"].append({
-                    "item": str(item),
-                    "error": str(e)
-                })
-        
-        results["total"] = len(data_items)
-        results["success_count"] = len(results["successful"])
-        results["failure_count"] = len(results["failed"])
-        
-        return results
+        try:
+            results = {
+                "embeddings": [],
+                "successful": [],
+                "failed": []
+            }
+            
+            for idx, item in enumerate(data_items, 1):
+                try:
+                    self.progress_tracker.update_tracking(tracking_id, 
+                                                         message=f"Processing item {idx}/{len(data_items)}")
+                    embedding = self.generate_embeddings(item, **options)
+                    results["embeddings"].append(embedding)
+                    results["successful"].append(str(item))
+                except Exception as e:
+                    results["failed"].append({
+                        "item": str(item),
+                        "error": str(e)
+                    })
+            
+            results["total"] = len(data_items)
+            results["success_count"] = len(results["successful"])
+            results["failure_count"] = len(results["failed"])
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                               message=f"Processed {results['success_count']}/{len(data_items)} items successfully")
+            return results
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
 
 
 # Re-export classes from other modules for convenience

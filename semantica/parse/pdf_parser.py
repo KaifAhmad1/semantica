@@ -38,6 +38,7 @@ from PIL import Image
 
 from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 
 
 @dataclass
@@ -78,6 +79,7 @@ class PDFParser:
         """
         self.logger = get_logger("pdf_parser")
         self.config = config
+        self.progress_tracker = get_progress_tracker()
     
     def parse(self, file_path: Union[str, Path], **options) -> Dict[str, Any]:
         """
@@ -96,41 +98,60 @@ class PDFParser:
         """
         file_path = Path(file_path)
         
-        if not file_path.exists():
-            raise ValidationError(f"PDF file not found: {file_path}")
-        
-        if not file_path.suffix.lower() == '.pdf':
-            raise ValidationError(f"File is not a PDF: {file_path}")
+        # Track PDF parsing
+        tracking_id = self.progress_tracker.start_tracking(
+            file=str(file_path),
+            module="parse",
+            submodule="PDFParser",
+            message=f"PDF: {file_path.name}"
+        )
         
         try:
-            with pdfplumber.open(str(file_path)) as pdf:
-                # Extract metadata
-                metadata = self._extract_metadata(pdf)
-                metadata.page_count = len(pdf.pages)
-                
-                # Extract pages
-                pages = []
-                page_numbers = options.get("pages", range(len(pdf.pages)))
-                
-                for page_num in page_numbers:
-                    if page_num < len(pdf.pages):
-                        page_data = self._parse_page(
-                            pdf.pages[page_num],
-                            page_num + 1,
-                            options
-                        )
-                        pages.append(page_data)
-                
-                return {
-                    "metadata": metadata.__dict__,
-                    "pages": [page.__dict__ for page in pages],
-                    "full_text": "\n\n".join(page.text for page in pages),
-                    "total_pages": len(pdf.pages)
-                }
+            if not file_path.exists():
+                raise ValidationError(f"PDF file not found: {file_path}")
+            
+            if not file_path.suffix.lower() == '.pdf':
+                raise ValidationError(f"File is not a PDF: {file_path}")
+            
+            try:
+                with pdfplumber.open(str(file_path)) as pdf:
+                    # Extract metadata
+                    metadata = self._extract_metadata(pdf)
+                    metadata.page_count = len(pdf.pages)
+                    
+                    # Extract pages
+                    pages = []
+                    page_numbers = options.get("pages", range(len(pdf.pages)))
+                    
+                    self.progress_tracker.update_tracking(tracking_id, 
+                                                         message=f"Parsing {len(pdf.pages)} pages")
+                    
+                    for page_num in page_numbers:
+                        if page_num < len(pdf.pages):
+                            page_data = self._parse_page(
+                                pdf.pages[page_num],
+                                page_num + 1,
+                                options
+                            )
+                            pages.append(page_data)
+                    
+                    self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                                       message=f"Parsed {len(pages)} pages")
+                    return {
+                        "metadata": metadata.__dict__,
+                        "pages": [page.__dict__ for page in pages],
+                        "full_text": "\n\n".join(page.text for page in pages),
+                        "total_pages": len(pdf.pages)
+                    }
+                    
+            except Exception as e:
+                self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+                self.logger.error(f"Failed to parse PDF {file_path}: {e}")
+                raise ProcessingError(f"Failed to parse PDF: {e}")
                 
         except Exception as e:
-            self.logger.error(f"Failed to parse PDF {file_path}: {e}")
-            raise ProcessingError(f"Failed to parse PDF: {e}")
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def extract_text(self, file_path: Union[str, Path], pages: Optional[List[int]] = None) -> str:
         """

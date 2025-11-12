@@ -87,7 +87,9 @@ class GraphBuilder:
         
         # Initialize logging
         from ..utils.logging import get_logger
+        from ..utils.progress_tracker import get_progress_tracker
         self.logger = get_logger("graph_builder")
+        self.progress_tracker = get_progress_tracker()
         
         # Initialize entity resolver if entity merging is enabled
         # This helps deduplicate and merge similar entities
@@ -153,94 +155,108 @@ class GraphBuilder:
         if not isinstance(sources, list):
             sources = [sources]
         
-        self.logger.info(f"Building knowledge graph from {len(sources)} source(s)")
-        
-        # Use provided resolver or default instance resolver
-        resolver_to_use = entity_resolver or self.entity_resolver
-        
-        # Extract entities and relationships from all sources
-        all_entities = []
-        all_relationships = []
-        
-        for source in sources:
-            if isinstance(source, dict):
-                # Source is a dictionary - extract entities and relationships
-                if "entities" in source:
-                    # Explicit entities list
-                    all_entities.extend(source["entities"])
-                elif "id" in source or "entity_id" in source:
-                    # Single entity object
-                    all_entities.append(source)
-                
-                if "relationships" in source:
-                    # Explicit relationships list
-                    all_relationships.extend(source["relationships"])
-                elif "source" in source and "target" in source:
-                    # Single relationship object
-                    all_relationships.append(source)
-                    
-            elif isinstance(source, list):
-                # Source is a list - process each item
-                for item in source:
-                    if isinstance(item, dict):
-                        # Determine if item is a relationship or entity
-                        if "source" in item and "target" in item:
-                            all_relationships.append(item)
-                        else:
-                            all_entities.append(item)
-        
-        self.logger.debug(
-            f"Extracted {len(all_entities)} entities and "
-            f"{len(all_relationships)} relationships from sources"
+        # Track graph building
+        tracking_id = self.progress_tracker.start_tracking(
+            module="kg",
+            submodule="GraphBuilder",
+            message=f"Knowledge graph from {len(sources)} source(s)"
         )
         
-        # Resolve entities (deduplicate and merge) if resolver is available
-        resolved_entities = all_entities
-        if resolver_to_use and all_entities:
-            self.logger.info(f"Resolving {len(all_entities)} entities using {self.entity_resolution_strategy} strategy")
-            resolved_entities = resolver_to_use.resolve_entities(all_entities)
-            self.logger.info(
-                f"Entity resolution complete: {len(all_entities)} -> {len(resolved_entities)} unique entities"
-            )
-        
-        # Build graph structure
-        graph = {
-            "entities": resolved_entities,
-            "relationships": all_relationships,
-            "metadata": {
-                "num_entities": len(resolved_entities),
-                "num_relationships": len(all_relationships),
-                "temporal_enabled": self.enable_temporal,
-                "timestamp": self._get_timestamp(),
-                "entity_resolution_applied": resolver_to_use is not None
-            }
-        }
-        
-        # Detect and resolve conflicts if conflict detector is available
-        if self.conflict_detector:
-            self.logger.debug("Detecting conflicts in graph")
-            detected_conflicts = self.conflict_detector.detect_conflicts(graph)
+        try:
+            self.logger.info(f"Building knowledge graph from {len(sources)} source(s)")
             
-            if detected_conflicts:
-                conflict_count = len(detected_conflicts)
-                self.logger.warning(f"Detected {conflict_count} conflict(s) in graph")
+            # Use provided resolver or default instance resolver
+            resolver_to_use = entity_resolver or self.entity_resolver
+            
+            # Extract entities and relationships from all sources
+            all_entities = []
+            all_relationships = []
+            
+            for source in sources:
+                if isinstance(source, dict):
+                    # Source is a dictionary - extract entities and relationships
+                    if "entities" in source:
+                        # Explicit entities list
+                        all_entities.extend(source["entities"])
+                    elif "id" in source or "entity_id" in source:
+                        # Single entity object
+                        all_entities.append(source)
+                    
+                    if "relationships" in source:
+                        # Explicit relationships list
+                        all_relationships.extend(source["relationships"])
+                    elif "source" in source and "target" in source:
+                        # Single relationship object
+                        all_relationships.append(source)
+                        
+                elif isinstance(source, list):
+                    # Source is a list - process each item
+                    for item in source:
+                        if isinstance(item, dict):
+                            # Determine if item is a relationship or entity
+                            if "source" in item and "target" in item:
+                                all_relationships.append(item)
+                            else:
+                                all_entities.append(item)
+            
+            self.logger.debug(
+                f"Extracted {len(all_entities)} entities and "
+                f"{len(all_relationships)} relationships from sources"
+            )
+            
+            # Resolve entities (deduplicate and merge) if resolver is available
+            resolved_entities = all_entities
+            if resolver_to_use and all_entities:
+                self.logger.info(f"Resolving {len(all_entities)} entities using {self.entity_resolution_strategy} strategy")
+                resolved_entities = resolver_to_use.resolve_entities(all_entities)
+                self.logger.info(
+                    f"Entity resolution complete: {len(all_entities)} -> {len(resolved_entities)} unique entities"
+                )
+            
+            # Build graph structure
+            graph = {
+                "entities": resolved_entities,
+                "relationships": all_relationships,
+                "metadata": {
+                    "num_entities": len(resolved_entities),
+                    "num_relationships": len(all_relationships),
+                    "temporal_enabled": self.enable_temporal,
+                    "timestamp": self._get_timestamp(),
+                    "entity_resolution_applied": resolver_to_use is not None
+                }
+            }
+            
+            # Detect and resolve conflicts if conflict detector is available
+            if self.conflict_detector:
+                self.logger.debug("Detecting conflicts in graph")
+                detected_conflicts = self.conflict_detector.detect_conflicts(graph)
                 
-                # Attempt to resolve conflicts
-                resolution_result = self.conflict_detector.resolve_conflicts(detected_conflicts)
-                resolved_count = resolution_result.get('resolved_count', 0)
-                
-                if resolved_count > 0:
-                    self.logger.info(f"Successfully resolved {resolved_count} out of {conflict_count} conflict(s)")
-                else:
-                    self.logger.warning("No conflicts were automatically resolved")
+                if detected_conflicts:
+                    conflict_count = len(detected_conflicts)
+                    self.logger.warning(f"Detected {conflict_count} conflict(s) in graph")
+                    
+                    # Attempt to resolve conflicts
+                    resolution_result = self.conflict_detector.resolve_conflicts(detected_conflicts)
+                    resolved_count = resolution_result.get('resolved_count', 0)
+                    
+                    if resolved_count > 0:
+                        self.logger.info(f"Successfully resolved {resolved_count} out of {conflict_count} conflict(s)")
+                    else:
+                        self.logger.warning("No conflicts were automatically resolved")
         
-        # Log final graph statistics
-        self.logger.info(
-            f"Knowledge graph built successfully: "
-            f"{len(resolved_entities)} entities, {len(all_relationships)} relationships"
-        )
-        
-        return graph
+            # Log final graph statistics
+            self.logger.info(
+                f"Knowledge graph built successfully: "
+                f"{len(resolved_entities)} entities, {len(all_relationships)} relationships"
+            )
+            
+            self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                               message=f"Built graph with {len(resolved_entities)} entities, {len(all_relationships)} relationships")
+            return graph
+            
+        except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def add_temporal_edge(
         self,

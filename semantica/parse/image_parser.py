@@ -37,6 +37,7 @@ from PIL.Image import Image as PILImage
 
 from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 
 try:
     import pytesseract
@@ -80,6 +81,7 @@ class ImageParser:
         """
         self.logger = get_logger("image_parser")
         self.config = config
+        self.progress_tracker = get_progress_tracker()
         self.tesseract_path = config.get("tesseract_path")
         if self.tesseract_path:
             pytesseract.pytesseract.tesseract_cmd = self.tesseract_path
@@ -100,37 +102,55 @@ class ImageParser:
         """
         file_path = Path(file_path)
         
-        if not file_path.exists():
-            raise ValidationError(f"Image file not found: {file_path}")
-        
-        # Validate image file
-        try:
-            with Image.open(file_path) as img:
-                img.verify()
-        except Exception as e:
-            raise ValidationError(f"Invalid image file: {e}")
+        # Track image parsing
+        tracking_id = self.progress_tracker.start_tracking(
+            file=str(file_path),
+            module="parse",
+            submodule="ImageParser",
+            message=f"Image: {file_path.name}"
+        )
         
         try:
-            with Image.open(file_path) as img:
-                # Extract metadata
-                metadata = None
-                if options.get("extract_metadata", True):
-                    metadata = self._extract_metadata(img, file_path)
-                
-                # Extract text using OCR
-                ocr_result = None
-                if options.get("extract_text", False) and TESSERACT_AVAILABLE:
-                    ocr_result = self.extract_text(file_path, language=options.get("ocr_language", "eng"))
-                
-                return {
-                    "metadata": metadata.__dict__ if metadata else None,
-                    "ocr": ocr_result.__dict__ if ocr_result else None,
-                    "text": ocr_result.text if ocr_result else None
-                }
+            if not file_path.exists():
+                raise ValidationError(f"Image file not found: {file_path}")
+            
+            # Validate image file
+            try:
+                with Image.open(file_path) as img:
+                    img.verify()
+            except Exception as e:
+                raise ValidationError(f"Invalid image file: {e}")
+            
+            try:
+                with Image.open(file_path) as img:
+                    # Extract metadata
+                    metadata = None
+                    if options.get("extract_metadata", True):
+                        self.progress_tracker.update_tracking(tracking_id, message="Extracting metadata...")
+                        metadata = self._extract_metadata(img, file_path)
+                    
+                    # Extract text using OCR
+                    ocr_result = None
+                    if options.get("extract_text", False) and TESSERACT_AVAILABLE:
+                        self.progress_tracker.update_tracking(tracking_id, message="Running OCR...")
+                        ocr_result = self.extract_text(file_path, language=options.get("ocr_language", "eng"))
+                    
+                    self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                                     message="Image parsed successfully")
+                    return {
+                        "metadata": metadata.__dict__ if metadata else None,
+                        "ocr": ocr_result.__dict__ if ocr_result else None,
+                        "text": ocr_result.text if ocr_result else None
+                    }
+                    
+            except Exception as e:
+                self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+                self.logger.error(f"Failed to parse image {file_path}: {e}")
+                raise ProcessingError(f"Failed to parse image: {e}")
                 
         except Exception as e:
-            self.logger.error(f"Failed to parse image {file_path}: {e}")
-            raise ProcessingError(f"Failed to parse image: {e}")
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def extract_text(self, file_path: Union[str, Path], language: str = "eng", **options) -> OCRResult:
         """

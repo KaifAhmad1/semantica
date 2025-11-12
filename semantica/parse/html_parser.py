@@ -77,6 +77,7 @@ class HTMLParser:
         """
         self.logger = get_logger("html_parser")
         self.config = config
+        self.progress_tracker = get_progress_tracker()
     
     def parse(self, html_content: Union[str, Path], base_url: Optional[str] = None, **options) -> Dict[str, Any]:
         """
@@ -95,62 +96,82 @@ class HTMLParser:
         Returns:
             dict: Parsed HTML data
         """
-        # Load HTML content
+        # Track HTML parsing
+        file_path = None
         if isinstance(html_content, Path) or (isinstance(html_content, str) and Path(html_content).exists()):
-            with open(html_content, 'r', encoding='utf-8', errors='ignore') as f:
-                html_string = f.read()
-        else:
-            html_string = html_content
+            file_path = Path(html_content)
+        
+        tracking_id = self.progress_tracker.start_tracking(
+            file=str(file_path) if file_path else None,
+            module="parse",
+            submodule="HTMLParser",
+            message=f"HTML: {file_path.name if file_path else 'content'}"
+        )
         
         try:
-            soup = BeautifulSoup(html_string, 'html.parser')
-            
-            # Extract metadata
-            metadata = self._extract_metadata(soup)
-            
-            # Extract text content
-            if options.get("clean_text", True):
-                text = self._extract_clean_text(soup)
+            # Load HTML content
+            if file_path:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    html_string = f.read()
             else:
-                text = soup.get_text()
+                html_string = html_content
             
-            # Extract links
-            links = []
-            if options.get("extract_links", True):
-                links = self._extract_links(soup, base_url)
-            
-            # Extract images
-            images = []
-            if options.get("extract_images", True):
-                images = self._extract_images(soup, base_url)
-            
-            # Extract forms
-            forms = []
-            if options.get("extract_forms", False):
-                forms = self._extract_forms(soup)
-            
-            # Extract tables
-            tables = []
-            if options.get("extract_tables", True):
-                tables = self._extract_tables(soup)
-            
-            # Extract structure
-            structure = self._extract_structure(soup)
-            
-            return {
-                "metadata": metadata.__dict__,
-                "text": text,
-                "html": html_string,
-                "links": links,
-                "images": images,
-                "forms": forms,
-                "tables": tables,
-                "structure": structure
-            }
-            
+            try:
+                soup = BeautifulSoup(html_string, 'html.parser')
+                
+                # Extract metadata
+                metadata = self._extract_metadata(soup)
+                
+                # Extract text content
+                if options.get("clean_text", True):
+                    text = self._extract_clean_text(soup)
+                else:
+                    text = soup.get_text()
+                
+                # Extract links
+                links = []
+                if options.get("extract_links", True):
+                    links = self._extract_links(soup, base_url)
+                
+                # Extract images
+                images = []
+                if options.get("extract_images", True):
+                    images = self._extract_images(soup, base_url)
+                
+                # Extract forms
+                forms = []
+                if options.get("extract_forms", False):
+                    forms = self._extract_forms(soup)
+                
+                # Extract tables
+                tables = []
+                if options.get("extract_tables", True):
+                    tables = self._extract_tables(soup)
+                
+                # Extract structure
+                structure = self._extract_structure(soup)
+                
+                self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                                   message=f"Parsed HTML: {len(links)} links, {len(images)} images")
+                return {
+                    "metadata": metadata.__dict__,
+                    "text": text,
+                    "html": html_string,
+                    "links": links,
+                    "images": images,
+                    "forms": forms,
+                    "tables": tables,
+                    "structure": structure
+                }
+                
+            except Exception as e:
+                self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+                self.logger.error(f"Failed to parse HTML: {e}")
+                raise ProcessingError(f"Failed to parse HTML: {e}")
+                
         except Exception as e:
-            self.logger.error(f"Failed to parse HTML: {e}")
-            raise ProcessingError(f"Failed to parse HTML: {e}")
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            raise
     
     def extract_text(self, html_content: Union[str, Path], clean: bool = True) -> str:
         """

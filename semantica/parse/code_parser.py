@@ -41,6 +41,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 
 
 @dataclass
@@ -95,6 +96,9 @@ class CodeParser:
         self.comment_extractor = CommentExtractor(**self.config.get("comments", {}))
         self.dependency_analyzer = DependencyAnalyzer(**self.config.get("dependencies", {}))
         
+        # Initialize progress tracker
+        self.progress_tracker = get_progress_tracker()
+        
         # Supported languages
         self.supported_languages = {
             '.py': 'python',
@@ -123,41 +127,58 @@ class CodeParser:
         """
         file_path = Path(file_path)
         
-        if not file_path.exists():
-            raise ValidationError(f"Code file not found: {file_path}")
-        
-        # Detect language if not specified
-        if language is None:
-            language = self._detect_language(file_path)
-        
-        if language not in self.supported_languages.values():
-            self.logger.warning(f"Language {language} may not be fully supported")
+        # Track code parsing
+        tracking_id = self.progress_tracker.start_tracking(
+            file=str(file_path),
+            module="parse",
+            submodule="CodeParser",
+            message=f"Code: {file_path.name}"
+        )
         
         try:
-            # Read code content
-            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                code_content = f.read()
+            if not file_path.exists():
+                raise ValidationError(f"Code file not found: {file_path}")
             
-            # Extract structure
-            structure = self.extract_structure(code_content, language)
+            # Detect language if not specified
+            if language is None:
+                language = self._detect_language(file_path)
             
-            # Extract comments
-            comments = self.extract_comments(code_content, language)
+            if language not in self.supported_languages.values():
+                self.logger.warning(f"Language {language} may not be fully supported")
             
-            # Analyze dependencies
-            dependencies = self.analyze_dependencies(code_content, language)
-            
-            return {
-                "file_path": str(file_path),
-                "language": language,
-                "structure": structure.__dict__,
-                "comments": [c.__dict__ for c in comments],
-                "dependencies": dependencies,
-                "line_count": len(code_content.splitlines()),
-                "size": len(code_content)
-            }
-            
+            try:
+                # Read code content
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    code_content = f.read()
+                
+                # Extract structure
+                self.progress_tracker.update_tracking(tracking_id, message=f"Analyzing {language} code...")
+                structure = self.extract_structure(code_content, language)
+                
+                # Extract comments
+                comments = self.extract_comments(code_content, language)
+                
+                # Analyze dependencies
+                dependencies = self.analyze_dependencies(code_content, language)
+                
+                self.progress_tracker.stop_tracking(tracking_id, status="completed",
+                                                   message=f"Parsed {language} code: {len(structure.functions)} functions, {len(structure.classes)} classes")
+                return {
+                    "file_path": str(file_path),
+                    "language": language,
+                    "structure": structure.__dict__,
+                    "comments": [c.__dict__ for c in comments],
+                    "dependencies": dependencies,
+                    "line_count": len(code_content.splitlines()),
+                    "size": len(code_content)
+                }
+                
+            except Exception as e:
+                self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+                raise
+                
         except Exception as e:
+            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
             self.logger.error(f"Failed to parse code {file_path}: {e}")
             raise ProcessingError(f"Failed to parse code: {e}")
     
