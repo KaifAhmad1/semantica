@@ -5,6 +5,40 @@ This module provides comprehensive conflict analysis capabilities for the
 Semantica framework, analyzing patterns in conflicts, identifying conflict types,
 and providing insights into conflict sources and trends.
 
+Algorithms Used:
+
+Pattern Identification:
+    - Frequency-based Pattern Detection: Uses Counter and defaultdict to identify
+      frequently occurring conflict patterns
+    - Pattern Grouping: Groups conflicts by entity, property, type, and source
+    - Pattern Frequency Analysis: Calculates frequency of each pattern type
+
+Type Classification:
+    - Conflict Type Categorization: Groups conflicts by ConflictType enumeration
+    - Type-based Statistics: Calculates statistics per conflict type
+    - Type Distribution Analysis: Analyzes distribution of conflict types
+
+Severity Analysis:
+    - Severity-based Grouping: Groups conflicts by severity level (low, medium, high, critical)
+    - Severity Distribution: Calculates distribution of severities
+    - Critical Conflict Identification: Identifies critical conflicts requiring immediate attention
+
+Source Analysis:
+    - Source-based Aggregation: Aggregates conflicts by source document
+    - Source Conflict Frequency: Calculates conflict frequency per source
+    - Source Credibility Correlation: Correlates conflicts with source credibility
+
+Trend Analysis:
+    - Temporal Trend Identification: Uses time-series analysis to identify trends
+    - Conflict Rate Calculation: Calculates conflict rate over time
+    - Trend Detection: Detects increasing or decreasing conflict trends
+
+Statistical Analysis:
+    - Conflict Statistics: Calculates mean, median, and distribution of conflicts
+    - Entity Conflict Counts: Counts conflicts per entity
+    - Property Conflict Counts: Counts conflicts per property
+    - Overall Statistics: Provides overall conflict statistics
+
 Key Features:
     - Analyzes conflict patterns and trends
     - Classifies conflict types
@@ -36,6 +70,7 @@ from datetime import datetime
 
 from .conflict_detector import Conflict, ConflictType
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 
 
 @dataclass

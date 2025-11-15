@@ -5,6 +5,36 @@ This module provides comprehensive investigation guide generation capabilities
 for the Semantica framework, generating investigation guides for detected
 conflicts to help domain experts investigate and resolve discrepancies.
 
+Algorithms Used:
+
+Guide Generation:
+    - Template-based Generation: Uses conflict type and severity to select appropriate templates
+    - Context Extraction: Extracts conflict context from Conflict object and SourceTracker
+    - Step Generation: Generates investigation steps based on conflict characteristics
+    - Severity-based Recommendations: Provides recommendations based on conflict severity
+
+Checklist Generation:
+    - Step-by-step Checklist Creation: Converts investigation steps into checklist format
+    - Action Item Extraction: Extracts actionable items from investigation steps
+    - Priority Ordering: Orders checklist items by priority and severity
+
+Context Extraction:
+    - Conflict Context: Extracts conflict metadata, sources, and conflicting values
+    - Source Context: Extracts source information from SourceTracker
+    - Historical Context: Includes historical conflict information if available
+    - Related Conflicts: Identifies related conflicts for context
+
+Step Generation:
+    - Type-based Steps: Generates steps specific to conflict type (value, type, relationship, etc.)
+    - Severity-based Steps: Adjusts steps based on conflict severity
+    - Source Investigation Steps: Includes steps for investigating conflicting sources
+    - Resolution Steps: Suggests resolution steps based on conflict characteristics
+
+Export Formats:
+    - Text Export: Plain text format for investigation guides
+    - Markdown Export: Markdown format for documentation and reporting
+    - Structured Export: Structured format for programmatic processing
+
 Key Features:
     - Generates conflict investigation checklists
     - Identifies conflicting source documents

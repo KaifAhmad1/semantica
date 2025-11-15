@@ -5,6 +5,32 @@ This module provides comprehensive conflict resolution capabilities for the
 Semantica framework, offering multiple strategies for resolving detected conflicts
 including voting mechanisms, credibility-based resolution, and expert review.
 
+Algorithms Used:
+
+Voting Algorithm:
+    - Majority Value Selection: Uses Counter-based frequency counting to select
+      the most frequently occurring value across sources
+    - Tie Breaking: Handles ties by selecting first value or using confidence scores
+
+Credibility Weighted Resolution:
+    - Weighted Average Calculation: Calculates weighted average of values based on
+      source credibility scores
+    - Credibility Scoring: Uses source credibility from SourceTracker
+    - Value Weight Calculation: Combines value frequency with source credibility
+
+Temporal Selection:
+    - Most Recent: Timestamp-based selection of newest value
+    - First Seen: Temporal-based selection of oldest value
+    - Timestamp Comparison: Compares source timestamps to determine temporal order
+
+Confidence Selection:
+    - Maximum Confidence: Selects value from source with highest confidence score
+    - Confidence Comparison: Compares source confidence values
+
+Manual/Expert Review:
+    - Conflict Flagging: Flags conflicts for human review workflow
+    - Review Queue Management: Manages conflicts requiring manual intervention
+
 Key Features:
     - Automatic conflict resolution strategies
     - Voting-based resolution from multiple sources

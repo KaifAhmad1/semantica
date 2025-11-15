@@ -5,6 +5,26 @@ This module provides comprehensive conflict detection capabilities for the
 Semantica framework, detecting conflicts from multiple sources and tracking
 source disagreements for compliance and investigation.
 
+Algorithms Used:
+
+Conflict Detection:
+    - Value Comparison: Property value comparison across sources with equality checking
+    - Type Mismatch Detection: Entity type comparison and mismatch identification
+    - Relationship Consistency: Relationship property comparison and inconsistency detection
+    - Temporal Analysis: Time-based conflict detection using timestamp comparison
+    - Logical Consistency: Logical rule validation and inconsistency detection
+
+Severity Calculation:
+    - Multi-factor Severity Scoring: Combines property importance, value difference magnitude,
+      and source count to calculate conflict severity (low, medium, high, critical)
+    - Critical Field Detection: Identifies critical fields (id, name, type, etc.) for higher severity
+    - Numeric Difference Analysis: Calculates severity based on numeric value differences
+
+Confidence Scoring:
+    - Source Credibility Weighting: Uses average confidence of sources
+    - Value Diversity Factor: Higher confidence for more diverse conflicting values
+    - Combined Confidence: Combines source confidence and value diversity
+
 Key Features:
     - Detects property value conflicts
     - Identifies relationship conflicts
@@ -14,6 +34,7 @@ Key Features:
     - Multiple conflict types (value, type, relationship, temporal, logical)
     - Severity calculation
     - Confidence scoring
+    - Source provenance tracking
 
 Main Classes:
     - ConflictType: Conflict type enumeration

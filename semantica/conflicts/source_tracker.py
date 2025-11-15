@@ -5,6 +5,33 @@ This module provides comprehensive source tracking capabilities for the Semantic
 framework, tracking source information for entities and properties to enable
 conflict investigation and source disagreement analysis.
 
+Algorithms Used:
+
+Property Source Tracking:
+    - Dictionary-based Mapping: Uses nested dictionaries (entity -> property -> PropertySource)
+      for efficient property-to-source mapping
+    - Source Aggregation: Aggregates multiple sources for the same property value
+    - Source Deduplication: Prevents duplicate source entries
+
+Entity Source Tracking:
+    - Entity-to-Source Mapping: Tracks which sources contributed to each entity
+    - Source Relationship Tracking: Maintains entity-to-source relationships
+    - Entity Provenance Chain: Builds provenance chain for entities
+
+Relationship Source Tracking:
+    - Relationship-to-Source Mapping: Tracks sources for relationships
+    - Relationship Source Aggregation: Aggregates sources for relationship properties
+
+Credibility Scoring:
+    - Source Credibility Calculation: Calculates source credibility based on historical accuracy
+    - Credibility Weighting: Uses credibility scores for weighted conflict resolution
+    - Credibility Updates: Updates credibility based on conflict resolution outcomes
+
+Traceability Chain:
+    - Graph-based Traceability: Builds traceability graph connecting entities, properties, and sources
+    - Chain Generation: Generates traceability chains from entity to source documents
+    - Path Finding: Finds paths through the traceability graph
+
 Key Features:
     - Tracks source documents for each property value
     - Maintains source provenance for entities
