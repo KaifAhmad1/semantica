@@ -6,18 +6,44 @@ retrieving relevant context from memory, knowledge graphs, and vector stores
 to inform decision-making. It supports hybrid retrieval combining multiple
 sources for optimal context relevance.
 
+Algorithms Used:
+
+Vector Retrieval:
+    - Vector Similarity Search: Cosine similarity search in vector space
+    - Query Embedding: Embedding generation for search queries
+    - Top-K Retrieval: Top-K result selection based on similarity scores
+
+Graph Retrieval:
+    - Keyword Matching: Word overlap-based node matching
+    - Graph Traversal: Multi-hop graph expansion for related entities
+    - Relevance Scoring: Word overlap-based relevance calculation
+    - Entity Expansion: BFS-based entity relationship traversal
+
+Memory Retrieval:
+    - Memory Search: Vector and keyword search in memory store
+    - Conversation History: Temporal-based memory retrieval
+
+Result Processing:
+    - Result Ranking: Score-based ranking and merging
+    - Deduplication: Content-based result deduplication
+    - Score Aggregation: Maximum score selection for duplicate results
+    - Metadata Merging: Dictionary-based metadata merging
+    - Entity Merging: Set-based entity deduplication
+
 Key Features:
     - Retrieve context from multiple sources (memory, graph, vector)
-    - Hybrid retrieval (vector + graph + memory)
-    - Context relevance ranking
+    - Hybrid retrieval (vector + graph + memory) with weighted combination
+    - Context relevance ranking and scoring
     - Context aggregation and synthesis
     - Ontology-aware context retrieval
     - Real-time context updates
     - Graph expansion for related entities
     - Multi-hop relationship traversal
+    - Result deduplication and merging
+    - Configurable retrieval strategies
 
 Main Classes:
-    - RetrievedContext: Retrieved context item data structure
+    - RetrievedContext: Retrieved context item data structure with content, score, source, metadata, related_entities, related_relationships
     - ContextRetriever: Context retriever for hybrid retrieval
 
 Example Usage:
@@ -25,7 +51,8 @@ Example Usage:
     >>> retriever = ContextRetriever(memory_store=mem, knowledge_graph=kg, vector_store=vs)
     >>> results = retriever.retrieve("Python programming", max_results=5)
     >>> for result in results:
-    ...     print(result.content, result.score)
+    ...     print(f"{result.content}: {result.score:.2f}")
+    ...     print(f"Related entities: {len(result.related_entities)}")
 
 Author: Semantica Contributors
 License: MIT

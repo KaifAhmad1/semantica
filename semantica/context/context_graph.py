@@ -6,8 +6,30 @@ formalizing context as a graph of connections. It turns context from intuition
 into infrastructure, enabling meaningful connections between concepts, entities,
 and conversations.
 
+Algorithms Used:
+
+Graph Construction:
+    - Node Creation: Dictionary-based node storage with type indexing
+    - Edge Creation: List-based edge storage with type indexing
+    - Entity Extraction: Entity extraction from conversations and text
+    - Relationship Extraction: Relationship extraction from conversations
+    - Intent Extraction: Intent classification from conversations
+    - Sentiment Analysis: Sentiment extraction from conversations
+    - URI Assignment: Entity linker-based URI assignment for entities
+
+Graph Traversal:
+    - BFS (Breadth-First Search): Multi-hop neighbor discovery
+    - Graph Indexing: Type-based indexing for efficient node/edge lookup
+    - Neighbor Discovery: Outgoing and incoming edge traversal
+    - Multi-hop Expansion: Iterative expansion for related entities
+
+Graph Querying:
+    - Type Filtering: Node type-based filtering
+    - Metadata Filtering: Dictionary-based metadata matching
+    - Graph Statistics: Node and edge type counting
+
 Key Features:
-    - Builds context graphs from entities and relationships
+    - Builds context graphs from entities, relationships, and conversations
     - Creates meaningful connections between concepts
     - Assigns URLs/URIs to entities for web-like context
     - Formalizes context into graph structure
@@ -15,10 +37,12 @@ Key Features:
     - Enables context traversal and querying
     - Conversation-based graph construction
     - Intent and sentiment extraction
+    - Multi-hop relationship traversal
+    - Graph statistics and analytics
 
 Main Classes:
-    - ContextNode: Context graph node data structure
-    - ContextEdge: Context graph edge data structure
+    - ContextNode: Context graph node data structure with node_id, node_type, content, metadata, properties
+    - ContextEdge: Context graph edge data structure with source_id, target_id, edge_type, weight, metadata
     - ContextGraphBuilder: Context graph builder for formalizing context
 
 Example Usage:
@@ -28,6 +52,7 @@ Example Usage:
     >>> builder.add_node("node1", "entity", "Python programming")
     >>> builder.add_edge("node1", "node2", "related_to", weight=0.9)
     >>> neighbors = builder.get_neighbors("node1", max_hops=2)
+    >>> results = builder.query(node_type="entity", confidence=0.8)
 
 Author: Semantica Contributors
 License: MIT
@@ -40,6 +65,7 @@ from collections import defaultdict
 from .entity_linker import EntityLinker
 from ..utils.exceptions import ValidationError, ProcessingError
 from ..utils.logging import get_logger
+from ..utils.progress_tracker import get_progress_tracker
 from ..utils.types import EntityDict, RelationshipDict
 
 

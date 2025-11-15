@@ -6,6 +6,27 @@ engineering, linking entities across different sources to build the web of
 context. It assigns each entity a unique URL/URI and connects them meaningfully
 to enable semantic understanding.
 
+Algorithms Used:
+
+URI Generation:
+    - Hash-based URI: MD5 hash-based URI generation for entities without text
+    - Text-based URI: URL-safe text encoding for entity text
+    - Type-based URI: Entity type inclusion in URI
+    - URI Registry: Dictionary-based URI-to-entity mapping
+
+Entity Linking:
+    - Text Similarity: Word overlap-based similarity calculation (Jaccard-like)
+    - Knowledge Graph Lookup: Entity matching in knowledge graph
+    - Similarity Threshold: Threshold-based entity matching
+    - Cross-Document Linking: Entity linking across multiple documents
+    - Bidirectional Linking: Symmetric relationship creation
+
+Entity Web Construction:
+    - Graph Building: Graph construction from entity links
+    - Link Aggregation: Link counting and statistics
+    - Entity Registry: Entity-to-URI mapping
+    - Link Storage: Dictionary-based link storage (entity_id -> List[EntityLink])
+
 Key Features:
     - Links entities across different sources
     - Assigns unique identifiers (URLs/URIs) to entities
@@ -15,10 +36,12 @@ Key Features:
     - Enables entity disambiguation and resolution
     - Similarity-based entity matching
     - Bidirectional entity linking
+    - Entity web construction and statistics
+    - Configurable similarity thresholds
 
 Main Classes:
-    - EntityLink: Entity link data structure
-    - LinkedEntity: Linked entity with context
+    - EntityLink: Entity link data structure with source_entity_id, target_entity_id, link_type, confidence, source, metadata
+    - LinkedEntity: Linked entity with context including entity_id, uri, text, type, linked_entities, context, confidence
     - EntityLinker: Entity linker for context engineering
 
 Example Usage:
@@ -27,6 +50,7 @@ Example Usage:
     >>> uri = linker.assign_uri("entity_1", "Python", "PROGRAMMING_LANGUAGE")
     >>> linked_entities = linker.link("Python is a programming language", entities=entities)
     >>> linker.link_entities("entity_1", "entity_2", "related_to", confidence=0.9)
+    >>> web = linker.build_entity_web()
 
 Author: Semantica Contributors
 License: MIT

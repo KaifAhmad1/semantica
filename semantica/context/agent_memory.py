@@ -5,18 +5,42 @@ This module provides comprehensive agent memory management and context retrieval
 integrating RAG (Retrieval-Augmented Generation) with knowledge graphs to give
 agents persistent context across conversations and interactions.
 
+Algorithms Used:
+
+Memory Storage:
+    - Vector Embedding: Embedding generation for memory items using embedding models
+    - Vector Indexing: Vector store indexing for efficient similarity search
+    - Memory Indexing: Deque-based memory index for efficient temporal access
+    - Knowledge Graph Integration: Entity and relationship updates to knowledge graph
+    - Metadata Storage: Dictionary-based metadata storage and retrieval
+
+Memory Retrieval:
+    - Vector Similarity Search: Cosine similarity search in vector space
+    - Keyword Search: Fallback keyword-based search using word overlap
+    - Score Ranking: Relevance score-based result ranking
+    - Filter Matching: Metadata-based filtering (type, date range, etc.)
+    - Result Deduplication: Content-based deduplication of results
+
+Memory Management:
+    - Retention Policy: Time-based memory retention and cleanup
+    - Memory Statistics: Counter-based statistics tracking
+    - Conversation History: Temporal-based conversation history retrieval
+    - Memory Deletion: Cascading deletion from vector store and memory index
+
 Key Features:
     - Persistent memory storage for agents
-    - Vector-based context retrieval
+    - Vector-based context retrieval with embedding support
     - Knowledge graph context integration
     - Conversation history management
     - Context accumulation over time
     - Memory retrieval for agent decision-making
-    - Retention policy management
+    - Retention policy management (time-based cleanup)
     - Memory statistics and analytics
+    - Metadata-based filtering and search
+    - Fallback keyword search when vector store unavailable
 
 Main Classes:
-    - MemoryItem: Memory item data structure
+    - MemoryItem: Memory item data structure with content, timestamp, metadata, entities, relationships
     - AgentMemory: Agent memory manager with RAG integration
 
 Example Usage:
@@ -25,6 +49,7 @@ Example Usage:
     >>> memory_id = memory.store("User asked about Python", metadata={"type": "conversation"})
     >>> results = memory.retrieve("Python", max_results=5)
     >>> history = memory.get_conversation_history(conversation_id="conv_123")
+    >>> stats = memory.get_statistics()
 
 Author: Semantica Contributors
 License: MIT
