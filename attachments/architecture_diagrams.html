@@ -5,405 +5,700 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Semantica - Architecture Diagrams</title>
     <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; max-width: 1400px; margin: 0 auto; padding: 20px; }
-        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
-        h2 { color: #34495e; margin-top: 40px; border-bottom: 2px solid #ecf0f1; padding-bottom: 5px; }
-        pre { background-color: #f4f4f4; padding: 20px; border-radius: 5px; overflow-x: auto; font-size: 12px; line-height: 1.4; }
-        .diagram { margin: 30px 0; }
-        .caption { font-style: italic; color: #666; margin-top: 10px; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            line-height: 1.6; 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            background-color: #f5f5f5;
+        }
+        h1 { 
+            color: #2c3e50; 
+            border-bottom: 4px solid #3498db; 
+            padding-bottom: 15px;
+            text-align: center;
+            font-size: 2.5em;
+        }
+        h2 { 
+            color: #34495e; 
+            margin-top: 40px; 
+            border-bottom: 3px solid #3498db; 
+            padding-bottom: 10px;
+            font-size: 1.8em;
+        }
+        .diagram { 
+            background: white;
+            padding: 30px; 
+            margin: 30px 0; 
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .caption { 
+            font-style: italic; 
+            color: #666; 
+            margin-top: 15px;
+            text-align: center;
+            font-size: 0.9em;
+        }
+        .layer {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .component-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .component {
+            background: #e8f4f8;
+            border: 2px solid #3498db;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .arrow {
+            text-align: center;
+            font-size: 2em;
+            color: #3498db;
+            margin: 10px 0;
+        }
+        .flow-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .flow-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 8px;
+            min-width: 300px;
+            text-align: center;
+            font-weight: bold;
+            margin: 10px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .split-flow {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .split-box {
+            background: #e8f4f8;
+            border: 2px solid #3498db;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .deployment-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .deployment-box {
+            background: white;
+            border: 2px solid #3498db;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stage-box {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        svg {
+            width: 100%;
+            height: auto;
+        }
+        .node {
+            fill: #3498db;
+            stroke: #2c3e50;
+            stroke-width: 2;
+        }
+        .edge {
+            stroke: #3498db;
+            stroke-width: 2;
+            fill: none;
+        }
+        .label {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            fill: #2c3e50;
+        }
     </style>
 </head>
 <body>
-    <h1>Semantica Framework - Architecture Diagrams</h1>
+    <h1>🏗️ Semantica Framework - Architecture Diagrams</h1>
     
     <h2>1. High-Level System Architecture</h2>
     <div class="diagram">
-        <pre>
-┌─────────────────────────────────────────────────────────────────────┐
-│                        SEMANTICA FRAMEWORK                          │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  ┌──────────────────────────────────────────────────────────────┐  │
-│  │              DATA INGESTION LAYER                            │  │
-│  │  ┌────────┬────────┬────────┬────────┬────────┬──────────┐  │  │
-│  │  │ Files  │  Web   │ Feeds  │  APIs  │Streams │ Archives │  │  │
-│  │  └────────┴────────┴────────┴────────┴────────┴──────────┘  │  │
-│  │           50+ Formats • Real-time • Multi-modal             │  │
-│  └──────────────────────────────────────────────────────────────┘  │
-│                              ↓                                     │
-│  ┌──────────────────────────────────────────────────────────────┐  │
-│  │            SEMANTIC PROCESSING LAYER                         │  │
-│  │  ┌──────────┬────────────┬────────────┬──────────────────┐  │  │
-│  │  │  Parse   │ Normalize  │   Extract  │  Build Graph     │  │  │
-│  │  │          │            │  Semantics │                  │  │  │
-│  │  └──────────┴────────────┴────────────┴──────────────────┘  │  │
-│  │     NLP • Embeddings • Ontologies • Quality Assurance    │  │
-│  └──────────────────────────────────────────────────────────────┘  │
-│                              ↓                                     │
-│  ┌──────────────────────────────────────────────────────────────┐  │
-│  │               APPLICATION LAYER                              │  │
-│  │  ┌──────────┬────────────┬────────────┬──────────────────┐  │  │
-│  │  │ GraphRAG │ AI Agents  │Multi-Agent │  Analytics       │  │  │
-│  │  │          │            │  Systems   │  Copilots        │  │  │
-│  │  └──────────┴────────────┴────────────┴──────────────────┘  │  │
-│  │        Hybrid Retrieval • Context Engineering • Reasoning   │  │
-│  └──────────────────────────────────────────────────────────────┘  │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-        </pre>
+        <div class="flow-container">
+            <div class="layer" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                📥 DATA INGESTION LAYER<br/>
+                <small>50+ Formats • Real-time • Multi-modal</small>
+            </div>
+            <div class="component-grid">
+                <div class="component">Files</div>
+                <div class="component">Web</div>
+                <div class="component">Feeds</div>
+                <div class="component">APIs</div>
+                <div class="component">Streams</div>
+                <div class="component">Archives</div>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="layer" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                🧠 SEMANTIC PROCESSING LAYER<br/>
+                <small>NLP • Embeddings • Ontologies • Quality Assurance</small>
+            </div>
+            <div class="component-grid">
+                <div class="component">Parse</div>
+                <div class="component">Normalize</div>
+                <div class="component">Extract</div>
+                <div class="component">Build Graph</div>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="layer" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                🚀 APPLICATION LAYER<br/>
+                <small>Hybrid Retrieval • Context Engineering • Reasoning</small>
+            </div>
+            <div class="component-grid">
+                <div class="component">GraphRAG</div>
+                <div class="component">AI Agents</div>
+                <div class="component">Multi-Agent</div>
+                <div class="component">Analytics</div>
+            </div>
+        </div>
         <p class="caption">Figure 1: High-level system architecture showing three main layers</p>
     </div>
     
     <h2>2. Data Ingestion Pipeline Flow</h2>
     <div class="diagram">
-        <pre>
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   Files     │     │    Web      │     │   Feeds     │
-│  (50+ fmt)  │     │  Scraping   │     │  RSS/Atom   │
-└──────┬──────┘     └──────┬──────┘     └──────┬──────┘
-       │                   │                   │
-       └───────────────────┼───────────────────┘
-                           │
-                  ┌────────▼────────┐
-                  │  FileIngestor   │
-                  │  WebIngestor    │
-                  │  FeedIngestor   │
-                  │  DBIngestor     │
-                  │  StreamIngestor │
-                  └────────┬────────┘
-                           │
-                  ┌────────▼────────┐
-                  │  Source Objects  │
-                  │  (with metadata) │
-                  └────────┬────────┘
-                           │
-                  ┌────────▼────────┐
-                  │  Parse Layer    │
-                  │  (DocumentParser)│
-                  └─────────────────┘
-        </pre>
+        <div class="component-grid">
+            <div class="component">
+                📄 Files<br/>
+                <small>50+ formats</small>
+            </div>
+            <div class="component">
+                🌐 Web<br/>
+                <small>Scraping</small>
+            </div>
+            <div class="component">
+                📡 Feeds<br/>
+                <small>RSS/Atom</small>
+            </div>
+            <div class="component">
+                💾 Databases<br/>
+                <small>SQL/NoSQL</small>
+            </div>
+            <div class="component">
+                📧 Email<br/>
+                <small>EML/MSG</small>
+            </div>
+            <div class="component">
+                🔄 Streams<br/>
+                <small>Kafka/RabbitMQ</small>
+            </div>
+        </div>
+        
+        <div class="arrow">↓</div>
+        
+        <div class="flow-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            🔄 Ingestion Layer<br/>
+            FileIngestor • WebIngestor • FeedIngestor<br/>
+            DBIngestor • StreamIngestor • EmailIngestor
+        </div>
+        
+        <div class="arrow">↓</div>
+        
+        <div class="flow-box" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            📦 Source Objects<br/>
+            (with metadata, format, size, timestamp)
+        </div>
+        
+        <div class="arrow">↓</div>
+        
+        <div class="flow-box" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            📄 Parse Layer<br/>
+            DocumentParser • WebParser • StructuredDataParser
+        </div>
+        
         <p class="caption">Figure 2: Data ingestion pipeline supporting multiple input sources</p>
     </div>
     
     <h2>3. Semantic Processing Pipeline</h2>
     <div class="diagram">
-        <pre>
-Raw Text/Data
-     │
-     ├─→ [Parse] ──→ Structured Content
-     │
-     ├─→ [Normalize] ──→ Cleaned Text
-     │
-     ├─→ [Split] ──→ Chunks
-     │
-     ├─→ [Embed] ──→ Vector Embeddings ──→ Vector Store
-     │
-     └─→ [Extract Semantics]
-              │
-              ├─→ Entities ──→ Entity Store
-              │
-              ├─→ Relations ──→ Relation Store
-              │
-              ├─→ Events ──→ Event Store
-              │
-              └─→ Triples ──→ Triple Store
-                     │
-                     └─→ [Build Graph] ──→ Knowledge Graph
-                              │
-                              ├─→ Entity Resolution
-                              ├─→ Conflict Detection
-                              ├─→ Deduplication
-                              └─→ Quality Assurance
-        </pre>
+        <div class="flow-container">
+            <div class="flow-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                📝 Raw Text/Data
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="split-flow">
+                <div class="split-box">
+                    <strong>📄 Parse</strong><br/>
+                    → Structured Content
+                </div>
+                <div class="split-box">
+                    <strong>🧹 Normalize</strong><br/>
+                    → Cleaned Text
+                </div>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="split-flow">
+                <div class="split-box">
+                    <strong>✂️ Split</strong><br/>
+                    → Chunks
+                </div>
+                <div class="split-box">
+                    <strong>🔢 Embed</strong><br/>
+                    → Vector Embeddings<br/>
+                    → Vector Store
+                </div>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-box" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                🧠 Extract Semantics
+            </div>
+            
+            <div class="component-grid">
+                <div class="component">Entities<br/>→ Entity Store</div>
+                <div class="component">Relations<br/>→ Relation Store</div>
+                <div class="component">Events<br/>→ Event Store</div>
+                <div class="component">Triples<br/>→ Triple Store</div>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-box" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                🕸️ Build Knowledge Graph
+            </div>
+            
+            <div class="component-grid">
+                <div class="component">Entity Resolution</div>
+                <div class="component">Conflict Detection</div>
+                <div class="component">Deduplication</div>
+                <div class="component">Quality Assurance</div>
+            </div>
+        </div>
         <p class="caption">Figure 3: Complete semantic processing pipeline from raw data to knowledge graph</p>
     </div>
     
     <h2>4. Knowledge Graph Construction Flow</h2>
     <div class="diagram">
-        <pre>
-Multiple Sources
-     │
-     ├─→ Source 1 ──→ Entities + Relations
-     ├─→ Source 2 ──→ Entities + Relations
-     └─→ Source N ──→ Entities + Relations
-              │
-              ▼
-     ┌────────────────┐
-     │ Entity Pool    │
-     └────────┬───────┘
-              │
-              ▼
-     ┌────────────────┐
-     │ Entity         │
-     │ Resolution     │──→ Merge Duplicates
-     └────────┬───────┘
-              │
-              ▼
-     ┌────────────────┐
-     │ Conflict       │
-     │ Detection      │──→ Resolve Conflicts
-     └────────┬───────┘
-              │
-              ▼
-     ┌────────────────┐
-     │ Graph Builder  │
-     │                │
-     │ • Add Nodes    │
-     │ • Add Edges    │
-     │ • Add Metadata│
-     └────────┬───────┘
-              │
-              ▼
-     ┌────────────────┐
-     │ Knowledge Graph│
-     │                │
-     │ • Nodes        │
-     │ • Edges        │
-     │ • Properties   │
-     └────────────────┘
-        </pre>
+        <div class="flow-container">
+            <div class="flow-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                📚 Multiple Sources
+            </div>
+            
+            <div class="component-grid">
+                <div class="component">Source 1<br/>Entities + Relations</div>
+                <div class="component">Source 2<br/>Entities + Relations</div>
+                <div class="component">Source N<br/>Entities + Relations</div>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-box" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                📦 Entity Pool
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-box" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                🔍 Entity Resolution<br/>
+                → Merge Duplicates
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-box" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                ⚠️ Conflict Detection<br/>
+                → Resolve Conflicts
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-box" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);">
+                🏗️ Graph Builder<br/>
+                • Add Nodes<br/>
+                • Add Edges<br/>
+                • Add Metadata
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-box" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #2c3e50;">
+                ✅ Knowledge Graph<br/>
+                • Nodes<br/>
+                • Edges<br/>
+                • Properties
+            </div>
+        </div>
         <p class="caption">Figure 4: Knowledge graph construction with entity resolution and conflict handling</p>
     </div>
     
     <h2>5. GraphRAG Query Flow</h2>
     <div class="diagram">
-        <pre>
-User Query
-     │
-     ├─→ [Vector Search] ──→ Top-K Similar Chunks
-     │                            │
-     │                            ├─→ Extract Entities
-     │                            │
-     │                            └─→ Seed Entities
-     │                                    │
-     │                                    ▼
-     │                            ┌──────────────┐
-     │                            │ Graph        │
-     │                            │ Expansion    │
-     │                            │ (2-3 hops)   │
-     │                            └──────┬───────┘
-     │                                   │
-     │                                   ▼
-     │                            Expanded Context
-     │                                   │
-     └─→ [Graph Traversal] ──────────────┘
-              │
-              ▼
-     ┌────────────────┐
-     │ Hybrid         │
-     │ Retrieval      │──→ Rerank Results
-     │ (Vector + Graph)│
-     └────────┬───────┘
-              │
-              ▼
-     ┌────────────────┐
-     │ Context        │
-     │ Building       │──→ Structured Context
-     └────────┬───────┘
-              │
-              ▼
-     ┌────────────────┐
-     │ LLM Generation │──→ Final Answer
-     └────────────────┘
-        </pre>
-        <p class="caption">Figure 5: GraphRAG query flow combining vector search with graph traversal</p>
+        <div class="flow-container">
+            <div class="flow-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                ❓ User Query
+            </div>
+            
+            <div class="split-flow">
+                <div class="split-box">
+                    <strong>🔍 Vector Search</strong><br/>
+                    → Top-K Similar Chunks<br/><br/>
+                    → Extract Entities<br/>
+                    → Seed Entities
+                </div>
+                <div class="split-box">
+                    <strong>🕸️ Graph Traversal</strong><br/>
+                    → Relationship Queries<br/>
+                    → Path Finding
+                </div>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-box" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                🌐 Graph Expansion<br/>
+                (2-3 hops from seed entities)
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-box" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                🔀 Hybrid Retrieval<br/>
+                (Vector + Graph)<br/>
+                → Rerank Results
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-box" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                📝 Context Building<br/>
+                → Structured Context<br/>
+                → Citations
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-box" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);">
+                🤖 LLM Generation<br/>
+                → Final Answer<br/>
+                → Confidence Score
+            </div>
+        </div>
+        <p class="caption">Figure 5: GraphRAG query flow combining vector search with graph traversal (30% accuracy improvement)</p>
     </div>
     
     <h2>6. Component Interaction Diagram</h2>
     <div class="diagram">
-        <pre>
-┌──────────────┐
-│   Semantica  │
-│   (Core)     │
-└──────┬───────┘
-       │
-       ├─→ Orchestrator
-       │       │
-       │       ├─→ ConfigManager
-       │       ├─→ PluginRegistry
-       │       └─→ LifecycleManager
-       │
-       ├─→ Pipeline
-       │       │
-       │       ├─→ PipelineBuilder
-       │       ├─→ ExecutionEngine
-       │       └─→ ParallelismManager
-       │
-       ├─→ Ingest Layer
-       │       │
-       │       ├─→ FileIngestor
-       │       ├─→ WebIngestor
-       │       └─→ DBIngestor
-       │
-       ├─→ Parse Layer
-       │       │
-       │       ├─→ DocumentParser
-       │       ├─→ WebParser
-       │       └─→ StructuredDataParser
-       │
-       ├─→ Semantic Extract
-       │       │
-       │       ├─→ NamedEntityRecognizer
-       │       ├─→ RelationExtractor
-       │       └─→ TripleExtractor
-       │
-       ├─→ Knowledge Graph
-       │       │
-       │       ├─→ GraphBuilder
-       │       ├─→ EntityResolver
-       │       └─→ GraphAnalyzer
-       │
-       └─→ Application Layer
-               │
-               ├─→ GraphRAGEngine
-               ├─→ ContextBuilder
-               └─→ ReasoningEngine
-        </pre>
+        <div class="flow-container">
+            <div class="flow-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); font-size: 1.2em;">
+                🧠 Semantica (Core)
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="component-grid">
+                <div class="component">
+                    🎯 Orchestrator<br/>
+                    <small>ConfigManager<br/>PluginRegistry<br/>LifecycleManager</small>
+                </div>
+                <div class="component">
+                    🔄 Pipeline<br/>
+                    <small>PipelineBuilder<br/>ExecutionEngine<br/>ParallelismManager</small>
+                </div>
+                <div class="component">
+                    📥 Ingest Layer<br/>
+                    <small>FileIngestor<br/>WebIngestor<br/>DBIngestor</small>
+                </div>
+                <div class="component">
+                    📄 Parse Layer<br/>
+                    <small>DocumentParser<br/>WebParser<br/>StructuredParser</small>
+                </div>
+                <div class="component">
+                    🧠 Semantic Extract<br/>
+                    <small>NER<br/>RelationExtractor<br/>TripleExtractor</small>
+                </div>
+                <div class="component">
+                    🕸️ Knowledge Graph<br/>
+                    <small>GraphBuilder<br/>EntityResolver<br/>GraphAnalyzer</small>
+                </div>
+                <div class="component">
+                    🚀 Application Layer<br/>
+                    <small>GraphRAGEngine<br/>ContextBuilder<br/>ReasoningEngine</small>
+                </div>
+            </div>
+        </div>
         <p class="caption">Figure 6: Component interaction and module organization</p>
     </div>
     
-    <h2>7. Deployment Architecture - Single Node</h2>
+    <h2>7. 6-Stage Ontology Generation Pipeline</h2>
     <div class="diagram">
-        <pre>
-┌─────────────────────────────────────┐
-│         Application Server          │
-│                                     │
-│  ┌───────────────────────────────┐  │
-│  │   Semantica Framework        │  │
-│  │   • Orchestrator             │  │
-│  │   • Processing Modules       │  │
-│  │   • API Endpoints            │  │
-│  └───────────────────────────────┘  │
-│                                     │
-│  ┌───────────────────────────────┐  │
-│  │   Local Storage              │  │
-│  │   • FAISS (Vectors)          │  │
-│  │   • NetworkX (Graph)         │  │
-│  │   • File System (Cache)      │  │
-│  └───────────────────────────────┘  │
-└─────────────────────────────────────┘
-        </pre>
-        <p class="caption">Figure 7: Single node deployment for small to medium scale</p>
+        <div class="flow-container">
+            <div class="flow-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                📝 Unstructured Content
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="stage-box">
+                Stage 1: Semantic Network Parsing<br/>
+                Extract domain concepts
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="stage-box">
+                Stage 2: YAML-to-Definition<br/>
+                Transform to class definitions
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="stage-box">
+                Stage 3: Definition-to-Types<br/>
+                Map to OWL types
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="stage-box">
+                Stage 4: Hierarchy Generation<br/>
+                Build taxonomic structures
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="stage-box">
+                Stage 5: TTL Generation<br/>
+                Generate OWL/Turtle syntax
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="stage-box" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);">
+                Stage 6: Symbolic Validation<br/>
+                HermiT/Pellet reasoning<br/>
+                (F1 up to 0.99)
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-box" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #2c3e50; font-size: 1.2em;">
+                ✅ W3C-Compliant OWL Ontology
+            </div>
+        </div>
+        <p class="caption">Figure 7: Automatic ontology generation pipeline with symbolic validation</p>
     </div>
     
-    <h2>8. Deployment Architecture - Distributed</h2>
+    <h2>8. Deployment Architecture - Single Node</h2>
     <div class="diagram">
-        <pre>
-┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-│   Worker 1   │  │   Worker 2   │  │   Worker N   │
-│  (Ingestion) │  │ (Processing) │  │  (Graph)     │
-│              │  │              │  │              │
-│ • FileIngest │  │ • NER        │  │ • GraphBuild │
-│ • WebIngest  │  │ • Relations  │  │ • Analytics  │
-│ • Parse      │  │ • Embeddings │  │ • Queries    │
-└──────┬───────┘  └──────┬───────┘  └──────┬───────┘
-       │                 │                 │
-       └─────────────────┼─────────────────┘
-                         │
-              ┌──────────▼──────────┐
-              │   Message Queue     │
-              │   (Kafka/RabbitMQ)  │
-              │   • Task Queue      │
-              │   • Event Stream    │
-              └──────────┬──────────┘
-                         │
-       ┌─────────────────┼─────────────────┐
-       │                 │                 │
-┌──────▼──────┐  ┌──────▼──────┐  ┌──────▼──────┐
-│  Neo4j      │  │  Vector DB   │  │  Triple     │
-│  (Graph)    │  │  (Pinecone)  │  │  Store      │
-│             │  │              │  │  (Virtuoso) │
-└─────────────┘  └──────────────┘  └─────────────┘
-        </pre>
-        <p class="caption">Figure 8: Distributed deployment for enterprise scale</p>
+        <div class="deployment-box">
+            <h3>🖥️ Application Server</h3>
+            <div class="component-grid">
+                <div class="component">
+                    Semantica Framework<br/>
+                    • Orchestrator<br/>
+                    • Processing Modules<br/>
+                    • API Endpoints
+                </div>
+                <div class="component">
+                    Local Storage<br/>
+                    • FAISS (Vectors)<br/>
+                    • NetworkX (Graph)<br/>
+                    • File System (Cache)
+                </div>
+            </div>
+        </div>
+        <p class="caption">Figure 8: Single node deployment for small to medium scale</p>
     </div>
     
-    <h2>9. 6-Stage Ontology Generation Pipeline</h2>
+    <h2>9. Deployment Architecture - Distributed</h2>
     <div class="diagram">
-        <pre>
-Unstructured Content
-     │
-     ▼
-┌─────────────────────┐
-│ Stage 1: Semantic   │
-│ Network Parsing     │──→ Extract domain concepts
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│ Stage 2: YAML-to-   │
-│ Definition          │──→ Transform to class definitions
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│ Stage 3: Definition│
-│ to Types            │──→ Map to OWL types
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│ Stage 4: Hierarchy  │
-│ Generation          │──→ Build taxonomic structures
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│ Stage 5: TTL        │
-│ Generation          │──→ Generate OWL/Turtle syntax
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│ Stage 6: Symbolic   │
-│ Validation          │──→ HermiT/Pellet reasoning
-│                     │    (F1 up to 0.99)
-└──────────┬──────────┘
-           │
-           ▼
-    W3C-Compliant
-    OWL Ontology
-        </pre>
-        <p class="caption">Figure 9: Automatic ontology generation pipeline with symbolic validation</p>
+        <div class="deployment-grid">
+            <div class="deployment-box">
+                <h3>👷 Worker 1</h3>
+                <strong>Ingestion</strong><br/>
+                • FileIngest<br/>
+                • WebIngest<br/>
+                • Parse
+            </div>
+            <div class="deployment-box">
+                <h3>👷 Worker 2</h3>
+                <strong>Processing</strong><br/>
+                • NER<br/>
+                • Relations<br/>
+                • Embeddings
+            </div>
+            <div class="deployment-box">
+                <h3>👷 Worker N</h3>
+                <strong>Graph</strong><br/>
+                • GraphBuild<br/>
+                • Analytics<br/>
+                • Queries
+            </div>
+        </div>
+        
+        <div class="arrow">↕</div>
+        
+        <div class="flow-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            📨 Message Queue<br/>
+            (Kafka/RabbitMQ)<br/>
+            • Task Queue<br/>
+            • Event Stream
+        </div>
+        
+        <div class="arrow">↓</div>
+        
+        <div class="deployment-grid">
+            <div class="deployment-box">
+                <h3>🗄️ Neo4j</h3>
+                Graph Storage
+            </div>
+            <div class="deployment-box">
+                <h3>🔢 Vector DB</h3>
+                Pinecone/Weaviate
+            </div>
+            <div class="deployment-box">
+                <h3>📊 Triple Store</h3>
+                Virtuoso/Blazegraph
+            </div>
+        </div>
+        
+        <p class="caption">Figure 9: Distributed deployment for enterprise scale</p>
     </div>
     
-    <h2>10. Real-Time Streaming Architecture (Future)</h2>
+    <h2>10. Real-Time Streaming Architecture</h2>
     <div class="diagram">
-        <pre>
-Data Streams
-     │
-     ├─→ Kafka Topic ──→ Stream Processor
-     ├─→ RabbitMQ    ──→ Stream Processor
-     └─→ Kinesis     ──→ Stream Processor
-              │
-              ▼
-     ┌────────────────┐
-     │ Event Handler  │
-     │ • Parse        │
-     │ • Extract      │
-     │ • Validate     │
-     └────────┬───────┘
-              │
-              ▼
-     ┌────────────────┐
-     │ Incremental    │
-     │ Graph Update   │
-     │ • Add Entities │
-     │ • Add Relations│
-     │ • Resolve      │
-     └────────┬───────┘
-              │
-              ▼
-     ┌────────────────┐
-     │ Graph Store    │
-     │ (Versioned)    │
-     └────────────────┘
-        </pre>
+        <div class="flow-container">
+            <div class="flow-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                📡 Data Streams
+            </div>
+            
+            <div class="component-grid">
+                <div class="component">Kafka Topic</div>
+                <div class="component">RabbitMQ</div>
+                <div class="component">Kinesis</div>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-box" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                ⚙️ Stream Processor<br/>
+                • Parse<br/>
+                • Extract<br/>
+                • Validate
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-box" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                🔄 Incremental Graph Update<br/>
+                • Add Entities<br/>
+                • Add Relations<br/>
+                • Resolve Conflicts
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-box" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);">
+                🗄️ Graph Store<br/>
+                (Versioned)
+            </div>
+        </div>
         <p class="caption">Figure 10: Real-time streaming architecture for incremental knowledge graph updates</p>
     </div>
     
+    <h2>11. Quality Assurance Pipeline</h2>
+    <div class="diagram">
+        <div class="flow-container">
+            <div class="flow-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                📊 Knowledge Graph
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="component-grid">
+                <div class="component">
+                    📋 Schema Templates<br/>
+                    Enforce structure
+                </div>
+                <div class="component">
+                    🌱 Seed Data<br/>
+                    Verified foundation
+                </div>
+                <div class="component">
+                    🔍 Duplicate Detection<br/>
+                    Find duplicates
+                </div>
+                <div class="component">
+                    ⚠️ Conflict Detection<br/>
+                    Identify conflicts
+                </div>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="component-grid">
+                <div class="component">
+                    🔗 Entity Merging<br/>
+                    Merge duplicates
+                </div>
+                <div class="component">
+                    ✅ Conflict Resolution<br/>
+                    Resolve conflicts
+                </div>
+                <div class="component">
+                    📈 Quality Scoring<br/>
+                    Assess quality
+                </div>
+                <div class="component">
+                    📝 Provenance Tracking<br/>
+                    Track sources
+                </div>
+            </div>
+            
+            <div class="arrow">↓</div>
+            
+            <div class="flow-box" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #2c3e50;">
+                ✅ Validated Knowledge Graph<br/>
+                High Quality • Consistent • Complete
+            </div>
+        </div>
+        <p class="caption">Figure 11: Quality assurance pipeline ensuring production-ready knowledge graphs</p>
+    </div>
+    
     <hr>
-    <p><em>Document Version: 1.0 | Semantica Framework Architecture Diagrams</em></p>
+    <p style="text-align: center; color: #666; margin-top: 40px;">
+        <em>Document Version: 2.0 | Semantica Framework Architecture Diagrams | Last Updated: 2025</em>
+    </p>
 </body>
 </html>
-
