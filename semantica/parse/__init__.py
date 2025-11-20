@@ -135,6 +135,7 @@ from .json_parser import JSONParser, JSONData
 from .csv_parser import CSVParser, CSVData
 from .xml_parser import XMLParser, XMLElement, XMLData
 from .image_parser import ImageParser, ImageMetadata, OCRResult
+from .mcp_parser import MCPParser
 from .methods import (
     parse_document,
     parse_web_content,
@@ -200,6 +201,8 @@ __all__ = [
     "ImageParser",
     "ImageMetadata",
     "OCRResult",
+    # MCP parsing
+    "MCPParser",
     # Registry and config
     "MethodRegistry",
     "method_registry",

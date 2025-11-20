@@ -95,6 +95,12 @@ class IngestConfig:
             "INGEST_RESPECT_ROBOTS": ("respect_robots", bool),
             "INGEST_BATCH_SIZE": ("batch_size", int),
             "INGEST_TIMEOUT": ("timeout", float),
+            # MCP server configuration
+            "MCP_SERVER_URL": ("mcp_server_url", str),
+            "MCP_SERVER_TRANSPORT": ("mcp_server_transport", str),
+            "MCP_SERVER_COMMAND": ("mcp_server_command", str),
+            "MCP_SERVER_ARGS": ("mcp_server_args", str),
+            "MCP_SERVER_TIMEOUT": ("mcp_server_timeout", float),
         }
         
         for env_key, (config_key, type_func) in env_mappings.items():
@@ -123,6 +129,26 @@ class IngestConfig:
                         self._configs[config_key] = float(value)
                     except ValueError:
                         self._configs[config_key] = value
+        
+        # Parse MCP_SERVER_ARGS if it's a comma-separated string
+        if "mcp_server_args" in self._configs and isinstance(self._configs["mcp_server_args"], str):
+            self._configs["mcp_server_args"] = [arg.strip() for arg in self._configs["mcp_server_args"].split(",") if arg.strip()]
+        
+        # Also check for MCP_ prefixed variables
+        mcp_prefix = "MCP_"
+        for key, value in os.environ.items():
+            if key.startswith(mcp_prefix) and key not in env_mappings:
+                config_key = key[len(mcp_prefix):].lower()
+                # Try to convert to appropriate type
+                if value.lower() in ('true', 'false'):
+                    self._configs[f"mcp_{config_key}"] = value.lower() == 'true'
+                elif value.isdigit():
+                    self._configs[f"mcp_{config_key}"] = int(value)
+                else:
+                    try:
+                        self._configs[f"mcp_{config_key}"] = float(value)
+                    except ValueError:
+                        self._configs[f"mcp_{config_key}"] = value
     
     def set(self, key: str, value: Any):
         """Set configuration value programmatically."""

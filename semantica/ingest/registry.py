@@ -55,6 +55,7 @@ class MethodRegistry:
         "repo": {},
         "email": {},
         "db": {},
+        "mcp": {},
         "ingest": {},
     }
     
@@ -64,7 +65,7 @@ class MethodRegistry:
         Register a custom ingestion method.
         
         Args:
-            task: Task type ("file", "web", "feed", "stream", "repo", "email", "db", "ingest")
+            task: Task type ("file", "web", "feed", "stream", "repo", "email", "db", "mcp", "ingest")
             name: Method name
             method_func: Method function
         """
@@ -78,7 +79,7 @@ class MethodRegistry:
         Get method by task and name.
         
         Args:
-            task: Task type ("file", "web", "feed", "stream", "repo", "email", "db", "ingest")
+            task: Task type ("file", "web", "feed", "stream", "repo", "email", "db", "mcp", "ingest")
             name: Method name
             
         Returns:
@@ -107,7 +108,7 @@ class MethodRegistry:
         Unregister a method.
         
         Args:
-            task: Task type ("file", "web", "feed", "stream", "repo", "email", "db", "ingest")
+            task: Task type ("file", "web", "feed", "stream", "repo", "email", "db", "mcp", "ingest")
             name: Method name
         """
         if task in cls._methods and name in cls._methods[task]:

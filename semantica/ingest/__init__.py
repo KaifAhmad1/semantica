@@ -129,6 +129,8 @@ from .stream_ingestor import (
 from .repo_ingestor import RepoIngestor, CodeFile, CommitInfo, CodeExtractor, GitAnalyzer
 from .email_ingestor import EmailIngestor, EmailData, AttachmentProcessor, EmailParser as EmailIngestorParser
 from .db_ingestor import DBIngestor, TableData, DatabaseConnector, DataExporter
+from .mcp_ingestor import MCPIngestor, MCPData
+from .mcp_client import MCPClient, MCPResource, MCPTool
 from .registry import MethodRegistry, method_registry
 from .methods import (
     ingest,
@@ -139,6 +141,7 @@ from .methods import (
     ingest_repository,
     ingest_email,
     ingest_database,
+    ingest_mcp,
     get_ingest_method,
     list_available_methods,
 )
@@ -188,6 +191,12 @@ __all__ = [
     "TableData",
     "DatabaseConnector",
     "DataExporter",
+    # MCP ingestion
+    "MCPIngestor",
+    "MCPData",
+    "MCPClient",
+    "MCPResource",
+    "MCPTool",
     # Registry and Methods
     "MethodRegistry",
     "method_registry",
@@ -199,6 +208,7 @@ __all__ = [
     "ingest_repository",
     "ingest_email",
     "ingest_database",
+    "ingest_mcp",
     "get_ingest_method",
     "list_available_methods",
     # Configuration

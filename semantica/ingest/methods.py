@@ -151,6 +151,7 @@ from .stream_ingestor import StreamIngestor, StreamProcessor
 from .repo_ingestor import RepoIngestor
 from .email_ingestor import EmailIngestor, EmailData
 from .db_ingestor import DBIngestor, TableData
+from .mcp_ingestor import MCPIngestor, MCPData
 from .registry import method_registry
 from .config import ingest_config
 
@@ -600,6 +601,108 @@ def ingest_database(
         raise
 
 
+def ingest_mcp(
+    source: Union[str, Dict[str, Any]],
+    method: str = "resources",
+    server_name: Optional[str] = None,
+    **kwargs
+) -> Union[MCPData, List[MCPData], Dict[str, Any]]:
+    """
+    Ingest data from MCP server (convenience function).
+    
+    This is a user-friendly wrapper that ingests data from MCP servers using
+    the specified method. Works with any Python-based MCP server.
+    
+    Args:
+        source: MCP server configuration (dict) or server name (str) if already connected
+        method: Ingestion method (default: "resources")
+            - "resources": Ingest from MCP server resources
+            - "tools": Ingest by calling MCP tools
+            - "all": Ingest all resources
+        server_name: Name for MCP server connection (auto-generated if not provided)
+        **kwargs: Additional options:
+            - transport: Transport method ("stdio", "http", "sse")
+            - command: Command for stdio transport
+            - args: Arguments for command
+            - url: URL for HTTP/SSE transport
+            - headers: Custom headers
+            - resource_uris: List of resource URIs to ingest
+            - tool_name: Tool name to call
+            - tool_arguments: Tool arguments
+            
+    Returns:
+        MCPData, List[MCPData], or Dict with ingestion results
+        
+    Examples:
+        >>> from semantica.ingest.methods import ingest_mcp
+        >>> # Connect and ingest resources
+        >>> data = ingest_mcp(
+        ...     {"transport": "stdio", "command": "python", "args": ["-m", "mcp_server"]},
+        ...     method="resources"
+        ... )
+        >>> # Ingest from already connected server
+        >>> data = ingest_mcp("server1", method="resources", resource_uris=["resource://example"])
+        >>> # Call tool
+        >>> result = ingest_mcp("server1", method="tools", tool_name="get_data", tool_arguments={})
+    """
+    # Check for custom method in registry
+    custom_method = method_registry.get("mcp", method)
+    if custom_method:
+        try:
+            return custom_method(source, **kwargs)
+        except Exception as e:
+            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
+    
+    try:
+        # Get config
+        config = ingest_config.get_method_config("mcp")
+        config.update(kwargs)
+        
+        ingestor = MCPIngestor(**config)
+        
+        # If source is a string, assume it's a server name (already connected)
+        if isinstance(source, str):
+            server_name = source
+            if not ingestor.is_connected(server_name):
+                raise ProcessingError(f"MCP server '{server_name}' not connected. Provide connection config.")
+        elif isinstance(source, dict):
+            # Connect to MCP server
+            if not server_name:
+                server_name = source.get("server_name", f"mcp_server_{len(ingestor.get_connected_servers())}")
+            
+            ingestor.connect(
+                server_name=server_name,
+                transport=source.get("transport", "stdio"),
+                command=source.get("command"),
+                args=source.get("args"),
+                url=source.get("url"),
+                headers=source.get("headers"),
+                **{k: v for k, v in source.items() if k not in ("transport", "command", "args", "url", "headers", "server_name")}
+            )
+        else:
+            raise ProcessingError("Source must be server name (str) or configuration (dict)")
+        
+        # Ingest based on method
+        if method == "resources" or method == "all":
+            resource_uris = kwargs.get("resource_uris")
+            if method == "all":
+                return ingestor.ingest_all_resources(server_name, **kwargs)
+            else:
+                return ingestor.ingest_resources(server_name, resource_uris=resource_uris, **kwargs)
+        elif method == "tools":
+            tool_name = kwargs.get("tool_name")
+            if not tool_name:
+                raise ProcessingError("tool_name required for tools method")
+            tool_arguments = kwargs.get("tool_arguments", {})
+            return ingestor.ingest_tool_output(server_name, tool_name, tool_arguments, **kwargs)
+        else:
+            raise ProcessingError(f"Unknown MCP method: {method}")
+            
+    except Exception as e:
+        logger.error(f"Failed to ingest MCP: {e}")
+        raise
+
+
 def ingest(
     sources: Union[List[Union[str, Path]], str, Path],
     source_type: Optional[str] = None,
@@ -678,6 +781,9 @@ def ingest(
     elif source_type == "db":
         return {"data": ingest_database(sources, method=method, **kwargs)}
     else:
+    elif source_type == "mcp":
+        return {"data": ingest_mcp(sources, method=method or "resources", **kwargs)}
+    else:
         raise ProcessingError(f"Unknown source type: {source_type}")
 
 
@@ -686,7 +792,7 @@ def get_ingest_method(task: str, name: str) -> Optional[Callable]:
     Get a registered ingestion method.
     
     Args:
-        task: Task type ("file", "web", "feed", "stream", "repo", "email", "db", "ingest")
+        task: Task type ("file", "web", "feed", "stream", "repo", "email", "db", "mcp", "ingest")
         name: Method name
         
     Returns:
@@ -750,6 +856,10 @@ method_registry.register("db", "mysql", ingest_database)
 method_registry.register("db", "sqlite", ingest_database)
 method_registry.register("db", "oracle", ingest_database)
 method_registry.register("db", "mssql", ingest_database)
+method_registry.register("mcp", "default", ingest_mcp)
+method_registry.register("mcp", "resources", ingest_mcp)
+method_registry.register("mcp", "tools", ingest_mcp)
+method_registry.register("mcp", "all", ingest_mcp)
 method_registry.register("ingest", "default", ingest)
 method_registry.register("ingest", "unified", ingest)
 
