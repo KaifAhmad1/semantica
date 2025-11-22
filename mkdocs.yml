@@ -14,15 +14,15 @@ theme:
   palette:
     # Light mode
     - scheme: default
-      primary: indigo
-      accent: indigo
+      primary: "#4A4F2F"
+      accent: "#8C9464"
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     # Dark mode
     - scheme: slate
-      primary: indigo
-      accent: indigo
+      primary: "#4A4F2F"
+      accent: "#8C9464"
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
@@ -84,12 +84,23 @@ extra_css:
 # Navigation
 nav:
   - Home: index.md
-  - Quickstart: quickstart.md
-  - Installation: installation.md
-  - Cookbook Recipes: cookbook.md
-  - Learning More: learning-more.md
-  - Deep Dive: deep-dive.md
-  - API References: api.md
+  - Getting Started:
+    - getting-started.md
+    - installation.md
+    - quickstart.md
+  - Guides:
+    - concepts.md
+    - examples.md
+    - cookbook.md
+    - learning-more.md
+  - Advanced:
+    - deep-dive.md
+    - api.md
+  - Resources:
+    - community-projects.md
+    - citation.md
+    - faq.md
+    - license.md
 
 # Extra
 extra:

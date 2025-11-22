@@ -1,118 +1,271 @@
-/* Custom CSS for Semantica Documentation */
+/* Semantica Documentation - Premium Green-Brown & Cream Theme */
 
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
 }
 
-/* Enhanced code blocks */
-.md-typeset pre > code {
-  border-radius: 8px;
-  padding: 1.2em;
+/* Cream background */
+:root {
+  --md-default-bg-color: #FAF7F2;
 }
 
-/* Custom card styles */
-.feature-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+[data-md-color-scheme="slate"] {
+  --md-default-bg-color: #1a1a1a;
 }
 
-.feature-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+/* Dark Green-Brown Header */
+.md-header {
+  background-color: #4A4F2F !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-/* Diagram containers */
-.mermaid {
-  background: var(--md-default-bg-color);
-  border-radius: 8px;
-  padding: 1em;
-  margin: 1em 0;
+[data-md-color-scheme="slate"] .md-header {
+  background-color: #4A4F2F !important;
 }
 
-/* Enhanced tables */
-.md-typeset table:not([class]) {
-  border-radius: 8px;
-  overflow: hidden;
+.md-header {
+  height: 2.4rem !important;
 }
 
-/* Custom animations */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
+.md-header__inner {
+  max-width: 100%;
+  padding: 0 1rem;
+  position: relative;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  height: 2.4rem !important;
+}
+
+/* Hamburger menu button - perfect alignment */
+.md-header__button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 2.4rem !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.md-header__button--menu {
+  margin-right: 0.5rem !important;
+  width: 2.4rem !important;
+  height: 2.4rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* "Semantica" perfectly aligned with hamburger menu */
+.md-header__title {
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  margin-left: 0.5rem !important;
+  position: relative !important;
+  left: 0 !important;
+  transform: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  height: 2.4rem !important;
+  color: #FFFFFF !important;
+  letter-spacing: 0.5px;
+  z-index: 10;
+}
+
+.md-header__title .md-header__button {
+  color: #FFFFFF !important;
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px;
+  display: flex !important;
+  align-items: center !important;
+  height: 2.4rem !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.md-header__title span {
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px;
+  color: #FFFFFF !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  line-height: 1 !important;
+  height: auto !important;
+  vertical-align: middle !important;
+}
+
+/* Hide logo */
+.md-header__button.md-logo {
+  display: none !important;
+}
+
+/* Table of Contents - Move to Left Side */
+@media screen and (min-width: 76.25em) {
+  .md-sidebar--primary {
+    width: 8rem !important;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .md-sidebar--secondary {
+    left: 0 !important;
+    right: auto !important;
+    width: 8rem !important;
+    border-right: 1px solid var(--md-default-fg-color--lightest);
+  }
+
+  .md-content {
+    margin-left: 8rem !important;
+    margin-right: 8rem !important;
   }
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.5s ease-out;
+/* Ensure content uses full available width */
+.md-grid {
+  max-width: 100% !important;
 }
 
-/* Better spacing for sections */
+.md-content__inner {
+  max-width: 100% !important;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.md-main__inner {
+  max-width: 100% !important;
+}
+
+.md-container {
+  padding: 0;
+}
+
+/* Reduce spacing for compact look */
+.md-content {
+  padding-top: 0.8rem !important;
+  padding-bottom: 1.2rem !important;
+}
+
+/* Tighter headings */
+.md-typeset h1 {
+  margin-top: 1.5rem !important;
+  margin-bottom: 0.6rem !important;
+  font-weight: 700;
+}
+
 .md-typeset h2 {
-  margin-top: 2em;
-  margin-bottom: 1em;
+  margin-top: 1.0rem !important;
+  margin-bottom: 0.4rem !important;
+  font-weight: 600;
 }
 
 .md-typeset h3 {
-  margin-top: 1.5em;
-  margin-bottom: 0.75em;
+  margin-top: 1.0rem !important;
+  margin-bottom: 0.4rem !important;
+  font-weight: 600;
 }
 
-/* Enhanced badges */
-.badge {
-  display: inline-block;
-  padding: 0.25em 0.75em;
-  border-radius: 4px;
-  font-size: 0.85em;
+.md-typeset h4 {
+  margin-top: 0.8rem !important;
+  margin-bottom: 0.3rem !important;
+}
+
+.md-typeset p {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+  line-height: 1.7;
+}
+
+.md-typeset ul,
+.md-typeset ol {
+  margin-top: 0.8em;
+  margin-bottom: 0.8em;
+}
+
+.md-typeset li {
+  margin-top: 0.4em;
+  margin-bottom: 0.4em;
+  line-height: 1.7;
+}
+
+/* Sidebar spacing */
+.md-nav__link {
+  padding: 0.20rem 0.60rem !important;
+}
+
+/* Clean TOC styling */
+.md-nav__link--active {
+  color: var(--md-primary-fg-color);
   font-weight: 500;
 }
 
-/* Custom button styles */
-.md-button {
+/* Better code blocks */
+.md-typeset pre {
   border-radius: 6px;
-  transition: all 0.2s ease;
+  background-color: #f8f6f0;
 }
 
-.md-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+[data-md-color-scheme="slate"] .md-typeset pre {
+  background-color: #1e1e1e !important;
+  color: #e0e0e0 !important;
 }
 
-/* Improved code copy button */
-.md-clipboard {
-  opacity: 0.7;
-  transition: opacity 0.2s ease;
+[data-md-color-scheme="slate"] .md-typeset pre code {
+  background-color: #1e1e1e !important;
+  color: #e0e0e0 !important;
 }
 
-.md-clipboard:hover {
-  opacity: 1;
+[data-md-color-scheme="slate"] .md-typeset code:not(pre code) {
+  background-color: #2d2d2d !important;
+  color: #e0e0e0 !important;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
 }
 
-/* Chart and diagram containers */
-.chart-container {
-  background: var(--md-code-bg-color);
-  border-radius: 8px;
-  padding: 1.5em;
-  margin: 1.5em 0;
-  border: 1px solid var(--md-code-hl-color);
+[data-md-color-scheme="slate"] .md-typeset a {
+  color: #8C9464 !important;
 }
 
-/* Responsive improvements */
-@media screen and (max-width: 76.1875em) {
-  .md-nav--primary .md-nav__title {
-    font-size: 1.1rem;
-  }
+[data-md-color-scheme="slate"] .md-typeset a:hover {
+  color: #a8b080 !important;
 }
 
-/* Print styles */
-@media print {
-  .md-sidebar,
-  .md-header {
-    display: none;
-  }
+[data-md-color-scheme="slate"] .md-typeset {
+  color: rgba(255, 255, 255, 0.87) !important;
 }
 
+[data-md-color-scheme="slate"] .md-typeset p {
+  color: rgba(255, 255, 255, 0.87) !important;
+}
+
+[data-md-color-scheme="slate"] .md-typeset li {
+  color: rgba(255, 255, 255, 0.87) !important;
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) th {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  color: rgba(255, 255, 255, 0.87) !important;
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) td {
+  color: rgba(255, 255, 255, 0.87) !important;
+}
+
+/* Accent color for links */
+.md-typeset a {
+  color: #4A4F2F;
+}
+
+.md-typeset a:hover {
+  color: #8C9464;
+}
