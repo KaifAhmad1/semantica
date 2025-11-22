@@ -14,15 +14,15 @@ theme:
   palette:
     # Light mode
     - scheme: default
-      primary: "#4A4F2F"
-      accent: "#8C9464"
+      primary: custom
+      accent: custom
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     # Dark mode
     - scheme: slate
-      primary: "#4A4F2F"
-      accent: "#8C9464"
+      primary: custom
+      accent: custom
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
@@ -76,6 +76,16 @@ plugins:
       lang: en
   - minify:
       minify_html: true
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_category_heading: true
+  - mkdocs-jupyter:
+      include_source: true
 
 # Custom CSS
 extra_css:
@@ -91,11 +101,43 @@ nav:
   - Guides:
     - concepts.md
     - examples.md
-    - cookbook.md
     - learning-more.md
-  - Advanced:
-    - deep-dive.md
-    - api.md
+  - Cookbook:
+    - Introduction:
+      - cookbook/introduction/Welcome_to_Semantica.ipynb
+      - cookbook/introduction/Configuration_Basics.ipynb
+      - cookbook/introduction/Your_First_Knowledge_Graph.ipynb
+      - cookbook/introduction/Data_Ingestion.ipynb
+      - cookbook/introduction/Document_Parsing.ipynb
+      - cookbook/introduction/Data_Normalization.ipynb
+      - cookbook/introduction/Entity_Extraction.ipynb
+      - cookbook/introduction/Relation_Extraction.ipynb
+      - cookbook/introduction/Embedding_Generation.ipynb
+      - cookbook/introduction/Vector_Store.ipynb
+      - cookbook/introduction/Ontology.ipynb
+      - cookbook/introduction/Conflict_Detection.ipynb
+      - cookbook/introduction/Deduplication.ipynb
+      - cookbook/introduction/Building_Knowledge_Graphs.ipynb
+      - cookbook/introduction/Graph_Analytics.ipynb
+      - cookbook/introduction/Graph_Quality.ipynb
+      - cookbook/introduction/Visualization.ipynb
+      - cookbook/introduction/Export.ipynb
+  - Reference:
+    - Core: reference/core.md
+    - Ingest: reference/ingest.md
+    - Parse: reference/parse.md
+    - Normalize: reference/normalize.md
+    - Semantic Extract: reference/semantic_extract.md
+    - Knowledge Graph: reference/kg.md
+    - Embeddings: reference/embeddings.md
+    - Vector Store: reference/vector_store.md
+    - Triple Store: reference/triple_store.md
+    - Ontology: reference/ontology.md
+    - Reasoning: reference/reasoning.md
+    - Pipeline: reference/pipeline.md
+    - Export: reference/export.md
+    - Visualization: reference/visualization.md
+    - Utils: reference/utils.md
   - Resources:
     - community-projects.md
     - citation.md

@@ -1,0 +1,3 @@
+# Kg
+
+::: semantica.kg

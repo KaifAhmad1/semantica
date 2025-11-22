@@ -8,6 +8,10 @@ html {
 /* Cream background */
 :root {
   --md-default-bg-color: #FAF7F2;
+  --md-primary-fg-color: #4A4F2F;
+  --md-primary-fg-color--light: #8C9464;
+  --md-primary-fg-color--dark: #3A3E25;
+  --md-accent-fg-color: #8C9464;
 }
 
 [data-md-color-scheme="slate"] {
