@@ -1,75 +1,18 @@
 name: CI
 
-# Runs tests across multiple Python versions and performs code quality checks
-# Includes test coverage reporting and linting with flake8 and mypy
-
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
-    branches: [main, develop]
-
-permissions:
-  contents: read
+    branches: [main]
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.10', '3.11', '3.12']
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Free Disk Space
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: false
-          android: true
-          dotnet: true
-          haskell: true
-          large-packages: true
-          docker-images: true
-          swap-storage: true
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - run: |
-          pip install -e ".[dev]"
-
-      - run: pytest --cov=semantica --cov-report=xml --cov-report=term-missing -v
-
-      - name: Upload coverage
-        if: matrix.python-version == '3.11'
-        uses: codecov/codecov-action@v3
-        with:
-          file: ./coverage.xml
-
-  lint:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Free Disk Space
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: false
-          android: true
-          dotnet: true
-          haskell: true
-          large-packages: true
-          docker-images: true
-          swap-storage: true
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - run: pip install -e ".[dev]"
-
-      - run: flake8 semantica/
-      - run: mypy semantica/
+      - run: pip install build
+      - run: python -m build

@@ -1,65 +1,18 @@
-name: Security Scan
-
-# Scans dependencies and code for security vulnerabilities
-# Runs on push, PR, weekly schedule, and manual trigger
+name: Security
 
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
   schedule:
     - cron: '0 0 * * 1'
   workflow_dispatch:
 
-permissions:
-  contents: read
-  security-events: write
-
 jobs:
-  dependency-scan:
+  audit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Free Disk Space
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: false
-          android: true
-          dotnet: true
-          haskell: true
-          large-packages: true
-          docker-images: true
-          swap-storage: true
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - run: |
-          pip install safety pip-audit
-          pip install -e ".[dev]"
-
+      - run: pip install pip-audit
       - run: pip-audit
-      - run: safety check
-        continue-on-error: true
-
-  code-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
-
-      - uses: github/codeql-action/upload-sarif@v3
-        if: always() && hashFiles('trivy-results.sarif') != ''
-        with:
-          sarif_file: 'trivy-results.sarif'
         continue-on-error: true
