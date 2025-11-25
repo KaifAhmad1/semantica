@@ -30,17 +30,11 @@
 
 ## 🌟 What is Semantica?
 
-Semantica is the **first comprehensive open-source framework** that bridges the critical gap between raw data chaos and AI-ready knowledge. It's not just another data processing library—it's a complete **semantic intelligence platform** that transforms unstructured information into structured, queryable knowledge graphs that power the next generation of AI applications.
-
-### The Vision
-
-In the era of AI agents and autonomous systems, data alone isn't enough. **Context is king**. Semantica provides the semantic infrastructure that enables AI systems to truly understand, reason about, and act upon information with human-like comprehension.
+Semantica bridges the gap between raw data chaos and AI-ready knowledge. It's a **semantic intelligence platform** that transforms unstructured data into structured, queryable knowledge graphs powering GraphRAG, AI agents, and multi-agent systems.
 
 ### What Makes Semantica Different?
 
-Unlike traditional approaches that process data as isolated documents and extract text into simple vectors, Semantica understands **semantic relationships across all content**. Instead of generic entity recognition, it provides **general-purpose ontology generation and validation**. Where others require manual schema definition, Semantica **automatically models semantics from content patterns**. 
-
-While traditional systems create disconnected data silos, Semantica builds a **unified semantic layer across all data sources**. And instead of basic quality checks, Semantica offers **production-grade QA with conflict detection and resolution** — ensuring your knowledge graphs are trustworthy and ready for production AI systems.
+Unlike traditional approaches that process isolated documents and extract text into vectors, Semantica understands **semantic relationships across all content**, provides **automated ontology generation**, and builds a **unified semantic layer** with **production-grade QA**.
 
 | **Traditional Approaches** | **Semantica's Approach** |
 |:---------------------------|:-------------------------|
@@ -61,9 +55,7 @@ Organizations today face a **fundamental mismatch** between how data exists and 
 
 #### 📊 The Semantic Gap: Problem vs. Solution
 
-Most organizations struggle with **unstructured data** scattered across PDFs, emails, logs, and various formats. This data is often **messy and noisy** — inconsistent formats, duplicate records, and conflicting facts create chaos. Worse yet, data exists in **disconnected silos** — separate systems with no shared context, missing relationships, and isolated knowledge that can't be connected or queried together.
-
-Modern AI systems need the opposite: **clear rules** defined through formal ontologies, **structured entities** that are validated and consistent, and **relationships** that create semantic connections. They require **graphs and networks** that capture domain knowledge and enable **context-aware reasoning** — the ability to understand not just what something is, but how it relates to everything else.
+Organizations have **unstructured data** (PDFs, emails, logs), **messy data** (inconsistent formats, duplicates, conflicts), and **disconnected silos** (no shared context, missing relationships). AI systems need **clear rules** (formal ontologies), **structured entities** (validated, consistent), and **relationships** (semantic connections, context-aware reasoning).
 
 | **📊 What Organizations Have** | **🤖 What AI Systems Require** |
 |:------------------------------|:------------------------------|
@@ -137,69 +129,16 @@ flowchart TD
 
 </details>
 
-#### 📋 Text-Based Flow Diagram
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         RAW DATA SOURCES                             │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐           │
-│  │   PDFs   │  │  Emails  │  │   Logs   │  │ Databases│  ... 50+   │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘           │
-└───────────────────────────────┬─────────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                    📥 INPUT LAYER                                    │
-│              Universal Data Ingestion Pipeline                        │
-│  ┌──────────────────────────────────────────────────────────────┐   │
-│  │  Format Detection • Parsing • Normalization • Preprocessing  │   │
-│  └──────────────────────────────────────────────────────────────┘   │
-└───────────────────────────────┬─────────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                   🧠 SEMANTIC LAYER                                  │
-│              Core Intelligence Processing                             │
-│  ┌──────────────────────────────────────────────────────────────┐   │
-│  │  1. Entity Extraction (NER with LLM enhancement)              │   │
-│  │  2. Relationship Mapping (Triple generation)                   │   │
-│  │  3. Ontology Generation (6-stage automated pipeline)          │   │
-│  │  4. Context Engineering (Semantic enrichment)                  │   │
-│  │  5. Quality Assurance (Conflict detection & resolution)       │   │
-│  └──────────────────────────────────────────────────────────────┘   │
-└───────────────────────────────┬─────────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                   📤 OUTPUT LAYER                                   │
-│            Production-Ready Knowledge Assets                         │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐              │
-│  │  Knowledge   │  │   Vector     │  │  Ontologies  │              │
-│  │   Graphs     │  │  Embeddings  │  │   (OWL)     │              │
-│  └──────────────┘  └──────────────┘  └──────────────┘              │
-└───────────────────────────────┬─────────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                    ✅ APPLICATION LAYER                              │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐             │
-│  │ GraphRAG │  │AI Agents │  │Multi-Agent│  │Analytics │             │
-│  │  Engine  │  │  Memory  │  │  Systems  │  │ & BI    │             │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘             │
-└─────────────────────────────────────────────────────────────────────┘
-```
 
 ### ⚠️ What Happens Without Semantics?
 
-When organizations push messy, unstructured data directly into RAG systems, AI agents, workflows, and LLM pipelines without semantic understanding, three critical failures occur:
+**💥 They Break** — Systems crash due to inconsistent formats and missing structure.
 
-**💥 They Break** — Systems crash or perform poorly because they can't handle inconsistent formats, mixed schemas, duplicate records, and missing structure.
+**🎭 They Hallucinate** — AI models generate false information without semantic context to validate outputs.
 
-**🎭 They Hallucinate** — AI models generate false information and make up facts because they lack semantic context to validate outputs against domain knowledge. Without relationships and ontologies, there's no way to check if information is correct.
+**🔇 They Fail Silently** — Systems return wrong answers without warnings, leading to bad decisions.
 
-**🔇 They Fail Silently** — Most dangerously, systems return wrong answers without warning or error indicators, leading to bad decisions based on incorrect information.
-
-**Why?** Because the system has data — not semantics. Without semantic understanding, AI systems can't connect related concepts, understand context and relationships, validate information against domain rules, reason about complex queries, or detect conflicts and inconsistencies.
+**Why?** Systems have data — not semantics. They can't connect concepts, understand relationships, validate against domain rules, or detect conflicts.
 
 ---
 
@@ -209,41 +148,21 @@ When organizations push messy, unstructured data directly into RAG systems, AI a
 
 ### How Semantica Solves These Problems
 
-**📥 Universal Data Ingestion** — Single framework handles 50+ formats (PDF, DOCX, HTML, JSON, CSV, databases, feeds, APIs, streams) with no need for custom parsers. Unified data pipeline from any source to semantic knowledge.
+**📥 Universal Data Ingestion** — Handles 50+ formats (PDF, DOCX, HTML, JSON, CSV, databases, APIs, streams) with unified pipeline, no custom parsers needed.
 
-**🧠 Automated Semantic Extraction** — Advanced NER, relationship extraction, and triple generation with LLM enhancement automatically discovers entities, relationships, and meaning from unstructured text without manual annotation.
+**🧠 Automated Semantic Extraction** — NER, relationship extraction, and triple generation with LLM enhancement discovers entities and relationships automatically.
 
-**🕸️ Knowledge Graph Construction** — Production-ready knowledge graphs with entity resolution, temporal support, and graph analytics. Structured, queryable knowledge that captures relationships and context, ready for AI applications.
+**🕸️ Knowledge Graph Construction** — Production-ready graphs with entity resolution, temporal support, and graph analytics. Queryable knowledge ready for AI applications.
 
-**🎯 GraphRAG Engine** — Hybrid vector + graph retrieval achieves 91% accuracy (30% improvement over vector-only RAG) by combining semantic search with graph traversal for comprehensive context retrieval and multi-hop reasoning.
+**🎯 GraphRAG Engine** — Hybrid vector + graph retrieval achieves 91% accuracy (30% improvement) via semantic search + graph traversal for multi-hop reasoning.
 
-**🔗 AI Agent Context Engineering** — Persistent memory systems with RAG + knowledge graphs and MCP-compatible tools enable agents to maintain context, validate actions, and access structured knowledge.
+**🔗 AI Agent Context Engineering** — Persistent memory with RAG + knowledge graphs enables context maintenance, action validation, and structured knowledge access.
 
-**📚 Automated Ontology Generation** — 6-stage LLM pipeline automatically generates validated OWL ontologies from documents with HermiT/Pellet validation, eliminating months of manual engineering.
+**📚 Automated Ontology Generation** — 6-stage LLM pipeline generates validated OWL ontologies with HermiT/Pellet validation, eliminating manual engineering.
 
-**🔧 Production-Grade Quality Assurance** — Conflict detection, deduplication, quality scoring, and provenance tracking ensure trusted knowledge graphs with validated, conflict-free data ready for production.
+**🔧 Production-Grade QA** — Conflict detection, deduplication, quality scoring, and provenance tracking ensure trusted, production-ready knowledge graphs.
 
-**🔄 Pipeline Orchestration** — Flexible pipeline builder with parallel execution and custom step integration enables scalable processing through orchestrator-worker pattern for large-scale data handling.
-
-### Key Differentiators
-
-Semantica stands apart from traditional approaches in several critical ways:
-
-**📊 Data Formats** — While others require custom parsers for each format, Semantica unifies 50+ formats through a single framework, eliminating the need for format-specific code.
-
-**🧠 Semantic Extraction** — Instead of manual annotation or basic NER, Semantica provides automated semantic extraction enhanced with LLM capabilities, discovering entities and relationships automatically.
-
-**🕸️ Knowledge Graphs** — Where traditional tools produce basic graphs without validation, Semantica builds production-ready knowledge graphs with comprehensive quality assurance built-in.
-
-**🎯 RAG Performance** — Semantica's hybrid graph+vector approach achieves 91% accuracy, compared to 60-70% for vector-only RAG systems, by combining semantic search with graph traversal.
-
-**📚 Ontology Generation** — Rather than requiring months of manual engineering, Semantica's automated 6-stage pipeline generates validated ontologies from documents automatically.
-
-**🔧 Quality Assurance** — Beyond basic checks, Semantica provides conflict detection and resolution, ensuring knowledge graphs are trustworthy and production-ready.
-
-**🔗 Agent Memory** — Built-in semantic memory systems eliminate the need for custom development, providing agents with persistent, structured knowledge access.
-
-**👥 Multi-Agent Support** — Shared semantic models enable coordination between multiple agents, something traditional approaches lack entirely.
+**🔄 Pipeline Orchestration** — Flexible pipeline builder with parallel execution enables scalable processing via orchestrator-worker pattern.
 
 ### Core Features at a Glance
 
@@ -266,47 +185,23 @@ Semantica is designed for **developers, data engineers, and organizations** buil
 
 ### 🎯 Who Uses Semantica
 
-Semantica serves diverse roles across the data and AI ecosystem:
+**👨‍💻 AI/ML Engineers & Data Scientists** — Build GraphRAG systems, AI agents, and multi-agent systems.
 
-**👨‍💻 AI/ML Engineers & Data Scientists** build GraphRAG systems, AI agents, and multi-agent systems using Semantica's complete semantic processing framework that handles everything from ingestion to knowledge graph construction.
+**👷 Data Engineers** — Build scalable pipelines with semantic enrichment.
 
-**👷 Data Engineers** leverage the framework to build scalable data pipelines with semantic enrichment, processing large volumes of diverse data sources efficiently.
+**📚 Knowledge Engineers & Ontologists** — Create knowledge graphs and ontologies with automated pipelines.
 
-**📚 Knowledge Engineers & Ontologists** create knowledge graphs, automated ontologies, and enterprise knowledge bases using Semantica's automated pipeline with built-in validation and quality assurance, eliminating months of manual work.
+**🏢 Enterprise Data Teams** — Unify semantic layers, improve data quality, resolve conflicts.
 
-**🏢 Enterprise Data Teams** seeking unified semantic layers, improved data quality, and conflict resolution rely on Semantica's universal ingestion capabilities and scalable processing architecture.
+**💻 Software & DevOps Engineers** — Build semantic APIs and infrastructure with production-ready SDK.
 
-**💻 Software & DevOps Engineers** build semantic APIs, pipelines, and infrastructure using Semantica's production-ready SDK with orchestration features for reliable deployments.
+**📊 Analysts & Researchers** — Transform data into queryable knowledge graphs for insights.
 
-**📊 Analysts & Researchers** explore data, analyze literature, and build business intelligence systems by transforming raw data into queryable knowledge graphs that reveal hidden insights.
+**🛡️ Security & Compliance Teams** — Threat intelligence, regulatory reporting, audit trails.
 
-**🛡️ Security & Compliance Teams** working on threat intelligence, regulatory reporting, and audit trails leverage Semantica's relationship mapping and provenance tracking capabilities.
+**🚀 Product Teams & Startups** — Rapid prototyping of AI products and semantic features.
 
-**🚀 Product Teams & Startups** rapidly prototype AI products and semantic intelligence features using Semantica's production-ready framework that accelerates development timelines.
-
-### 🎓 Skill Level Requirements
-
-- **Beginner**: Python basics, understanding of data structures
-- **Intermediate**: Experience with NLP, knowledge graphs, or AI applications
-- **Advanced**: Custom pipeline development, ontology engineering, production deployments
-
-### 💼 Use Cases by Organization Size
-
-**🚀 Startups** use Semantica for rapid prototyping and MVP development, benefiting from its open-source nature and fast time-to-value. The framework enables startups to build sophisticated AI features without massive engineering investments.
-
-**🏢 Mid-Size Companies** leverage Semantica for knowledge management and AI applications, relying on its production-ready features and scalable architecture to grow with their needs.
-
-**🏛️ Enterprises** deploy Semantica for enterprise knowledge graphs and multi-agent systems, where quality assurance and conflict resolution capabilities ensure trustworthy, reliable knowledge infrastructure at scale.
-
-**🎓 Research Institutions** utilize Semantica for academic research and knowledge synthesis, taking advantage of its extensible architecture and comprehensive documentation to build custom research tools.
-
-### 🚀 Getting Started Paths
-
-- **Quick Start**: Want to build a knowledge graph in minutes? → [Quick Start Guide](#-quick-start)
-- **RAG Systems**: Building retrieval-augmented generation? → [GraphRAG Engine](#-knowledge-graph-powered-rag-graphrag)
-- **AI Agents**: Creating agents with memory? → [Context Engineering](#-context-engineering-for-ai-agents)
-- **Enterprise**: Need production deployment? → [Quality Assurance](#-production-ready-quality-assurance)
-- **Learning**: New to knowledge graphs? → [Cookbook](https://semantica.readthedocs.io/cookbook/)
+**Skill Levels:** Beginner (Python basics) • Intermediate (NLP/knowledge graphs) • Advanced (custom pipelines, ontology engineering)
 
 ---
 
@@ -344,8 +239,6 @@ pip install -e ".[all]"
 pip install -e ".[dev]"
 ```
 
----
-
 ## 📚 Documentation & Resources
 
 | **📖 Documentation** | **🍳 Cookbook** | **🎯 Use Cases** | **🚀 Quick Start** |
@@ -353,8 +246,6 @@ pip install -e ".[dev]"
 | [API Reference & Guides](https://semantica.readthedocs.io/) | [50+ Interactive Notebooks](https://semantica.readthedocs.io/cookbook/) | [Industry Applications](https://semantica.readthedocs.io/use-cases/) | [Get Started in Minutes](https://semantica.readthedocs.io/getting-started/) |
 
 > 💡 **New to Semantica?** Start with the [**Cookbook**](https://semantica.readthedocs.io/cookbook/) for hands-on examples!
-
----
 
 ## ✨ Core Capabilities
 
@@ -387,8 +278,6 @@ print(f"✅ Ingested {len(sources)} sources")
 
 📖 [**Guide**](https://semantica.readthedocs.io/reference/ingest/) • 🍳 [**Cookbook**](https://semantica.readthedocs.io/cookbook/)
 
----
-
 ### 🧠 Semantic Intelligence Engine
 
 > **Entity & Relation Extraction** • NER, Relationships, Events, Triples with LLM Enhancement
@@ -405,8 +294,6 @@ print(f"Entities: {len(results.entities)}, Relationships: {len(results.relations
 ```
 
 📖 [**Guide**](https://semantica.readthedocs.io/reference/semantic_extract/) • 🍳 [**Cookbook**](https://semantica.readthedocs.io/cookbook/)
-
----
 
 ### 🕸️ Knowledge Graph Construction
 
@@ -430,8 +317,6 @@ print(f"Nodes: {kg.node_count}, Answer: {result.answer}")
 
 📖 [**Guide**](https://semantica.readthedocs.io/reference/kg/) • 🍳 [**Cookbook**](https://semantica.readthedocs.io/cookbook/)
 
----
-
 ### 📚 Ontology Generation & Management
 
 > **6-Stage LLM Pipeline** • Automatic OWL Generation • HermiT/Pellet Validation
@@ -450,8 +335,6 @@ print(f"Classes: {len(ontology.classes)}, Valid: {validation.is_consistent}")
 
 📖 [**Guide**](https://semantica.readthedocs.io/reference/ontology/) • 🍳 [**Cookbook**](https://semantica.readthedocs.io/cookbook/)
 
----
-
 ### 🔗 Context Engineering for AI Agents
 
 > **Persistent Memory** • RAG + Knowledge Graphs • MCP-Compatible Tools
@@ -468,8 +351,6 @@ context = retriever.retrieve("What are user preferences?", max_results=5)
 ```
 
 📖 [**Guide**](https://semantica.readthedocs.io/reference/context/) • 🍳 [**Cookbook**](https://semantica.readthedocs.io/cookbook/)
-
----
 
 ### 🎯 Knowledge Graph-Powered RAG (GraphRAG)
 
@@ -489,8 +370,6 @@ print(f"Answer: {result.answer} (Confidence: {result.confidence:.2f})")
 
 📖 [**Guide**](https://semantica.readthedocs.io/reference/qa_rag/) • 🍳 [**Cookbook**](https://semantica.readthedocs.io/cookbook/)
 
----
-
 ### 🔄 Pipeline Orchestration & Parallel Processing
 
 > **Orchestrator-Worker Pattern** • Parallel Execution • Scalable Processing
@@ -508,8 +387,6 @@ result = ExecutionEngine().execute_pipeline(pipeline, parallel=True)
 ```
 
 📖 [**Guide**](https://semantica.readthedocs.io/reference/pipeline/) • 🍳 [**Cookbook**](https://semantica.readthedocs.io/cookbook/)
-
----
 
 ### 🔧 Production-Ready Quality Assurance
 
@@ -531,10 +408,6 @@ print(f"Quality Score: {report.overall_score}/100, Duplicates: {len(duplicates)}
 
 📖 [**Guide**](https://semantica.readthedocs.io/reference/quality/) • 🍳 [**Cookbook**](https://semantica.readthedocs.io/cookbook/)
 
----
-
----
-
 ## 🚀 Quick Start
 
 > 💡 **For comprehensive examples, see the [**Cookbook**](https://semantica.readthedocs.io/cookbook/) with 50+ interactive notebooks!**
@@ -552,53 +425,43 @@ result = kg.query("Who founded the company?", return_format="structured")
 print(f"Answer: {result.answer} | Nodes: {kg.node_count}, Edges: {kg.edge_count}")
 ```
 
-🍳 **[See 50+ comprehensive examples in the Cookbook →](https://semantica.readthedocs.io/cookbook/)**
-
----
+🍳 **[See 50+ examples →](https://semantica.readthedocs.io/cookbook/)**
 
 ## 🎯 Use Cases
 
-Semantica powers diverse applications across industries and use cases:
+**🏢 Enterprise Knowledge Engineering** — Unify data sources into knowledge graphs, breaking down silos.
 
-**🏢 Enterprise Knowledge Engineering** — Process diverse enterprise data sources (documents, databases, APIs) and build unified knowledge graphs that break down data silos and enable cross-domain insights. Organizations use Semantica to create a single source of truth from fragmented information systems.
+**🤖 AI Agents & Autonomous Systems** — Build agents with persistent memory and semantic understanding.
 
-**🤖 AI Agents & Autonomous Systems** — Build AI agents with access to structured knowledge and persistent memory. Semantica enables agents to maintain context across conversations, validate actions against domain rules, and make decisions based on comprehensive semantic understanding.
+**📄 Multi-Format Document Processing** — Process 50+ formats through a unified pipeline.
 
-**📄 Multi-Format Document Processing** — Process 50+ document formats uniformly through a single pipeline. Whether you're dealing with PDFs, Word documents, HTML pages, or structured data, Semantica provides a unified interface for extracting semantic knowledge.
+**🔄 Data Pipeline Processing** — Build scalable pipelines with parallel execution.
 
-**🔄 Data Pipeline Processing** — Build custom processing pipelines with parallel execution. Semantica's orchestration framework enables scalable data processing, handling large volumes of data efficiently through its orchestrator-worker pattern.
+**🛡️ Intelligence & Security** — Analyze networks, threat intelligence, forensic analysis.
 
-**🛡️ Intelligence & Security** — Analyze criminal networks, build threat intelligence systems, and perform forensic analysis. Semantica's relationship mapping and graph analytics reveal hidden connections and patterns in security data.
+**💰 Finance & Trading** — Fraud detection, market intelligence, risk assessment.
 
-**💰 Finance & Trading** — Detect fraud, analyze market intelligence, and assess risk. Financial institutions use Semantica to build knowledge graphs that connect transactions, entities, and events, enabling sophisticated fraud detection and risk analysis.
+**🏥 Healthcare & Biomedical** — Clinical reports, drug discovery, medical literature analysis.
 
-**🏥 Healthcare & Biomedical** — Process clinical reports, accelerate drug discovery, and analyze medical literature. Semantica helps healthcare organizations build knowledge graphs that connect symptoms, treatments, research papers, and patient data for better medical insights.
-
-🍳 **[Explore all 50+ use case examples in the Cookbook →](https://semantica.readthedocs.io/cookbook/)**
-
----
+🍳 **[Explore 50+ examples →](https://semantica.readthedocs.io/cookbook/)**
 
 ## 🔬 Advanced Features
 
-Semantica includes powerful advanced features for production deployments:
+**🔄 Incremental Updates** — Real-time stream processing with Kafka, RabbitMQ, Kinesis for live updates.
 
-**🔄 Incremental Updates** — Real-time stream processing capabilities integrate with Kafka, RabbitMQ, and Kinesis, enabling live knowledge graph updates as new data arrives. This keeps your semantic layer current without full reprocessing.
+**🌍 Multi-Language Support** — Process 50+ languages with automatic detection.
 
-**🌍 Multi-Language Support** — Process documents in 50+ languages with automatic language detection. Semantica handles multilingual content seamlessly, extracting entities and relationships regardless of the source language.
+**📚 Custom Ontology Import** — Import and extend Schema.org and custom ontologies.
 
-**📚 Custom Ontology Import** — Import and extend existing ontologies including Schema.org and custom domain ontologies. This allows you to build on established standards while adding domain-specific knowledge.
+**🧠 Advanced Reasoning** — Deductive, inductive, abductive reasoning with HermiT/Pellet.
 
-**🧠 Advanced Reasoning** — Perform deductive, inductive, and abductive reasoning using HermiT and Pellet reasoners. This enables sophisticated logical inference and consistency checking across your knowledge graphs.
+**📊 Graph Analytics** — Centrality, community detection, path finding, temporal analysis.
 
-**📊 Graph Analytics** — Comprehensive graph analytics including centrality measures, community detection, path finding, and temporal analysis. Understand the structure and dynamics of your knowledge graphs with built-in analytical tools.
+**🔧 Custom Pipelines** — Build custom pipelines with parallel execution.
 
-**🔧 Custom Pipelines** — Build custom processing pipelines with parallel execution. Semantica's flexible pipeline framework allows you to compose processing steps tailored to your specific needs while maintaining scalability.
+**🔌 API Integration** — Integrate external APIs for entity enrichment.
 
-**🔌 API Integration** — Integrate with external APIs for entity enrichment. Connect to knowledge bases, databases, and services to enhance your knowledge graphs with additional context and metadata.
-
-🍳 **[See advanced examples in the Cookbook →](https://semantica.readthedocs.io/cookbook/)**
-
-
+🍳 **[See advanced examples →](https://semantica.readthedocs.io/cookbook/)**
 
 ## 🗺️ Roadmap
 
@@ -663,8 +526,6 @@ Semantica includes powerful advanced features for production deployments:
 
 **Contact:** enterprise@semantica.io
 
----
-
 ## 🤝 Contributing
 
 ### How to Contribute
@@ -705,13 +566,9 @@ Contributors receive:
 - 🎁 Semantica swag
 - 🌟 Featured showcases
 
----
-
 ## 📜 License
 
 Semantica is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
----
 
 <div align="center">
 
