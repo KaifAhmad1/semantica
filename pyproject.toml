@@ -191,10 +191,15 @@ graph-kuzu = [
     "kuzu>=0.4.0"
 ]
 graph-falkordb = [
-    "falkordb>=1.0.0"
+    "falkordb>=1.0.0",
+    "redis>=4.3.0"
 ]
 graph-all = [
     "semantica[graph-neo4j,graph-kuzu,graph-falkordb]"
+]
+# Complete installation with all optional dependencies
+all = [
+    "semantica[dev,viz,gpu,cloud,monitoring,llm-all,models-huggingface,split-all,graph-all]"
 ]
 
 [project.scripts]
