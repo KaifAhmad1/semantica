@@ -105,6 +105,7 @@ class _SemanticaModules:
         self._vector_store = None
         self._triple_store = None
         self._ontology = None
+        self._evals = None
 
     @property
     def kg(self):
@@ -196,6 +197,13 @@ class _SemanticaModules:
         if self._ontology is None:
             self._ontology = _ModuleProxy("ontology")
         return self._ontology
+
+    @property
+    def evals(self):
+        """Access evaluation module."""
+        if self._evals is None:
+            self._evals = _ModuleProxy("evals")
+        return self._evals
 
 
 # Create singleton instance for module access
@@ -321,6 +329,7 @@ def __getattr__(name: str):
         "vector_store",
         "triple_store",
         "ontology",
+        "evals",
     ]:
         return getattr(_modules, name)
     raise AttributeError(f"module 'semantica' has no attribute '{name}'")
