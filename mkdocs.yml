@@ -42,7 +42,6 @@ theme:
   icon:
     logo: material/brain
     repo: fontawesome/brands/github
-  custom_dir: docs/overrides
 
 # Extensions
 markdown_extensions:
