@@ -25,14 +25,29 @@ Projects and integrations from the Semantica community.
 ## 🔌 Integrations
 
 ### Vector Databases
-- **Pinecone** - Cloud-native vector database
-- **Weaviate** - Open-source vector search
-- **Qdrant** - High-performance similarity search
+- Pinecone
+- Weaviate
+- Qdrant
+- FAISS
+- Milvus
 
 ### Graph Databases
-- **Neo4j** - Leading graph database with Cypher queries
-- **Amazon Neptune** - Cloud-based managed graph database
-- **ArangoDB** - Multi-model database support
+- Neo4j
+- KuzuDB
+- FalkorDB
+
+### LLM Providers
+- OpenAI
+- Google Gemini
+- Groq
+- Anthropic
+- Ollama
+- HuggingFace
+
+### NLP Libraries
+- spaCy
+- NLTK
+- Sentence Transformers
 
 ---
 
