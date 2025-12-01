@@ -273,7 +273,7 @@ sources.extend(file_ingestor.ingest("documents/"))
 sources.extend(web_ingestor.ingest("https://example.com"))
 sources.extend(db_ingestor.ingest(query="SELECT * FROM articles"))
 
-print(f"✅ Ingested {len(sources)} sources")
+print(f" Ingested {len(sources)} sources")
 ```
 
 [**Cookbook: Data Ingestion**](https://github.com/Hawksight-AI/semantica/tree/main/cookbook/introduction/Data_Ingestion.ipynb)
