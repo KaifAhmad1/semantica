@@ -89,23 +89,23 @@ Author: Semantica Contributors
 License: MIT
 """
 
-from typing import Any, Dict, List, Optional, Union
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
-from .context_graph import ContextGraphBuilder, ContextNode, ContextEdge
-from .entity_linker import EntityLinker, EntityLink, LinkedEntity
 from .agent_memory import AgentMemory, MemoryItem
+from .config import ContextConfig, context_config
+from .context_graph import ContextEdge, ContextGraphBuilder, ContextNode
 from .context_retriever import ContextRetriever, RetrievedContext
-from .registry import MethodRegistry, method_registry
+from .entity_linker import EntityLink, EntityLinker, LinkedEntity
 from .methods import (
     build_context_graph,
-    store_memory,
-    retrieve_context,
-    link_entities,
     get_context_method,
+    link_entities,
     list_available_methods,
+    retrieve_context,
+    store_memory,
 )
-from .config import ContextConfig, context_config
+from .registry import MethodRegistry, method_registry
 
 __all__ = [
     # Main classes
@@ -145,14 +145,14 @@ def build_context(
     knowledge_graph: Optional[Any] = None,
     graph_method: str = "entities_relationships",
     store_initial_memories: bool = False,
-    **options
+    **options,
 ) -> Dict[str, Any]:
     """
     Build context graph and optionally manage memory (convenience function).
-    
+
     This is a user-friendly wrapper that builds context graphs and optionally
     stores initial memories in one call.
-    
+
     Args:
         entities: List of entity dictionaries
         relationships: List of relationship dictionaries
@@ -162,13 +162,13 @@ def build_context(
         graph_method: Graph construction method (default: "entities_relationships")
         store_initial_memories: Whether to store initial memories from entities
         **options: Additional options passed to builders
-        
+
     Returns:
         Dictionary containing:
             - graph: Context graph dictionary
             - memory_ids: List of stored memory IDs (if store_initial_memories=True)
             - statistics: Graph and memory statistics
-            
+
     Examples:
         >>> from semantica.context import build_context
         >>> entities = [{"id": "e1", "text": "Python", "type": "PROGRAMMING_LANGUAGE"}]
@@ -182,49 +182,49 @@ def build_context(
         >>> print(f"Graph has {result['graph']['statistics']['node_count']} nodes")
     """
     from ..utils.logging import get_logger
-    
+
     logger = get_logger("context")
-    
+
     # Build context graph
     graph = build_context_graph(
         entities=entities,
         relationships=relationships,
         conversations=conversations,
         method=graph_method,
-        **options
+        **options,
     )
-    
+
     memory_ids = []
-    
+
     # Optionally store initial memories
     if store_initial_memories and vector_store:
         memory = AgentMemory(
-            vector_store=vector_store,
-            knowledge_graph=knowledge_graph,
-            **options
+            vector_store=vector_store, knowledge_graph=knowledge_graph, **options
         )
-        
+
         # Store entity-based memories
         if entities:
             for entity in entities[:10]:  # Limit to first 10
-                entity_text = entity.get("text") or entity.get("label") or entity.get("name", "")
+                entity_text = (
+                    entity.get("text") or entity.get("label") or entity.get("name", "")
+                )
                 if entity_text:
                     memory_id = memory.store(
                         f"Entity: {entity_text}",
                         metadata={
                             "type": "entity",
                             "entity_id": entity.get("id"),
-                            "entity_type": entity.get("type")
+                            "entity_type": entity.get("type"),
                         },
-                        entities=[entity] if entity.get("id") else None
+                        entities=[entity] if entity.get("id") else None,
                     )
                     memory_ids.append(memory_id)
-    
+
     return {
         "graph": graph,
         "memory_ids": memory_ids,
         "statistics": {
             "graph": graph.get("statistics", {}),
-            "memories_stored": len(memory_ids)
-        }
+            "memories_stored": len(memory_ids),
+        },
     }

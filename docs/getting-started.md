@@ -104,6 +104,12 @@ embedding:
 knowledge_graph:
   backend: networkx # or neo4j, arangodb
   temporal: true
+
+graph_store:
+  backend: neo4j # or kuzu, falkordb
+  neo4j_uri: bolt://localhost:7687
+  neo4j_user: neo4j
+  neo4j_password: password
 ```
 
 ---
@@ -114,5 +120,5 @@ Now that you understand the basics, here are recommended next steps:
 
 1. **[Your First Knowledge Graph](cookbook/introduction/Your_First_Knowledge_Graph.ipynb)**: Build your first knowledge graph from a document.
 2. **[Configuration Basics](cookbook/introduction/Configuration_Basics.ipynb)**: Set up configuration files and API keys.
-3. **[Core Workflows](cookbook.md#core-workflows)**: Learn common patterns and workflows.
+3. **[Core Workflows](cookbook.md#introduction)**: Learn common patterns and workflows.
 4. **[Use Cases](cookbook.md#use-cases)**: Explore domain-specific applications.

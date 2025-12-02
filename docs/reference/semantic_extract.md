@@ -83,6 +83,7 @@
 ### NamedEntityRecognizer
 
 Coordinator for entity extraction.
+<<<<<<< HEAD
 
 **Parameters:**
 
@@ -92,6 +93,8 @@ Coordinator for entity extraction.
 | `confidence_threshold` | float | `0.5` | Minimum confidence score |
 | `merge_overlapping` | bool | `True` | Merge overlapping entities |
 | `include_standard_types` | bool | `True` | Include Person, Org, Location |
+=======
+>>>>>>> origin/main
 
 **Methods:**
 
@@ -105,6 +108,7 @@ Coordinator for entity extraction.
 ```python
 from semantica.semantic_extract import NamedEntityRecognizer
 
+<<<<<<< HEAD
 # Basic usage
 ner = NamedEntityRecognizer()
 entities = ner.extract_entities("Elon Musk leads SpaceX.")
@@ -117,11 +121,17 @@ ner = NamedEntityRecognizer(
     merge_overlapping=True
 )
 entities = ner.extract_entities("Apple Inc. was founded in 1976.")
+=======
+ner = NamedEntityRecognizer()
+entities = ner.extract_entities("Elon Musk leads SpaceX.")
+# [Entity(text="Elon Musk", label="PERSON"), Entity(text="SpaceX", label="ORG")]
+>>>>>>> origin/main
 ```
 
 ### RelationExtractor
 
 Extracts relationships between entities.
+<<<<<<< HEAD
 
 **Parameters:**
 
@@ -131,6 +141,8 @@ Extracts relationships between entities.
 | `bidirectional` | bool | `False` | Extract bidirectional relations |
 | `confidence_threshold` | float | `0.6` | Minimum confidence score |
 | `max_distance` | int | `50` | Max token distance between entities |
+=======
+>>>>>>> origin/main
 
 **Methods:**
 
@@ -143,6 +155,7 @@ Extracts relationships between entities.
 ```python
 from semantica.semantic_extract import RelationExtractor, NamedEntityRecognizer
 
+<<<<<<< HEAD
 # First extract entities
 ner = NamedEntityRecognizer()
 text = "Elon Musk founded SpaceX in 2002."
@@ -160,10 +173,16 @@ rel_extractor = RelationExtractor(
     bidirectional=False
 )
 relations = rel_extractor.extract_relations(text, entities=entities)
+=======
+re = RelationExtractor()
+relations = re.extract_relations(text, entities)
+# [Relation(source="Elon Musk", target="SpaceX", type="leads")]
+>>>>>>> origin/main
 ```
 
 ### EventDetector
 
+<<<<<<< HEAD
 Identifies events with temporal information and participants.
 
 **Parameters:**
@@ -174,6 +193,9 @@ Identifies events with temporal information and participants.
 | `extract_participants` | bool | `True` | Extract event participants |
 | `extract_location` | bool | `True` | Extract event locations |
 | `extract_time` | bool | `True` | Extract temporal information |
+=======
+Identifies events.
+>>>>>>> origin/main
 
 **Methods:**
 
@@ -181,6 +203,7 @@ Identifies events with temporal information and participants.
 |--------|-------------|
 | `detect_events(text)` | Find events |
 
+<<<<<<< HEAD
 **Example:**
 
 ```python
@@ -204,12 +227,18 @@ Extracts RDF triples (Subject-Predicate-Object).
 |-----------|------|---------|-------------|
 | `include_temporal` | bool | `False` | Include time information |
 | `include_provenance` | bool | `False` | Track source sentences |
+=======
+### TripleExtractor
+
+Extracts RDF triples.
+>>>>>>> origin/main
 
 **Methods:**
 
 | Method | Description |
 |--------|-------------|
 | `extract_triples(text)` | Get (S, P, O) tuples |
+<<<<<<< HEAD
 
 **Example:**
 
@@ -223,12 +252,15 @@ extractor = TripleExtractor(
 triples = extractor.extract_triples("Steve Jobs founded Apple in 1976.")
 # [Triple(subject="Steve Jobs", predicate="founded", object="Apple", temporal="1976")]
 ```
+=======
+>>>>>>> origin/main
 
 ---
 
 ## Convenience Functions
 
 ```python
+<<<<<<< HEAD
 from semantica.semantic_extract import (
     NamedEntityRecognizer, 
     RelationExtractor,
@@ -263,6 +295,19 @@ print(f"Entities: {len(entities)}")
 print(f"Relations: {len(relations)}")
 print(f"Triples: {len(triples)}")
 print(f"Events: {len(events)}")
+=======
+from semantica.semantic_extract import build
+
+# All-in-one extraction
+result = build(
+    "Apple released the iPhone in 2007.",
+    extract_entities=True,
+    extract_relations=True,
+    extract_events=True
+)
+
+print(result['triples'])
+>>>>>>> origin/main
 ```
 
 ---
@@ -299,6 +344,7 @@ semantic_extract:
 ### KG Population Pipeline
 
 ```python
+<<<<<<< HEAD
 from semantica.semantic_extract import NamedEntityRecognizer, RelationExtractor, TripleExtractor
 from semantica.kg import GraphBuilder
 
@@ -316,6 +362,23 @@ sources = [{
     "relationships": [{"source": t.subject, "target": t.object, "type": t.predicate} for t in triples]
 }]
 kg = builder.build(sources)
+=======
+from semantica.semantic_extract import build
+from semantica.kg import KnowledgeGraph
+
+# 1. Extract
+text = "Google was founded by Larry Page and Sergey Brin."
+data = build(text, extract_triples=True)
+
+# 2. Populate KG
+kg = KnowledgeGraph()
+for triple in data['triples']:
+    kg.add_triple(
+        subject=triple.subject,
+        predicate=triple.predicate,
+        object=triple.object
+    )
+>>>>>>> origin/main
 ```
 
 ---

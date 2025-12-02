@@ -1,198 +1,126 @@
 # Contributing to Semantica
 
-Thank you for your interest in contributing to Semantica! This guide provides detailed information about contributing to the project.
+Thank you for your interest in contributing to Semantica!
 
-## Quick Links
+!!! tip "Quick Start"
+    New to contributing? Check out issues labeled [`good-first-issue`](https://github.com/Hawksight-AI/semantica/labels/good-first-issue)
 
-- [Contributing Guide](../CONTRIBUTING.md) - Main contributing guide
-- [Code of Conduct](../CODE_OF_CONDUCT.md) - Community standards
-- [Security Policy](../SECURITY.md) - Security reporting
-- [GitHub Discussions](https://github.com/Hawksight-AI/semantica/discussions) - Community discussions
+---
 
-## Documentation-Specific Guidelines
+## 📚 Essential Links
 
-### Writing Documentation
+- **[Contributing Guide](https://github.com/Hawksight-AI/semantica/blob/main/CONTRIBUTING.md)** - Complete contribution guidelines
+- **[Code of Conduct](https://github.com/Hawksight-AI/semantica/blob/main/CODE_OF_CONDUCT.md)** - Community standards
+- **[Security Policy](https://github.com/Hawksight-AI/semantica/blob/main/SECURITY.md)** - Report vulnerabilities
+- **[GitHub Issues](https://github.com/Hawksight-AI/semantica/issues)** - Bug reports and features
 
-When contributing documentation, please follow these guidelines:
+---
 
-#### Style Guide
+## 🎯 Ways to Contribute
+
+### Code Contributions
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+See the [Contributing Guide](https://github.com/Hawksight-AI/semantica/blob/main/CONTRIBUTING.md) for detailed instructions.
+
+### Documentation
+
+- Fix typos and improve clarity
+- Add examples and tutorials
+- Update API documentation
+- Translate documentation
+
+### Bug Reports
+
+Report bugs on [GitHub Issues](https://github.com/Hawksight-AI/semantica/issues) with:
+- Description of the problem
+- Steps to reproduce
+- Expected vs actual behavior
+- Environment details
+
+### Feature Requests
+
+Suggest features on [GitHub Issues](https://github.com/Hawksight-AI/semantica/issues) with:
+- Use case description
+- Proposed solution
+- Benefits to the community
+
+---
+
+## ✍️ Documentation Style Guide
+
+### Writing Guidelines
 
 - Use clear, concise language
-- Write for a technical audience but explain complex concepts
-- Include code examples where helpful
+- Include working code examples
+- Test all examples before submitting
+- Follow existing documentation structure
 - Use proper markdown formatting
-- Follow the existing documentation structure
 
-#### Code Examples
-
-- Always include working code examples
-- Test examples before submitting
-- Use realistic scenarios
-- Include expected output when relevant
-- Add comments for clarity
-
-#### API Documentation
-
-When documenting APIs:
-
-- Include function/class signatures with type hints
-- Document all parameters and return values
-- Provide usage examples
-- Note any exceptions that may be raised
-- Include performance considerations if relevant
-
-Example:
+### API Documentation Format
 
 ```python
-def extract_entities(
-    text: str,
-    model: str = "transformer",
-    confidence_threshold: float = 0.7
-) -> List[Entity]:
-    """Extract named entities from text.
+def function_name(
+    param1: str,
+    param2: int = 0
+) -> ReturnType:
+    """Brief description.
     
     Args:
-        text: Input text to process
-        model: NER model to use (default: "transformer")
-        confidence_threshold: Minimum confidence score (default: 0.7)
+        param1: Description of param1
+        param2: Description of param2 (default: 0)
     
     Returns:
-        List of extracted Entity objects
+        Description of return value
     
     Raises:
-        ValueError: If text is empty or model is invalid
+        ValueError: When and why this is raised
     
     Example:
-        >>> from semantica.semantic_extract import NamedEntityRecognizer
-        >>> ner = NamedEntityRecognizer()
-        >>> entities = ner.extract("Apple Inc. was founded in 1976.")
-        >>> len(entities)
-        2
+        >>> result = function_name("test", 5)
+        >>> print(result)
+        expected_output
     """
 ```
 
-### Documentation Structure
+---
 
-The documentation is organized as follows:
+## 📁 Documentation Structure
 
 ```
 docs/
 ├── index.md              # Homepage
-├── getting-started.md    # Getting started guide
+├── getting-started.md    # Getting started
 ├── concepts.md          # Core concepts
 ├── modules.md           # Module overview
-├── use-cases.md         # Use case examples
-├── examples.md          # Code examples
-├── learning-more.md     # Additional resources
-├── cookbook/            # Interactive tutorials
-│   ├── introduction/   # Beginner tutorials
-│   ├── advanced/        # Advanced tutorials
-│   └── use_cases/       # Domain-specific examples
+├── use-cases.md         # Use cases
+├── examples.md          # Examples
+├── cookbook/            # Tutorials
 └── reference/           # API reference
-    ├── core.md
-    ├── ingest.md
-    └── ...
 ```
 
-### Adding New Documentation
+---
 
-1. **Choose the right location**:
-   - Concepts → `concepts.md`
-   - Tutorials → `cookbook/`
-   - API docs → `reference/`
-   - Examples → `examples.md` or `cookbook/`
+## 🛠️ Documentation Tools
 
-2. **Follow naming conventions**:
-   - Use lowercase with hyphens: `my-new-doc.md`
-   - Be descriptive but concise
+- **[MkDocs](https://www.mkdocs.org/)** - Documentation generator
+- **[Material for MkDocs](https://squidfunk.github.io/mkdocs-material/)** - Theme
+- **[mkdocstrings](https://mkdocstrings.github.io/)** - API docs from docstrings
+- **[Mermaid](https://mermaid.js.org/)** - Diagrams
 
-3. **Update navigation**:
-   - Add to `mkdocs.yml` in the appropriate section
+---
 
-4. **Add to index if needed**:
-   - Update `docs/index.md` if it's a major new section
+## 🤝 Getting Help
 
-### Code Review Process
+- **[GitHub Issues](https://github.com/Hawksight-AI/semantica/issues)** - Ask questions
+- **Documentation** - Check existing docs for examples
+- **Pull Requests** - Review other contributors' PRs
 
-Documentation PRs go through the same review process as code:
+---
 
-1. **Automated checks**:
-   - Markdown linting
-   - Link checking
-   - Build verification
-
-2. **Manual review**:
-   - Accuracy and clarity
-   - Code example correctness
-   - Consistency with existing docs
-
-3. **Feedback**:
-   - Reviewers provide constructive feedback
-   - Address all comments before merging
-
-### Example Contributions
-
-#### Fixing Typos
-
-```markdown
-# Before
-Semantica is a knowlege graph framework.
-
-# After
-Semantica is a knowledge graph framework.
-```
-
-#### Improving Clarity
-
-```markdown
-# Before
-The function does entity extraction.
-
-# After
-The function extracts named entities (people, organizations, locations, etc.) from text using advanced NLP models.
-```
-
-#### Adding Examples
-
-```markdown
-## Example
-
-Here's how to extract entities from text:
-
-```python
-from semantica.semantic_extract import NamedEntityRecognizer
-
-ner = NamedEntityRecognizer()
-entities = ner.extract("Apple Inc. was founded by Steve Jobs.")
-print(f"Found {len(entities)} entities")
-```
-```
-
-### Translation
-
-We welcome translations of the documentation! If you'd like to translate:
-
-1. Create a new directory: `docs/i18n/<language>/`
-2. Translate the markdown files
-3. Update `mkdocs.yml` to include the new language
-4. Maintain the same structure as the English version
-
-### Documentation Tools
-
-We use:
-
-- **MkDocs**: Documentation generator
-- **Material for MkDocs**: Theme
-- **mkdocstrings**: API documentation from docstrings
-- **Mermaid**: Diagrams
-
-### Getting Help
-
-If you need help with documentation:
-
-- Ask in [GitHub Discussions](https://github.com/Hawksight-AI/semantica/discussions)
-- Check existing documentation for examples
-- Review other contributors' PRs
-
-Thank you for helping improve Semantica's documentation! 📚
-
+!!! success "Thank You!"
+    Every contribution helps make Semantica better! 🎉

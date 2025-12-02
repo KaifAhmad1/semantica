@@ -40,42 +40,45 @@ License: MIT
 """
 
 import os
-from typing import Optional, Dict
 from pathlib import Path
+from typing import Dict, Optional
 
 from ..utils.logging import get_logger
 
 
 class Config:
     """Configuration manager - supports .env files, environment variables, and programmatic config."""
-    
+
     def __init__(self, config_file: Optional[str] = None):
         """Initialize configuration manager."""
         self.logger = get_logger("config")
         self._configs: Dict[str, Dict] = {}
         self._load_config_file(config_file)
         self._load_env_vars()
-    
+
     def _load_config_file(self, config_file: Optional[str]):
         """Load configuration from file."""
         if config_file and Path(config_file).exists():
             try:
                 # Support YAML, JSON, TOML
-                if config_file.endswith('.yaml') or config_file.endswith('.yml'):
+                if config_file.endswith(".yaml") or config_file.endswith(".yml"):
                     import yaml
-                    with open(config_file, 'r') as f:
+
+                    with open(config_file, "r") as f:
                         self._configs.update(yaml.safe_load(f) or {})
-                elif config_file.endswith('.json'):
+                elif config_file.endswith(".json"):
                     import json
-                    with open(config_file, 'r') as f:
+
+                    with open(config_file, "r") as f:
                         self._configs.update(json.load(f) or {})
-                elif config_file.endswith('.toml'):
+                elif config_file.endswith(".toml"):
                     import toml
-                    with open(config_file, 'r') as f:
+
+                    with open(config_file, "r") as f:
                         self._configs.update(toml.load(f) or {})
             except Exception as e:
                 self.logger.warning(f"Failed to load config file {config_file}: {e}")
-    
+
     def _load_env_vars(self):
         """Load configuration from environment variables."""
         # Common environment variable patterns
@@ -87,24 +90,24 @@ class Config:
                 if provider not in self._configs:
                     self._configs[provider] = {}
                 self._configs[provider]["api_key"] = api_key
-    
+
     def set_provider(self, name: str, **config):
         """Set provider config programmatically."""
         self._configs[name] = config
-    
+
     def get_provider_config(self, name: str) -> Dict:
         """Get provider configuration."""
         if name in self._configs:
             return self._configs[name]
-        
+
         # Fallback to environment variables
         env_key = f"{name.upper()}_API_KEY"
         api_key = os.getenv(env_key)
         if api_key:
             return {"api_key": api_key}
-        
+
         return {}
-    
+
     def get_api_key(self, provider: str) -> Optional[str]:
         """Get API key with fallback chain: config -> env -> None."""
         if provider in self._configs:

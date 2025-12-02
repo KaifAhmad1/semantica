@@ -86,19 +86,20 @@ Example Usage:
     >>> fig = visualize_embeddings(embeddings, labels, method="2d_projection", output="interactive")
 """
 
-from typing import Any, Dict, List, Optional, Union
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+
 import numpy as np
 
+from .analytics_visualizer import AnalyticsVisualizer
+from .config import visualization_config
+from .embedding_visualizer import EmbeddingVisualizer
 from .kg_visualizer import KGVisualizer
 from .ontology_visualizer import OntologyVisualizer
-from .embedding_visualizer import EmbeddingVisualizer
-from .semantic_network_visualizer import SemanticNetworkVisualizer
 from .quality_visualizer import QualityVisualizer
-from .analytics_visualizer import AnalyticsVisualizer
-from .temporal_visualizer import TemporalVisualizer
 from .registry import method_registry
-from .config import visualization_config
+from .semantic_network_visualizer import SemanticNetworkVisualizer
+from .temporal_visualizer import TemporalVisualizer
 
 # Global visualizer instances
 _global_kg_visualizer: Optional[KGVisualizer] = None
@@ -185,18 +186,18 @@ def visualize_kg(
     output: str = "interactive",
     file_path: Optional[Union[str, Path]] = None,
     method: str = "default",
-    **options
+    **options,
 ) -> Optional[Any]:
     """
     Visualize knowledge graph.
-    
+
     Args:
         graph: Knowledge graph dictionary with entities and relationships
         output: Output type ("interactive", "html", "png", "svg")
         file_path: Output file path (required for non-interactive)
         method: Visualization method ("default", "network", "communities", "centrality")
         **options: Additional visualization options
-    
+
     Returns:
         Visualization figure or None
     """
@@ -204,22 +205,34 @@ def visualize_kg(
     custom_method = method_registry.get("kg", method)
     if custom_method:
         return custom_method(graph, output=output, file_path=file_path, **options)
-    
+
     # Use default method
     viz = _get_kg_visualizer(**options)
-    
+
     if method == "network" or method == "default":
-        return viz.visualize_network(graph, output=output, file_path=file_path, **options)
+        return viz.visualize_network(
+            graph, output=output, file_path=file_path, **options
+        )
     elif method == "communities":
         communities = options.pop("communities", {})
-        return viz.visualize_communities(graph, communities, output=output, file_path=file_path, **options)
+        return viz.visualize_communities(
+            graph, communities, output=output, file_path=file_path, **options
+        )
     elif method == "centrality":
         centrality = options.pop("centrality", {})
         centrality_type = options.pop("centrality_type", "degree")
-        return viz.visualize_centrality(graph, centrality, centrality_type=centrality_type, 
-                                       output=output, file_path=file_path, **options)
+        return viz.visualize_centrality(
+            graph,
+            centrality,
+            centrality_type=centrality_type,
+            output=output,
+            file_path=file_path,
+            **options,
+        )
     else:
-        return viz.visualize_network(graph, output=output, file_path=file_path, **options)
+        return viz.visualize_network(
+            graph, output=output, file_path=file_path, **options
+        )
 
 
 def visualize_ontology(
@@ -227,18 +240,18 @@ def visualize_ontology(
     output: str = "interactive",
     file_path: Optional[Union[str, Path]] = None,
     method: str = "default",
-    **options
+    **options,
 ) -> Optional[Any]:
     """
     Visualize ontology.
-    
+
     Args:
         ontology: Ontology dictionary, SemanticNetwork, or ontology generator result
         output: Output type
         file_path: Output file path
         method: Visualization method ("default", "hierarchy", "properties", "structure")
         **options: Additional options
-    
+
     Returns:
         Visualization figure or None
     """
@@ -246,18 +259,26 @@ def visualize_ontology(
     custom_method = method_registry.get("ontology", method)
     if custom_method:
         return custom_method(ontology, output=output, file_path=file_path, **options)
-    
+
     # Use default method
     viz = _get_ontology_visualizer(**options)
-    
+
     if method == "hierarchy" or method == "default":
-        return viz.visualize_hierarchy(ontology, output=output, file_path=file_path, **options)
+        return viz.visualize_hierarchy(
+            ontology, output=output, file_path=file_path, **options
+        )
     elif method == "properties":
-        return viz.visualize_properties(ontology, output=output, file_path=file_path, **options)
+        return viz.visualize_properties(
+            ontology, output=output, file_path=file_path, **options
+        )
     elif method == "structure":
-        return viz.visualize_structure(ontology, output=output, file_path=file_path, **options)
+        return viz.visualize_structure(
+            ontology, output=output, file_path=file_path, **options
+        )
     else:
-        return viz.visualize_hierarchy(ontology, output=output, file_path=file_path, **options)
+        return viz.visualize_hierarchy(
+            ontology, output=output, file_path=file_path, **options
+        )
 
 
 def visualize_embeddings(
@@ -266,11 +287,11 @@ def visualize_embeddings(
     output: str = "interactive",
     file_path: Optional[Union[str, Path]] = None,
     method: str = "default",
-    **options
+    **options,
 ) -> Optional[Any]:
     """
     Visualize embeddings.
-    
+
     Args:
         embeddings: Embedding matrix (n_samples, n_features)
         labels: Optional labels for coloring points
@@ -278,37 +299,77 @@ def visualize_embeddings(
         file_path: Output file path
         method: Visualization method ("default", "2d_projection", "3d_projection", "similarity", "clustering")
         **options: Additional options
-    
+
     Returns:
         Visualization figure or None
     """
     # Check for custom method
     custom_method = method_registry.get("embedding", method)
     if custom_method:
-        return custom_method(embeddings, labels=labels, output=output, file_path=file_path, **options)
-    
+        return custom_method(
+            embeddings, labels=labels, output=output, file_path=file_path, **options
+        )
+
     # Use default method
     viz = _get_embedding_visualizer(**options)
-    
+
     if method == "2d_projection" or method == "default":
-        reduction_method = options.pop("reduction_method", visualization_config.get("dimension_reduction_method", "umap"))
-        return viz.visualize_2d_projection(embeddings, labels, method=reduction_method, 
-                                          output=output, file_path=file_path, **options)
+        reduction_method = options.pop(
+            "reduction_method",
+            visualization_config.get("dimension_reduction_method", "umap"),
+        )
+        return viz.visualize_2d_projection(
+            embeddings,
+            labels,
+            method=reduction_method,
+            output=output,
+            file_path=file_path,
+            **options,
+        )
     elif method == "3d_projection":
-        reduction_method = options.pop("reduction_method", visualization_config.get("dimension_reduction_method", "umap"))
-        return viz.visualize_3d_projection(embeddings, labels, method=reduction_method,
-                                          output=output, file_path=file_path, **options)
+        reduction_method = options.pop(
+            "reduction_method",
+            visualization_config.get("dimension_reduction_method", "umap"),
+        )
+        return viz.visualize_3d_projection(
+            embeddings,
+            labels,
+            method=reduction_method,
+            output=output,
+            file_path=file_path,
+            **options,
+        )
     elif method == "similarity":
-        return viz.visualize_similarity_heatmap(embeddings, labels, output=output, file_path=file_path, **options)
+        return viz.visualize_similarity_heatmap(
+            embeddings, labels, output=output, file_path=file_path, **options
+        )
     elif method == "clustering":
         cluster_labels = options.pop("cluster_labels", None)
-        reduction_method = options.pop("reduction_method", visualization_config.get("dimension_reduction_method", "umap"))
-        return viz.visualize_clustering(embeddings, cluster_labels, method=reduction_method,
-                                       output=output, file_path=file_path, **options)
+        reduction_method = options.pop(
+            "reduction_method",
+            visualization_config.get("dimension_reduction_method", "umap"),
+        )
+        return viz.visualize_clustering(
+            embeddings,
+            cluster_labels,
+            method=reduction_method,
+            output=output,
+            file_path=file_path,
+            **options,
+        )
     else:
-        reduction_method = options.pop("reduction_method", visualization_config.get("dimension_reduction_method", "umap"))
-        return viz.visualize_2d_projection(embeddings, labels, method=reduction_method,
-                                         output=output, file_path=file_path, **options)
+        reduction_method = options.pop(
+            "reduction_method",
+            visualization_config.get("dimension_reduction_method", "umap"),
+        )
+        return viz.visualize_2d_projection(
+            embeddings,
+            labels,
+            method=reduction_method,
+            output=output,
+            file_path=file_path,
+            **options,
+        )
 
 
 def visualize_semantic_network(
@@ -316,37 +377,47 @@ def visualize_semantic_network(
     output: str = "interactive",
     file_path: Optional[Union[str, Path]] = None,
     method: str = "default",
-    **options
+    **options,
 ) -> Optional[Any]:
     """
     Visualize semantic network.
-    
+
     Args:
         semantic_network: SemanticNetwork object, dict, or semantic model
         output: Output type
         file_path: Output file path
         method: Visualization method ("default", "network", "node_types", "edge_types")
         **options: Additional options
-    
+
     Returns:
         Visualization figure or None
     """
     # Check for custom method
     custom_method = method_registry.get("semantic_network", method)
     if custom_method:
-        return custom_method(semantic_network, output=output, file_path=file_path, **options)
-    
+        return custom_method(
+            semantic_network, output=output, file_path=file_path, **options
+        )
+
     # Use default method
     viz = _get_semantic_network_visualizer(**options)
-    
+
     if method == "network" or method == "default":
-        return viz.visualize_network(semantic_network, output=output, file_path=file_path, **options)
+        return viz.visualize_network(
+            semantic_network, output=output, file_path=file_path, **options
+        )
     elif method == "node_types":
-        return viz.visualize_node_types(semantic_network, output=output, file_path=file_path, **options)
+        return viz.visualize_node_types(
+            semantic_network, output=output, file_path=file_path, **options
+        )
     elif method == "edge_types":
-        return viz.visualize_edge_types(semantic_network, output=output, file_path=file_path, **options)
+        return viz.visualize_edge_types(
+            semantic_network, output=output, file_path=file_path, **options
+        )
     else:
-        return viz.visualize_network(semantic_network, output=output, file_path=file_path, **options)
+        return viz.visualize_network(
+            semantic_network, output=output, file_path=file_path, **options
+        )
 
 
 def visualize_quality(
@@ -354,43 +425,59 @@ def visualize_quality(
     output: str = "interactive",
     file_path: Optional[Union[str, Path]] = None,
     method: str = "default",
-    **options
+    **options,
 ) -> Optional[Any]:
     """
     Visualize quality metrics.
-    
+
     Args:
         quality_report: QualityReport object or dictionary
         output: Output type
         file_path: Output file path
         method: Visualization method ("default", "dashboard", "completeness", "consistency", "issues")
         **options: Additional options
-    
+
     Returns:
         Visualization figure or None
     """
     # Check for custom method
     custom_method = method_registry.get("quality", method)
     if custom_method:
-        return custom_method(quality_report, output=output, file_path=file_path, **options)
-    
+        return custom_method(
+            quality_report, output=output, file_path=file_path, **options
+        )
+
     # Use default method
     viz = _get_quality_visualizer(**options)
-    
+
     if method == "dashboard" or method == "default":
-        return viz.visualize_dashboard(quality_report, output=output, file_path=file_path, **options)
+        return viz.visualize_dashboard(
+            quality_report, output=output, file_path=file_path, **options
+        )
     elif method == "completeness":
         completeness_metrics = options.pop("completeness_metrics", None)
-        return viz.visualize_completeness_metrics(completeness_metrics or quality_report,
-                                                 output=output, file_path=file_path, **options)
+        return viz.visualize_completeness_metrics(
+            completeness_metrics or quality_report,
+            output=output,
+            file_path=file_path,
+            **options,
+        )
     elif method == "consistency":
         consistency_data = options.pop("consistency_data", None)
-        return viz.visualize_consistency_heatmap(consistency_data or quality_report,
-                                               output=output, file_path=file_path, **options)
+        return viz.visualize_consistency_heatmap(
+            consistency_data or quality_report,
+            output=output,
+            file_path=file_path,
+            **options,
+        )
     elif method == "issues":
-        return viz.visualize_issues(quality_report, output=output, file_path=file_path, **options)
+        return viz.visualize_issues(
+            quality_report, output=output, file_path=file_path, **options
+        )
     else:
-        return viz.visualize_dashboard(quality_report, output=output, file_path=file_path, **options)
+        return viz.visualize_dashboard(
+            quality_report, output=output, file_path=file_path, **options
+        )
 
 
 def visualize_analytics(
@@ -398,49 +485,69 @@ def visualize_analytics(
     output: str = "interactive",
     file_path: Optional[Union[str, Path]] = None,
     method: str = "default",
-    **options
+    **options,
 ) -> Optional[Any]:
     """
     Visualize graph analytics.
-    
+
     Args:
         analytics_data: Analytics data dictionary (graph, centrality, communities, etc.)
         output: Output type
         file_path: Output file path
         method: Visualization method ("default", "centrality", "communities", "connectivity", "degree_distribution")
         **options: Additional options
-    
+
     Returns:
         Visualization figure or None
     """
     # Check for custom method
     custom_method = method_registry.get("analytics", method)
     if custom_method:
-        return custom_method(analytics_data, output=output, file_path=file_path, **options)
-    
+        return custom_method(
+            analytics_data, output=output, file_path=file_path, **options
+        )
+
     # Use default method
     viz = _get_analytics_visualizer(**options)
-    
+
     if method == "centrality" or method == "default":
         centrality = analytics_data.get("centrality", {})
         centrality_type = options.pop("centrality_type", "degree")
         top_n = options.pop("top_n", 20)
-        return viz.visualize_centrality_rankings(centrality, centrality_type=centrality_type,
-                                                top_n=top_n, output=output, file_path=file_path, **options)
+        return viz.visualize_centrality_rankings(
+            centrality,
+            centrality_type=centrality_type,
+            top_n=top_n,
+            output=output,
+            file_path=file_path,
+            **options,
+        )
     elif method == "communities":
         graph = analytics_data.get("graph", {})
         communities = analytics_data.get("communities", {})
-        return viz.visualize_community_structure(graph, communities, output=output, file_path=file_path, **options)
+        return viz.visualize_community_structure(
+            graph, communities, output=output, file_path=file_path, **options
+        )
     elif method == "connectivity":
         connectivity = analytics_data.get("connectivity", {})
-        return viz.visualize_connectivity(connectivity, output=output, file_path=file_path, **options)
+        return viz.visualize_connectivity(
+            connectivity, output=output, file_path=file_path, **options
+        )
     elif method == "degree_distribution":
         graph = analytics_data.get("graph", {})
-        return viz.visualize_degree_distribution(graph, output=output, file_path=file_path, **options)
+        return viz.visualize_degree_distribution(
+            graph, output=output, file_path=file_path, **options
+        )
     else:
         centrality = analytics_data.get("centrality", {})
-        return viz.visualize_centrality_rankings(centrality, centrality_type="degree",
-                                                top_n=20, output=output, file_path=file_path, **options)
+        return viz.visualize_centrality_rankings(
+            centrality,
+            centrality_type="degree",
+            top_n=20,
+            output=output,
+            file_path=file_path,
+            **options,
+        )
 
 
 def visualize_temporal(
@@ -448,53 +555,65 @@ def visualize_temporal(
     output: str = "interactive",
     file_path: Optional[Union[str, Path]] = None,
     method: str = "default",
-    **options
+    **options,
 ) -> Optional[Any]:
     """
     Visualize temporal data.
-    
+
     Args:
         temporal_data: Temporal data dictionary with timestamps and changes
         output: Output type
         file_path: Output file path
         method: Visualization method ("default", "timeline", "patterns", "snapshot_comparison", "evolution")
         **options: Additional options
-    
+
     Returns:
         Visualization figure or None
     """
     # Check for custom method
     custom_method = method_registry.get("temporal", method)
     if custom_method:
-        return custom_method(temporal_data, output=output, file_path=file_path, **options)
-    
+        return custom_method(
+            temporal_data, output=output, file_path=file_path, **options
+        )
+
     # Use default method
     viz = _get_temporal_visualizer(**options)
-    
+
     if method == "timeline" or method == "default":
-        return viz.visualize_timeline(temporal_data, output=output, file_path=file_path, **options)
+        return viz.visualize_timeline(
+            temporal_data, output=output, file_path=file_path, **options
+        )
     elif method == "patterns":
         patterns = options.pop("patterns", temporal_data.get("patterns", {}))
-        return viz.visualize_temporal_patterns(patterns, output=output, file_path=file_path, **options)
+        return viz.visualize_temporal_patterns(
+            patterns, output=output, file_path=file_path, **options
+        )
     elif method == "snapshot_comparison":
         snapshots = options.pop("snapshots", temporal_data.get("snapshots", []))
-        return viz.visualize_snapshot_comparison(snapshots, output=output, file_path=file_path, **options)
+        return viz.visualize_snapshot_comparison(
+            snapshots, output=output, file_path=file_path, **options
+        )
     elif method == "evolution":
         metrics_history = temporal_data.get("metrics_history", [])
         timestamps = temporal_data.get("timestamps", [])
-        return viz.visualize_metrics_evolution(metrics_history, timestamps, output=output, file_path=file_path, **options)
+        return viz.visualize_metrics_evolution(
+            metrics_history, timestamps, output=output, file_path=file_path, **options
+        )
     else:
-        return viz.visualize_timeline(temporal_data, output=output, file_path=file_path, **options)
+        return viz.visualize_timeline(
+            temporal_data, output=output, file_path=file_path, **options
+        )
 
 
 def get_visualization_method(task: str, method_name: str) -> Optional[Any]:
     """
     Get visualization method by task and name.
-    
+
     Args:
         task: Task type (kg, ontology, embedding, semantic_network, quality, analytics, temporal)
         method_name: Method name
-    
+
     Returns:
         Method function or None if not found
     """
@@ -504,12 +623,11 @@ def get_visualization_method(task: str, method_name: str) -> Optional[Any]:
 def list_available_methods(task: Optional[str] = None) -> Dict[str, List[str]]:
     """
     List available visualization methods.
-    
+
     Args:
         task: Optional task type to filter by
-    
+
     Returns:
         Dictionary mapping task types to lists of method names
     """
     return method_registry.list_all(task)
-

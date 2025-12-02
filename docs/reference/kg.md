@@ -121,11 +121,18 @@ Queries time-aware graphs.
 ## Convenience Functions
 
 ```python
+<<<<<<< HEAD
 from semantica.kg import GraphBuilder, analyze_graph
 
 # Build using GraphBuilder
 builder = GraphBuilder(resolve_conflicts=True)
 kg = builder.build(sources)
+=======
+from semantica.kg import build, analyze_graph
+
+# Build
+kg = build(sources, resolve_conflicts=True)
+>>>>>>> origin/main
 
 # Analyze
 stats = analyze_graph(kg)

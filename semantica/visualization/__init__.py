@@ -124,32 +124,26 @@ Author: Semantica Contributors
 License: MIT
 """
 
-from .kg_visualizer import KGVisualizer
-from .ontology_visualizer import OntologyVisualizer
-from .embedding_visualizer import EmbeddingVisualizer
-from .semantic_network_visualizer import SemanticNetworkVisualizer
-from .quality_visualizer import QualityVisualizer
 from .analytics_visualizer import AnalyticsVisualizer
-from .temporal_visualizer import TemporalVisualizer
+from .config import VisualizationConfig, visualization_config
+from .embedding_visualizer import EmbeddingVisualizer
+from .kg_visualizer import KGVisualizer
 from .methods import (
-    visualize_kg,
-    visualize_ontology,
-    visualize_embeddings,
-    visualize_semantic_network,
-    visualize_quality,
-    visualize_analytics,
-    visualize_temporal,
     get_visualization_method,
     list_available_methods,
+    visualize_analytics,
+    visualize_embeddings,
+    visualize_kg,
+    visualize_ontology,
+    visualize_quality,
+    visualize_semantic_network,
+    visualize_temporal,
 )
-from .config import (
-    VisualizationConfig,
-    visualization_config,
-)
-from .registry import (
-    MethodRegistry,
-    method_registry,
-)
+from .ontology_visualizer import OntologyVisualizer
+from .quality_visualizer import QualityVisualizer
+from .registry import MethodRegistry, method_registry
+from .semantic_network_visualizer import SemanticNetworkVisualizer
+from .temporal_visualizer import TemporalVisualizer
 
 __all__ = [
     # Visualizers
@@ -176,4 +170,3 @@ __all__ = [
     "MethodRegistry",
     "method_registry",
 ]
-

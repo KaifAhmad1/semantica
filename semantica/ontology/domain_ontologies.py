@@ -30,7 +30,7 @@ License: MIT
 
 from typing import Any, Dict, List, Optional
 
-from ..utils.exceptions import ValidationError, ProcessingError
+from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
 from ..utils.progress_tracker import get_progress_tracker
 from .ontology_generator import OntologyGenerator
@@ -39,7 +39,7 @@ from .ontology_generator import OntologyGenerator
 class DomainOntologies:
     """
     Pre-built domain ontologies manager.
-    
+
     • Healthcare domain ontology
     • Finance domain ontology
     • Legal domain ontology
@@ -47,11 +47,11 @@ class DomainOntologies:
     • Cybersecurity domain ontology
     • Custom domain ontology support
     """
-    
+
     def __init__(self, config: Optional[Dict[str, Any]] = None, **kwargs):
         """
         Initialize domain ontologies manager.
-        
+
         Args:
             config: Configuration dictionary
             **kwargs: Additional configuration options
@@ -59,15 +59,15 @@ class DomainOntologies:
         self.logger = get_logger("domain_ontologies")
         self.config = config or {}
         self.config.update(kwargs)
-        
+
         # Initialize progress tracker
         self.progress_tracker = get_progress_tracker()
-        
+
         self.ontology_generator = OntologyGenerator(**self.config)
         self.domain_templates: Dict[str, Dict[str, Any]] = {}
-        
+
         self._load_domain_templates()
-    
+
     def _load_domain_templates(self) -> None:
         """Load domain-specific templates."""
         # Healthcare domain
@@ -81,12 +81,27 @@ class DomainOntologies:
                 {"name": "Medication", "comment": "Prescribed medication"},
             ],
             "properties": [
-                {"name": "hasDiagnosis", "type": "object", "domain": ["Patient"], "range": ["Diagnosis"]},
-                {"name": "prescribedBy", "type": "object", "domain": ["Medication"], "range": ["Physician"]},
-                {"name": "treatedAt", "type": "object", "domain": ["Patient"], "range": ["Hospital"]},
-            ]
+                {
+                    "name": "hasDiagnosis",
+                    "type": "object",
+                    "domain": ["Patient"],
+                    "range": ["Diagnosis"],
+                },
+                {
+                    "name": "prescribedBy",
+                    "type": "object",
+                    "domain": ["Medication"],
+                    "range": ["Physician"],
+                },
+                {
+                    "name": "treatedAt",
+                    "type": "object",
+                    "domain": ["Patient"],
+                    "range": ["Hospital"],
+                },
+            ],
         }
-        
+
         # Finance domain
         self.domain_templates["finance"] = {
             "classes": [
@@ -96,53 +111,63 @@ class DomainOntologies:
                 {"name": "Customer", "comment": "Bank customer"},
             ],
             "properties": [
-                {"name": "hasAccount", "type": "object", "domain": ["Customer"], "range": ["Account"]},
-                {"name": "belongsTo", "type": "object", "domain": ["Account"], "range": ["Bank"]},
-            ]
+                {
+                    "name": "hasAccount",
+                    "type": "object",
+                    "domain": ["Customer"],
+                    "range": ["Account"],
+                },
+                {
+                    "name": "belongsTo",
+                    "type": "object",
+                    "domain": ["Account"],
+                    "range": ["Bank"],
+                },
+            ],
         }
-    
+
     def get_domain_template(self, domain: str) -> Optional[Dict[str, Any]]:
         """
         Get domain-specific template.
-        
+
         Args:
             domain: Domain name
-        
+
         Returns:
             Domain template or None
         """
         return self.domain_templates.get(domain.lower())
-    
-    def create_domain_ontology(
-        self,
-        domain: str,
-        **options
-    ) -> Dict[str, Any]:
+
+    def create_domain_ontology(self, domain: str, **options) -> Dict[str, Any]:
         """
         Create domain-specific ontology.
-        
+
         Args:
             domain: Domain name
             **options: Additional options
-        
+
         Returns:
             Generated ontology
         """
         tracking_id = self.progress_tracker.start_tracking(
             module="ontology",
             submodule="DomainOntologies",
-            message=f"Creating domain ontology: {domain}"
+            message=f"Creating domain ontology: {domain}",
         )
-        
+
         try:
-            self.progress_tracker.update_tracking(tracking_id, message="Getting domain template...")
+            self.progress_tracker.update_tracking(
+                tracking_id, message="Getting domain template..."
+            )
             template = self.get_domain_template(domain)
-            
+
             if not template:
                 raise ValidationError(f"Domain template not found: {domain}")
-            
+
             # Generate ontology from template
-            self.progress_tracker.update_tracking(tracking_id, message="Generating ontology from template...")
+            self.progress_tracker.update_tracking(
+                tracking_id, message="Generating ontology from template..."
+            )
             ontology = {
                 "name": f"{domain.capitalize()}Ontology",
                 "uri": options.get("uri", f"https://semantica.dev/ontology/{domain}/"),
@@ -151,33 +176,34 @@ class DomainOntologies:
                 "properties": template["properties"],
                 "metadata": {
                     "domain": domain,
-                    "generated_at": __import__("datetime").datetime.now().isoformat()
-                }
+                    "generated_at": __import__("datetime").datetime.now().isoformat(),
+                },
             }
-            
-            self.progress_tracker.stop_tracking(tracking_id, status="completed",
-                                               message=f"Created domain ontology: {domain} with {len(template['classes'])} classes, {len(template['properties'])} properties")
+
+            self.progress_tracker.stop_tracking(
+                tracking_id,
+                status="completed",
+                message=f"Created domain ontology: {domain} with {len(template['classes'])} classes, {len(template['properties'])} properties",
+            )
             return ontology
-            
+
         except Exception as e:
-            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
+            )
             raise
-    
-    def register_domain_template(
-        self,
-        domain: str,
-        template: Dict[str, Any]
-    ) -> None:
+
+    def register_domain_template(self, domain: str, template: Dict[str, Any]) -> None:
         """
         Register a custom domain template.
-        
+
         Args:
             domain: Domain name
             template: Template dictionary with classes and properties
         """
         self.domain_templates[domain.lower()] = template
         self.logger.info(f"Registered domain template: {domain}")
-    
+
     def list_domains(self) -> List[str]:
         """List available domain templates."""
         return list(self.domain_templates.keys())

@@ -252,3 +252,34 @@ html {
     font-size: 0.75rem;
   }
 }
+
+/* 
+   ==========================================================================
+   Footer Attribution - Keep MkDocs Credit Visible
+   ========================================================================== 
+*/
+.md-footer-meta__inner {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.md-footer-copyright {
+  opacity: 1 !important;
+  color: var(--md-default-fg-color--light) !important;
+}
+
+.md-footer-copyright__highlight {
+  opacity: 1 !important;
+  color: var(--md-default-fg-color) !important;
+  font-weight: 500 !important;
+}
+
+[data-md-color-scheme="slate"] .md-footer-copyright {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+[data-md-color-scheme="slate"] .md-footer-copyright__highlight {
+  color: rgba(255, 255, 255, 0.9) !important;
+}

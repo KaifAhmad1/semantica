@@ -43,17 +43,18 @@ Author: Semantica Contributors
 License: MIT
 """
 
-from typing import List, Dict, Any, Optional, Union
-from .semantic_chunker import Chunk
-from .methods import (
-    split_entity_aware,
-    split_relation_aware,
-    split_graph_based,
-    split_ontology_aware,
-    split_hierarchical
-)
+from typing import Any, Dict, List, Optional, Union
+
 from ..utils.logging import get_logger
 from ..utils.progress_tracker import get_progress_tracker
+from .methods import (
+    split_entity_aware,
+    split_graph_based,
+    split_hierarchical,
+    split_ontology_aware,
+    split_relation_aware,
+)
+from .semantic_chunker import Chunk
 
 logger = get_logger("kg_chunkers")
 
@@ -61,22 +62,22 @@ logger = get_logger("kg_chunkers")
 class EntityAwareChunker:
     """
     Entity boundary-preserving chunker for GraphRAG workflows.
-    
+
     Ensures that entities and their associated information are kept together,
     preserving the semantic integrity necessary for accurate graph-based retrieval.
     """
-    
+
     def __init__(
         self,
         chunk_size: int = 1000,
         chunk_overlap: int = 200,
         ner_method: str = "ml",
         preserve_entities: bool = True,
-        **kwargs
+        **kwargs,
     ):
         """
         Initialize entity-aware chunker.
-        
+
         Args:
             chunk_size: Target chunk size
             chunk_overlap: Overlap between chunks
@@ -91,24 +92,24 @@ class EntityAwareChunker:
         self.options = kwargs
         self.logger = get_logger("entity_aware_chunker")
         self.progress_tracker = get_progress_tracker()
-    
+
     def chunk(self, text: str, **options) -> List[Chunk]:
         """
         Chunk text preserving entity boundaries.
-        
+
         Args:
             text: Input text
             **options: Additional options
-            
+
         Returns:
             List of chunks
         """
         tracking_id = self.progress_tracker.start_tracking(
             module="split",
             submodule="EntityAwareChunker",
-            message="Chunking text with entity awareness"
+            message="Chunking text with entity awareness",
         )
-        
+
         try:
             merged_options = {**self.options, **options}
             chunks = split_entity_aware(
@@ -116,40 +117,42 @@ class EntityAwareChunker:
                 chunk_size=self.chunk_size,
                 ner_method=self.ner_method,
                 preserve_entities=self.preserve_entities,
-                **merged_options
+                **merged_options,
             )
-            
+
             self.progress_tracker.stop_tracking(
                 tracking_id,
                 status="completed",
-                message=f"Created {len(chunks)} entity-aware chunks"
+                message=f"Created {len(chunks)} entity-aware chunks",
             )
             return chunks
-            
+
         except Exception as e:
-            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
+            )
             raise
 
 
 class RelationAwareChunker:
     """
     Triple-preserving chunker for KG workflows.
-    
+
     Ensures that relation triples (subject-predicate-object) are preserved within
     the same chunk, preventing the loss of relational context.
     """
-    
+
     def __init__(
         self,
         chunk_size: int = 1000,
         chunk_overlap: int = 200,
         relation_method: str = "ml",
         preserve_triples: bool = True,
-        **kwargs
+        **kwargs,
     ):
         """
         Initialize relation-aware chunker.
-        
+
         Args:
             chunk_size: Target chunk size
             chunk_overlap: Overlap between chunks
@@ -164,24 +167,24 @@ class RelationAwareChunker:
         self.options = kwargs
         self.logger = get_logger("relation_aware_chunker")
         self.progress_tracker = get_progress_tracker()
-    
+
     def chunk(self, text: str, **options) -> List[Chunk]:
         """
         Chunk text preserving triple integrity.
-        
+
         Args:
             text: Input text
             **options: Additional options
-            
+
         Returns:
             List of chunks
         """
         tracking_id = self.progress_tracker.start_tracking(
             module="split",
             submodule="RelationAwareChunker",
-            message="Chunking text with relation awareness"
+            message="Chunking text with relation awareness",
         )
-        
+
         try:
             merged_options = {**self.options, **options}
             chunks = split_relation_aware(
@@ -189,39 +192,41 @@ class RelationAwareChunker:
                 chunk_size=self.chunk_size,
                 relation_method=self.relation_method,
                 preserve_triples=self.preserve_triples,
-                **merged_options
+                **merged_options,
             )
-            
+
             self.progress_tracker.stop_tracking(
                 tracking_id,
                 status="completed",
-                message=f"Created {len(chunks)} relation-aware chunks"
+                message=f"Created {len(chunks)} relation-aware chunks",
             )
             return chunks
-            
+
         except Exception as e:
-            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
+            )
             raise
 
 
 class GraphBasedChunker:
     """
     Graph structure-based chunker using centrality or communities.
-    
+
     Uses graph analysis (centrality measures, community detection) to determine
     optimal chunk boundaries based on the underlying knowledge graph structure.
     """
-    
+
     def __init__(
         self,
         chunk_size: int = 1000,
         strategy: str = "community",
         algorithm: str = "louvain",
-        **kwargs
+        **kwargs,
     ):
         """
         Initialize graph-based chunker.
-        
+
         Args:
             chunk_size: Target chunk size
             strategy: Strategy ("community", "centrality")
@@ -234,24 +239,24 @@ class GraphBasedChunker:
         self.options = kwargs
         self.logger = get_logger("graph_based_chunker")
         self.progress_tracker = get_progress_tracker()
-    
+
     def chunk(self, text: str, **options) -> List[Chunk]:
         """
         Chunk text using graph structure.
-        
+
         Args:
             text: Input text
             **options: Additional options
-            
+
         Returns:
             List of chunks
         """
         tracking_id = self.progress_tracker.start_tracking(
             module="split",
             submodule="GraphBasedChunker",
-            message="Chunking text using graph structure"
+            message="Chunking text using graph structure",
         )
-        
+
         try:
             merged_options = {**self.options, **options}
             chunks = split_graph_based(
@@ -259,39 +264,41 @@ class GraphBasedChunker:
                 chunk_size=self.chunk_size,
                 strategy=self.strategy,
                 algorithm=self.algorithm,
-                **merged_options
+                **merged_options,
             )
-            
+
             self.progress_tracker.stop_tracking(
                 tracking_id,
                 status="completed",
-                message=f"Created {len(chunks)} graph-based chunks"
+                message=f"Created {len(chunks)} graph-based chunks",
             )
             return chunks
-            
+
         except Exception as e:
-            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
+            )
             raise
 
 
 class OntologyAwareChunker:
     """
     Ontology concept and hierarchy-based chunker.
-    
+
     Chunks text based on ontology concepts, hierarchies, and taxonomic structures,
     ensuring alignment with domain-specific concepts and terminologies.
     """
-    
+
     def __init__(
         self,
         chunk_size: int = 1000,
         ontology_uri: Optional[str] = None,
         preserve_concepts: bool = True,
-        **kwargs
+        **kwargs,
     ):
         """
         Initialize ontology-aware chunker.
-        
+
         Args:
             chunk_size: Target chunk size
             ontology_uri: Ontology URI (optional)
@@ -304,24 +311,24 @@ class OntologyAwareChunker:
         self.options = kwargs
         self.logger = get_logger("ontology_aware_chunker")
         self.progress_tracker = get_progress_tracker()
-    
+
     def chunk(self, text: str, **options) -> List[Chunk]:
         """
         Chunk text using ontology concepts.
-        
+
         Args:
             text: Input text
             **options: Additional options
-            
+
         Returns:
             List of chunks
         """
         tracking_id = self.progress_tracker.start_tracking(
             module="split",
             submodule="OntologyAwareChunker",
-            message="Chunking text using ontology concepts"
+            message="Chunking text using ontology concepts",
         )
-        
+
         try:
             merged_options = {**self.options, **options}
             chunks = split_ontology_aware(
@@ -329,38 +336,40 @@ class OntologyAwareChunker:
                 chunk_size=self.chunk_size,
                 ontology_uri=self.ontology_uri,
                 preserve_concepts=self.preserve_concepts,
-                **merged_options
+                **merged_options,
             )
-            
+
             self.progress_tracker.stop_tracking(
                 tracking_id,
                 status="completed",
-                message=f"Created {len(chunks)} ontology-aware chunks"
+                message=f"Created {len(chunks)} ontology-aware chunks",
             )
             return chunks
-            
+
         except Exception as e:
-            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
+            )
             raise
 
 
 class HierarchicalChunker:
     """
     Multi-level hierarchical chunker.
-    
+
     Creates multiple layers of chunks, from fine-grained (sentences) to coarse-grained
     (sections), allowing for retrieval at various levels of granularity.
     """
-    
+
     def __init__(
         self,
         levels: List[str] = ["section", "paragraph", "sentence"],
         chunk_sizes: Optional[List[int]] = None,
-        **kwargs
+        **kwargs,
     ):
         """
         Initialize hierarchical chunker.
-        
+
         Args:
             levels: Hierarchy levels (e.g., ["section", "paragraph", "sentence"])
             chunk_sizes: Chunk sizes for each level
@@ -371,46 +380,44 @@ class HierarchicalChunker:
         self.options = kwargs
         self.logger = get_logger("hierarchical_chunker")
         self.progress_tracker = get_progress_tracker()
-    
+
     def chunk(self, text: str, **options) -> List[Chunk]:
         """
         Chunk text hierarchically.
-        
+
         Args:
             text: Input text
             **options: Additional options
-            
+
         Returns:
             List of chunks with hierarchical metadata
         """
         tracking_id = self.progress_tracker.start_tracking(
             module="split",
             submodule="HierarchicalChunker",
-            message="Chunking text hierarchically"
+            message="Chunking text hierarchically",
         )
-        
+
         try:
             merged_options = {**self.options, **options}
             chunks = split_hierarchical(
-                text,
-                levels=self.levels,
-                chunk_sizes=self.chunk_sizes,
-                **merged_options
+                text, levels=self.levels, chunk_sizes=self.chunk_sizes, **merged_options
             )
-            
+
             # Add hierarchical metadata
             for chunk in chunks:
                 chunk.metadata["hierarchical"] = True
                 chunk.metadata["levels"] = self.levels
-            
+
             self.progress_tracker.stop_tracking(
                 tracking_id,
                 status="completed",
-                message=f"Created {len(chunks)} hierarchical chunks"
+                message=f"Created {len(chunks)} hierarchical chunks",
             )
             return chunks
-            
-        except Exception as e:
-            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
-            raise
 
+        except Exception as e:
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
+            )
+            raise

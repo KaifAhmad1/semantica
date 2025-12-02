@@ -106,32 +106,32 @@ Example Usage:
     >>> report = generate_quality_report(knowledge_graph, schema, method="default")
 """
 
-from typing import Any, Dict, List, Optional, Callable, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
+from ..utils.exceptions import ConfigurationError, ProcessingError
 from ..utils.logging import get_logger
-from ..utils.exceptions import ProcessingError, ConfigurationError
-from .kg_quality_assessor import KGQualityAssessor, ConsistencyChecker, CompletenessValidator
-from .quality_metrics import QualityMetrics, CompletenessMetrics, ConsistencyMetrics
-from .validation_engine import ValidationEngine
-from .reporting import QualityReporter, QualityReport
 from .automated_fixes import AutomatedFixer, FixResult
-from .registry import method_registry
 from .config import kg_qa_config
+from .kg_quality_assessor import (
+    CompletenessValidator,
+    ConsistencyChecker,
+    KGQualityAssessor,
+)
+from .quality_metrics import CompletenessMetrics, ConsistencyMetrics, QualityMetrics
+from .registry import method_registry
+from .reporting import QualityReport, QualityReporter
+from .validation_engine import ValidationEngine
 
 logger = get_logger("kg_qa_methods")
 
 
-def assess_quality(
-    knowledge_graph: Any,
-    method: str = "default",
-    **kwargs
-) -> float:
+def assess_quality(knowledge_graph: Any, method: str = "default", **kwargs) -> float:
     """
     Assess overall quality of knowledge graph (convenience function).
-    
+
     This is a user-friendly wrapper that assesses knowledge graph quality
     using the specified method.
-    
+
     Args:
         knowledge_graph: Knowledge graph instance (object with entities
                        and relationships, or dict with "entities" and
@@ -141,10 +141,10 @@ def assess_quality(
             - "comprehensive": Comprehensive assessment with all metrics
             - "quick": Quick assessment with basic metrics
         **kwargs: Additional options passed to KGQualityAssessor
-        
+
     Returns:
         float: Overall quality score between 0.0 and 1.0 (higher is better)
-        
+
     Examples:
         >>> from semantica.kg_qa.methods import assess_quality
         >>> score = assess_quality(knowledge_graph, method="default")
@@ -155,15 +155,17 @@ def assess_quality(
         try:
             return custom_method(knowledge_graph, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = kg_qa_config.get_method_config("assess")
         config.update(kwargs)
-        
+
         assessor = KGQualityAssessor(**config)
         return assessor.assess_overall_quality(knowledge_graph)
-        
+
     except Exception as e:
         logger.error(f"Failed to assess quality: {e}")
         raise
@@ -173,14 +175,14 @@ def generate_quality_report(
     knowledge_graph: Any,
     schema: Optional[Dict[str, Any]] = None,
     method: str = "default",
-    **kwargs
+    **kwargs,
 ) -> QualityReport:
     """
     Generate comprehensive quality report (convenience function).
-    
+
     This is a user-friendly wrapper that generates a quality report using
     the specified method.
-    
+
     Args:
         knowledge_graph: Knowledge graph instance
         schema: Optional schema definition for validation
@@ -189,7 +191,7 @@ def generate_quality_report(
             - "detailed": Detailed report with all issues
             - "summary": Summary report only
         **kwargs: Additional options passed to KGQualityAssessor
-        
+
     Returns:
         QualityReport: Comprehensive quality report containing:
             - timestamp: Report generation timestamp
@@ -199,7 +201,7 @@ def generate_quality_report(
             - issues: List of identified quality issues
             - recommendations: List of improvement recommendations
             - metadata: Additional report metadata
-            
+
     Examples:
         >>> from semantica.kg_qa.methods import generate_quality_report
         >>> report = generate_quality_report(knowledge_graph, schema, method="default")
@@ -209,15 +211,17 @@ def generate_quality_report(
         try:
             return custom_method(knowledge_graph, schema, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = kg_qa_config.get_method_config("report")
         config.update(kwargs)
-        
+
         assessor = KGQualityAssessor(**config)
         return assessor.generate_quality_report(knowledge_graph, schema)
-        
+
     except Exception as e:
         logger.error(f"Failed to generate quality report: {e}")
         raise
@@ -227,20 +231,20 @@ def identify_quality_issues(
     knowledge_graph: Any,
     schema: Optional[Dict[str, Any]] = None,
     method: str = "default",
-    **kwargs
+    **kwargs,
 ) -> List[Dict[str, Any]]:
     """
     Identify quality issues in knowledge graph (convenience function).
-    
+
     This is a user-friendly wrapper that identifies quality issues using
     the specified method.
-    
+
     Args:
         knowledge_graph: Knowledge graph instance
         schema: Optional schema for validation
         method: Issue identification method (default: "default")
         **kwargs: Additional options passed to KGQualityAssessor
-        
+
     Returns:
         list: List of quality issue dictionaries, each containing:
             - id: Issue identifier
@@ -249,7 +253,7 @@ def identify_quality_issues(
             - description: Issue description
             - entity_id: Related entity ID (if applicable)
             - relationship_id: Related relationship ID (if applicable)
-            
+
     Examples:
         >>> from semantica.kg_qa.methods import identify_quality_issues
         >>> issues = identify_quality_issues(knowledge_graph, schema, method="default")
@@ -259,15 +263,17 @@ def identify_quality_issues(
         try:
             return custom_method(knowledge_graph, schema, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = kg_qa_config.get_method_config("assess")
         config.update(kwargs)
-        
+
         assessor = KGQualityAssessor(**config)
         return assessor.identify_quality_issues(knowledge_graph, schema)
-        
+
     except Exception as e:
         logger.error(f"Failed to identify quality issues: {e}")
         raise
@@ -277,14 +283,14 @@ def check_consistency(
     knowledge_graph: Any,
     consistency_type: str = "logical",
     method: str = "default",
-    **kwargs
+    **kwargs,
 ) -> Union[bool, Dict[str, bool]]:
     """
     Check consistency of knowledge graph (convenience function).
-    
+
     This is a user-friendly wrapper that checks consistency using
     the specified method.
-    
+
     Args:
         knowledge_graph: Knowledge graph instance
         consistency_type: Type of consistency to check (default: "logical")
@@ -294,13 +300,13 @@ def check_consistency(
             - "all": All consistency checks (returns dict)
         method: Consistency checking method (default: "default")
         **kwargs: Additional options passed to ConsistencyChecker
-        
+
     Returns:
         bool or dict: Consistency check result(s)
             - If consistency_type is "all", returns dict with keys:
               "logical", "temporal", "hierarchical"
             - Otherwise returns bool (True if consistent)
-            
+
     Examples:
         >>> from semantica.kg_qa.methods import check_consistency
         >>> is_consistent = check_consistency(knowledge_graph, consistency_type="logical")
@@ -311,19 +317,21 @@ def check_consistency(
         try:
             return custom_method(knowledge_graph, consistency_type, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = kg_qa_config.get_method_config("consistency")
         config.update(kwargs)
-        
+
         checker = ConsistencyChecker(**config)
-        
+
         if consistency_type == "all":
             return {
                 "logical": checker.check_logical_consistency(knowledge_graph),
                 "temporal": checker.check_temporal_consistency(knowledge_graph),
-                "hierarchical": checker.check_hierarchical_consistency(knowledge_graph)
+                "hierarchical": checker.check_hierarchical_consistency(knowledge_graph),
             }
         elif consistency_type == "logical":
             return checker.check_logical_consistency(knowledge_graph)
@@ -333,7 +341,7 @@ def check_consistency(
             return checker.check_hierarchical_consistency(knowledge_graph)
         else:
             raise ValueError(f"Unknown consistency type: {consistency_type}")
-        
+
     except Exception as e:
         logger.error(f"Failed to check consistency: {e}")
         raise
@@ -346,14 +354,14 @@ def validate_completeness(
     schema: Dict[str, Any] = None,
     completeness_type: str = "entity",
     method: str = "default",
-    **kwargs
+    **kwargs,
 ) -> Union[bool, Dict[str, bool]]:
     """
     Validate completeness of knowledge graph (convenience function).
-    
+
     This is a user-friendly wrapper that validates completeness using
     the specified method.
-    
+
     Args:
         entities: Optional list of entity dictionaries
         relationships: Optional list of relationship dictionaries
@@ -366,13 +374,13 @@ def validate_completeness(
             - "all": All completeness checks (returns dict)
         method: Completeness validation method (default: "default")
         **kwargs: Additional options passed to CompletenessValidator
-        
+
     Returns:
         bool or dict: Completeness validation result(s)
             - If completeness_type is "all", returns dict with keys:
               "entity", "relationship", "property"
             - Otherwise returns bool (True if complete)
-            
+
     Examples:
         >>> from semantica.kg_qa.methods import validate_completeness
         >>> is_complete = validate_completeness(entities, schema, completeness_type="entity")
@@ -381,40 +389,56 @@ def validate_completeness(
     custom_method = method_registry.get("completeness", method)
     if custom_method:
         try:
-            return custom_method(entities, relationships, properties, schema, completeness_type, **kwargs)
+            return custom_method(
+                entities, relationships, properties, schema, completeness_type, **kwargs
+            )
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = kg_qa_config.get_method_config("completeness")
         config.update(kwargs)
-        
+
         validator = CompletenessValidator(**config)
-        
+
         if completeness_type == "all":
             results = {}
             if entities and schema:
-                results["entity"] = validator.validate_entity_completeness(entities, schema)
+                results["entity"] = validator.validate_entity_completeness(
+                    entities, schema
+                )
             if relationships and schema:
-                results["relationship"] = validator.validate_relationship_completeness(relationships, schema)
+                results["relationship"] = validator.validate_relationship_completeness(
+                    relationships, schema
+                )
             if properties and schema:
-                results["property"] = validator.validate_property_completeness(properties, schema)
+                results["property"] = validator.validate_property_completeness(
+                    properties, schema
+                )
             return results
         elif completeness_type == "entity":
             if not entities or not schema:
-                raise ValueError("entities and schema are required for entity completeness validation")
+                raise ValueError(
+                    "entities and schema are required for entity completeness validation"
+                )
             return validator.validate_entity_completeness(entities, schema)
         elif completeness_type == "relationship":
             if not relationships or not schema:
-                raise ValueError("relationships and schema are required for relationship completeness validation")
+                raise ValueError(
+                    "relationships and schema are required for relationship completeness validation"
+                )
             return validator.validate_relationship_completeness(relationships, schema)
         elif completeness_type == "property":
             if not properties or not schema:
-                raise ValueError("properties and schema are required for property completeness validation")
+                raise ValueError(
+                    "properties and schema are required for property completeness validation"
+                )
             return validator.validate_property_completeness(properties, schema)
         else:
             raise ValueError(f"Unknown completeness type: {completeness_type}")
-        
+
     except Exception as e:
         logger.error(f"Failed to validate completeness: {e}")
         raise
@@ -424,14 +448,14 @@ def calculate_quality_metrics(
     knowledge_graph: Any,
     metrics_type: str = "overall",
     method: str = "default",
-    **kwargs
+    **kwargs,
 ) -> Union[float, Dict[str, float]]:
     """
     Calculate quality metrics for knowledge graph (convenience function).
-    
+
     This is a user-friendly wrapper that calculates quality metrics using
     the specified method.
-    
+
     Args:
         knowledge_graph: Knowledge graph instance
         metrics_type: Type of metrics to calculate (default: "overall")
@@ -443,12 +467,12 @@ def calculate_quality_metrics(
             - "all": All metrics (returns dict)
         method: Metrics calculation method (default: "default")
         **kwargs: Additional options passed to QualityMetrics
-        
+
     Returns:
         float or dict: Quality metric(s)
             - If metrics_type is "all", returns dict with all metrics
             - Otherwise returns float score
-            
+
     Examples:
         >>> from semantica.kg_qa.methods import calculate_quality_metrics
         >>> score = calculate_quality_metrics(knowledge_graph, metrics_type="overall")
@@ -459,35 +483,59 @@ def calculate_quality_metrics(
         try:
             return custom_method(knowledge_graph, metrics_type, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = kg_qa_config.get_method_config("metrics")
         config.update(kwargs)
-        
+
         quality_metrics = QualityMetrics(**config)
-        entities = getattr(knowledge_graph, "entities", knowledge_graph.get("entities", []) if isinstance(knowledge_graph, dict) else [])
-        relationships = getattr(knowledge_graph, "relationships", knowledge_graph.get("relationships", []) if isinstance(knowledge_graph, dict) else [])
-        
+        entities = getattr(
+            knowledge_graph,
+            "entities",
+            knowledge_graph.get("entities", [])
+            if isinstance(knowledge_graph, dict)
+            else [],
+        )
+        relationships = getattr(
+            knowledge_graph,
+            "relationships",
+            knowledge_graph.get("relationships", [])
+            if isinstance(knowledge_graph, dict)
+            else [],
+        )
+
         if metrics_type == "all":
             return {
                 "overall": quality_metrics.calculate_overall_score(knowledge_graph),
-                "entity": quality_metrics.calculate_entity_quality(entities) if entities else 0.0,
-                "relationship": quality_metrics.calculate_relationship_quality(relationships) if relationships else 0.0
+                "entity": quality_metrics.calculate_entity_quality(entities)
+                if entities
+                else 0.0,
+                "relationship": quality_metrics.calculate_relationship_quality(
+                    relationships
+                )
+                if relationships
+                else 0.0,
             }
         elif metrics_type == "overall":
             return quality_metrics.calculate_overall_score(knowledge_graph)
         elif metrics_type == "entity":
             if not entities:
-                raise ValueError("Knowledge graph must have entities for entity quality calculation")
+                raise ValueError(
+                    "Knowledge graph must have entities for entity quality calculation"
+                )
             return quality_metrics.calculate_entity_quality(entities)
         elif metrics_type == "relationship":
             if not relationships:
-                raise ValueError("Knowledge graph must have relationships for relationship quality calculation")
+                raise ValueError(
+                    "Knowledge graph must have relationships for relationship quality calculation"
+                )
             return quality_metrics.calculate_relationship_quality(relationships)
         else:
             raise ValueError(f"Unknown metrics type: {metrics_type}")
-        
+
     except Exception as e:
         logger.error(f"Failed to calculate quality metrics: {e}")
         raise
@@ -497,14 +545,14 @@ def validate_graph(
     knowledge_graph: Any,
     rules: Optional[List[Callable]] = None,
     method: str = "default",
-    **kwargs
+    **kwargs,
 ) -> Any:
     """
     Validate knowledge graph (convenience function).
-    
+
     This is a user-friendly wrapper that validates a knowledge graph using
     the specified method.
-    
+
     Args:
         knowledge_graph: Knowledge graph instance to validate
         rules: Optional list of validation rule functions
@@ -513,14 +561,14 @@ def validate_graph(
             - "custom": Custom rule validation
             - "constraints": Constraint-based validation
         **kwargs: Additional options passed to ValidationEngine
-        
+
     Returns:
         ValidationResult: Validation result containing:
             - valid: True if no errors, False otherwise
             - errors: List of error messages
             - warnings: List of warning messages
             - metadata: Additional validation metadata
-            
+
     Examples:
         >>> from semantica.kg_qa.methods import validate_graph
         >>> result = validate_graph(knowledge_graph, method="default")
@@ -530,32 +578,31 @@ def validate_graph(
         try:
             return custom_method(knowledge_graph, rules, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = kg_qa_config.get_method_config("validate")
         config.update(kwargs)
-        
+
         engine = ValidationEngine(**config)
         return engine.validate(knowledge_graph, rules)
-        
+
     except Exception as e:
         logger.error(f"Failed to validate graph: {e}")
         raise
 
 
 def export_report(
-    report: QualityReport,
-    format: str = "json",
-    method: str = "default",
-    **kwargs
+    report: QualityReport, format: str = "json", method: str = "default", **kwargs
 ) -> str:
     """
     Export quality report to specified format (convenience function).
-    
+
     This is a user-friendly wrapper that exports a quality report using
     the specified method.
-    
+
     Args:
         report: Quality report to export
         format: Export format (default: "json")
@@ -564,10 +611,10 @@ def export_report(
             - "html": HTML format (planned)
         method: Export method (default: "default")
         **kwargs: Additional options passed to QualityReporter
-        
+
     Returns:
         str: Exported report as string in the specified format
-        
+
     Examples:
         >>> from semantica.kg_qa.methods import export_report
         >>> json_report = export_report(report, format="json")
@@ -578,15 +625,17 @@ def export_report(
         try:
             return custom_method(report, format, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = kg_qa_config.get_method_config("report")
         config.update(kwargs)
-        
+
         reporter = QualityReporter(**config)
         return reporter.export_report(report, format=format)
-        
+
     except Exception as e:
         logger.error(f"Failed to export report: {e}")
         raise
@@ -597,14 +646,14 @@ def fix_issues(
     fix_type: str = "duplicates",
     schema: Optional[Dict[str, Any]] = None,
     method: str = "default",
-    **kwargs
+    **kwargs,
 ) -> FixResult:
     """
     Fix quality issues in knowledge graph (convenience function).
-    
+
     This is a user-friendly wrapper that fixes quality issues using
     the specified method.
-    
+
     Args:
         knowledge_graph: Knowledge graph instance
         fix_type: Type of fix to apply (default: "duplicates")
@@ -615,14 +664,14 @@ def fix_issues(
         schema: Optional schema definition (required for missing_properties)
         method: Fixing method (default: "default")
         **kwargs: Additional options passed to AutomatedFixer
-        
+
     Returns:
         FixResult: Fix result containing:
             - success: Whether fixing was successful
             - fixed_count: Number of issues fixed
             - errors: List of error messages
             - metadata: Additional fix metadata
-            
+
     Examples:
         >>> from semantica.kg_qa.methods import fix_issues
         >>> result = fix_issues(knowledge_graph, fix_type="duplicates")
@@ -633,14 +682,16 @@ def fix_issues(
         try:
             return custom_method(knowledge_graph, fix_type, schema, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = kg_qa_config.get_method_config("fix")
         config.update(kwargs)
-        
+
         fixer = AutomatedFixer(**config)
-        
+
         if fix_type == "all":
             # Apply all fixes sequentially
             results = []
@@ -648,17 +699,17 @@ def fix_issues(
             results.append(fixer.fix_inconsistencies(knowledge_graph))
             if schema:
                 results.append(fixer.fix_missing_properties(knowledge_graph, schema))
-            
+
             total_fixed = sum(r.fixed_count for r in results)
             all_errors = []
             for r in results:
                 all_errors.extend(r.errors)
-            
+
             return FixResult(
                 success=all(r.success for r in results),
                 fixed_count=total_fixed,
                 errors=all_errors,
-                metadata={"fixes_applied": [fix_type for r in results if r.success]}
+                metadata={"fixes_applied": [fix_type for r in results if r.success]},
             )
         elif fix_type == "duplicates":
             return fixer.fix_duplicates(knowledge_graph)
@@ -670,7 +721,7 @@ def fix_issues(
             return fixer.fix_missing_properties(knowledge_graph, schema)
         else:
             raise ValueError(f"Unknown fix type: {fix_type}")
-        
+
     except Exception as e:
         logger.error(f"Failed to fix issues: {e}")
         raise
@@ -694,4 +745,3 @@ method_registry.register("completeness", "default", validate_completeness)
 method_registry.register("metrics", "default", calculate_quality_metrics)
 method_registry.register("validate", "default", validate_graph)
 method_registry.register("fix", "default", fix_issues)
-

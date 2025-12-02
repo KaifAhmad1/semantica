@@ -121,34 +121,30 @@ Example Usage:
     >>> date = normalize_date("2023-01-15", method="default")
 """
 
-from typing import Any, Dict, List, Optional, Callable, Union, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
+from ..utils.exceptions import ConfigurationError, ProcessingError
 from ..utils.logging import get_logger
-from ..utils.exceptions import ProcessingError, ConfigurationError
-from .text_normalizer import TextNormalizer
-from .text_cleaner import TextCleaner
-from .entity_normalizer import EntityNormalizer
-from .date_normalizer import DateNormalizer
-from .number_normalizer import NumberNormalizer
-from .data_cleaner import DataCleaner
-from .language_detector import LanguageDetector
-from .encoding_handler import EncodingHandler
-from .registry import method_registry
 from .config import normalize_config
+from .data_cleaner import DataCleaner
+from .date_normalizer import DateNormalizer
+from .encoding_handler import EncodingHandler
+from .entity_normalizer import EntityNormalizer
+from .language_detector import LanguageDetector
+from .number_normalizer import NumberNormalizer
+from .registry import method_registry
+from .text_cleaner import TextCleaner
+from .text_normalizer import TextNormalizer
 
 logger = get_logger("normalize_methods")
 
 
-def normalize_text(
-    text: str,
-    method: str = "default",
-    **kwargs
-) -> str:
+def normalize_text(text: str, method: str = "default", **kwargs) -> str:
     """
     Normalize text content (convenience function).
-    
+
     This is a user-friendly wrapper that normalizes text using the specified method.
-    
+
     Args:
         text: Input text to normalize
         method: Normalization method (default: "default")
@@ -161,10 +157,10 @@ def normalize_text(
             - case: Case normalization (preserve, lower, upper, title)
             - normalize_diacritics: Whether to normalize diacritics
             - line_break_type: Line break type (unix, windows, mac)
-        
+
     Returns:
         str: Normalized text
-        
+
     Examples:
         >>> from semantica.normalize.methods import normalize_text
         >>> normalized = normalize_text("Hello   World", method="default")
@@ -175,30 +171,28 @@ def normalize_text(
         try:
             return custom_method(text, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = normalize_config.get_method_config("text")
         config.update(kwargs)
-        
+
         normalizer = TextNormalizer(**config)
         return normalizer.normalize_text(text, **kwargs)
-        
+
     except Exception as e:
         logger.error(f"Failed to normalize text: {e}")
         raise
 
 
-def clean_text(
-    text: str,
-    method: str = "default",
-    **kwargs
-) -> str:
+def clean_text(text: str, method: str = "default", **kwargs) -> str:
     """
     Clean and sanitize text content (convenience function).
-    
+
     This is a user-friendly wrapper that cleans text using the specified method.
-    
+
     Args:
         text: Input text to clean
         method: Cleaning method (default: "default")
@@ -208,10 +202,10 @@ def clean_text(
             - normalize_unicode: Whether to normalize Unicode
             - remove_special_chars: Whether to remove special characters
             - unicode_form: Unicode normalization form
-        
+
     Returns:
         str: Cleaned text
-        
+
     Examples:
         >>> from semantica.normalize.methods import clean_text
         >>> cleaned = clean_text("<p>Hello World</p>", method="default", remove_html=True)
@@ -221,15 +215,17 @@ def clean_text(
         try:
             return custom_method(text, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = normalize_config.get_method_config("clean")
         config.update(kwargs)
-        
+
         cleaner = TextCleaner(**config)
         return cleaner.clean(text, **kwargs)
-        
+
     except Exception as e:
         logger.error(f"Failed to clean text: {e}")
         raise
@@ -239,13 +235,13 @@ def normalize_entity(
     entity_name: str,
     entity_type: Optional[str] = None,
     method: str = "default",
-    **kwargs
+    **kwargs,
 ) -> str:
     """
     Normalize entity name to standard form (convenience function).
-    
+
     This is a user-friendly wrapper that normalizes entity names using the specified method.
-    
+
     Args:
         entity_name: Entity name to normalize
         entity_type: Optional entity type (e.g., "Person", "Organization")
@@ -256,10 +252,10 @@ def normalize_entity(
             - "link": Entity linking only
         **kwargs: Additional options passed to EntityNormalizer
             - resolve_aliases: Whether to resolve aliases
-        
+
     Returns:
         str: Normalized entity name in standard form
-        
+
     Examples:
         >>> from semantica.normalize.methods import normalize_entity
         >>> normalized = normalize_entity("John Doe", entity_type="Person", method="default")
@@ -269,15 +265,19 @@ def normalize_entity(
         try:
             return custom_method(entity_name, entity_type, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = normalize_config.get_method_config("entity")
         config.update(kwargs)
-        
+
         normalizer = EntityNormalizer(**config)
-        return normalizer.normalize_entity(entity_name, entity_type=entity_type, **kwargs)
-        
+        return normalizer.normalize_entity(
+            entity_name, entity_type=entity_type, **kwargs
+        )
+
     except Exception as e:
         logger.error(f"Failed to normalize entity: {e}")
         raise
@@ -287,22 +287,22 @@ def resolve_aliases(
     entity_name: str,
     entity_type: Optional[str] = None,
     method: str = "default",
-    **kwargs
+    **kwargs,
 ) -> Optional[str]:
     """
     Resolve entity aliases and variants (convenience function).
-    
+
     This is a user-friendly wrapper that resolves aliases using the specified method.
-    
+
     Args:
         entity_name: Entity name to resolve
         entity_type: Optional entity type
         method: Resolution method (default: "default")
         **kwargs: Additional options passed to EntityNormalizer
-        
+
     Returns:
         Optional[str]: Resolved canonical form if found, None otherwise
-        
+
     Examples:
         >>> from semantica.normalize.methods import resolve_aliases
         >>> canonical = resolve_aliases("J. Doe", entity_type="Person", method="default")
@@ -312,42 +312,44 @@ def resolve_aliases(
         try:
             return custom_method(entity_name, entity_type, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = normalize_config.get_method_config("entity")
         config.update(kwargs)
-        
+
         normalizer = EntityNormalizer(**config)
-        return normalizer.resolve_aliases(entity_name, entity_type=entity_type, **kwargs)
-        
+        return normalizer.resolve_aliases(
+            entity_name, entity_type=entity_type, **kwargs
+        )
+
     except Exception as e:
         logger.error(f"Failed to resolve aliases: {e}")
         raise
 
 
 def disambiguate_entity(
-    entity_name: str,
-    method: str = "default",
-    **context
+    entity_name: str, method: str = "default", **context
 ) -> Dict[str, Any]:
     """
     Disambiguate entity when multiple candidates exist (convenience function).
-    
+
     This is a user-friendly wrapper that disambiguates entities using the specified method.
-    
+
     Args:
         entity_name: Entity name to disambiguate
         method: Disambiguation method (default: "default")
         **context: Context information (e.g., entity_type, context_text)
-        
+
     Returns:
         dict: Disambiguation result containing:
             - entity_name: Original entity name
             - entity_type: Detected entity type
             - confidence: Confidence score (0.0 to 1.0)
             - candidates: List of candidate entity names
-            
+
     Examples:
         >>> from semantica.normalize.methods import disambiguate_entity
         >>> result = disambiguate_entity("John Smith", entity_type="Person", method="default")
@@ -357,15 +359,17 @@ def disambiguate_entity(
         try:
             return custom_method(entity_name, **context)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = normalize_config.get_method_config("entity")
         config.update(context)
-        
+
         normalizer = EntityNormalizer(**config)
         return normalizer.disambiguate_entity(entity_name, **context)
-        
+
     except Exception as e:
         logger.error(f"Failed to disambiguate entity: {e}")
         raise
@@ -376,13 +380,13 @@ def normalize_date(
     format: str = "ISO8601",
     timezone: str = "UTC",
     method: str = "default",
-    **kwargs
+    **kwargs,
 ) -> str:
     """
     Normalize date to standard format (convenience function).
-    
+
     This is a user-friendly wrapper that normalizes dates using the specified method.
-    
+
     Args:
         date_input: Date input (string or datetime object)
         format: Output format (default: "ISO8601")
@@ -396,10 +400,10 @@ def normalize_date(
             - "relative": Relative date processing
             - "timezone": Timezone-focused normalization
         **kwargs: Additional options passed to DateNormalizer
-        
+
     Returns:
         str: Normalized date string in specified format
-        
+
     Examples:
         >>> from semantica.normalize.methods import normalize_date
         >>> normalized = normalize_date("2023-01-15", method="default")
@@ -410,38 +414,38 @@ def normalize_date(
         try:
             return custom_method(date_input, format, timezone, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = normalize_config.get_method_config("date")
         config.update(kwargs)
-        
+
         normalizer = DateNormalizer(**config)
-        return normalizer.normalize_date(date_input, format=format, timezone=timezone, **kwargs)
-        
+        return normalizer.normalize_date(
+            date_input, format=format, timezone=timezone, **kwargs
+        )
+
     except Exception as e:
         logger.error(f"Failed to normalize date: {e}")
         raise
 
 
-def normalize_time(
-    time_input: Any,
-    method: str = "default",
-    **kwargs
-) -> str:
+def normalize_time(time_input: Any, method: str = "default", **kwargs) -> str:
     """
     Normalize time to standard format (convenience function).
-    
+
     This is a user-friendly wrapper that normalizes time using the specified method.
-    
+
     Args:
         time_input: Time input (string or datetime object)
         method: Normalization method (default: "default")
         **kwargs: Additional options passed to DateNormalizer
-        
+
     Returns:
         str: Normalized time string in ISO format (HH:MM:SS)
-        
+
     Examples:
         >>> from semantica.normalize.methods import normalize_time
         >>> normalized = normalize_time("10:30:00", method="default")
@@ -451,30 +455,30 @@ def normalize_time(
         try:
             return custom_method(time_input, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = normalize_config.get_method_config("date")
         config.update(kwargs)
-        
+
         normalizer = DateNormalizer(**config)
         return normalizer.normalize_time(time_input, **kwargs)
-        
+
     except Exception as e:
         logger.error(f"Failed to normalize time: {e}")
         raise
 
 
 def normalize_number(
-    number_input: Union[str, int, float],
-    method: str = "default",
-    **kwargs
+    number_input: Union[str, int, float], method: str = "default", **kwargs
 ) -> Union[int, float]:
     """
     Normalize number to standard format (convenience function).
-    
+
     This is a user-friendly wrapper that normalizes numbers using the specified method.
-    
+
     Args:
         number_input: Number input (string, int, or float)
         method: Normalization method (default: "default")
@@ -483,10 +487,10 @@ def normalize_number(
             - "currency": Currency processing
             - "scientific": Scientific notation handling
         **kwargs: Additional options passed to NumberNormalizer
-        
+
     Returns:
         Union[int, float]: Normalized number (int if no decimal, float otherwise)
-        
+
     Examples:
         >>> from semantica.normalize.methods import normalize_number
         >>> number = normalize_number("1,234.56", method="default")
@@ -497,41 +501,41 @@ def normalize_number(
         try:
             return custom_method(number_input, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = normalize_config.get_method_config("number")
         config.update(kwargs)
-        
+
         normalizer = NumberNormalizer(**config)
         return normalizer.normalize_number(number_input, **kwargs)
-        
+
     except Exception as e:
         logger.error(f"Failed to normalize number: {e}")
         raise
 
 
 def normalize_quantity(
-    quantity_input: str,
-    method: str = "default",
-    **kwargs
+    quantity_input: str, method: str = "default", **kwargs
 ) -> Dict[str, Any]:
     """
     Normalize quantity with units (convenience function).
-    
+
     This is a user-friendly wrapper that normalizes quantities using the specified method.
-    
+
     Args:
         quantity_input: Quantity string (e.g., "5 kg", "10 meters")
         method: Normalization method (default: "default")
         **kwargs: Additional options passed to NumberNormalizer
-        
+
     Returns:
         dict: Normalized quantity dictionary containing:
             - value: Numeric value (float)
             - unit: Normalized unit name (str)
             - original: Original quantity string (str)
-            
+
     Examples:
         >>> from semantica.normalize.methods import normalize_quantity
         >>> quantity = normalize_quantity("5 kg", method="default")
@@ -541,15 +545,17 @@ def normalize_quantity(
         try:
             return custom_method(quantity_input, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = normalize_config.get_method_config("number")
         config.update(kwargs)
-        
+
         normalizer = NumberNormalizer(**config)
         return normalizer.normalize_quantity(quantity_input, **kwargs)
-        
+
     except Exception as e:
         logger.error(f"Failed to normalize quantity: {e}")
         raise
@@ -561,13 +567,13 @@ def clean_data(
     validate: bool = True,
     handle_missing: bool = True,
     method: str = "default",
-    **kwargs
+    **kwargs,
 ) -> List[Dict[str, Any]]:
     """
     Clean dataset with various cleaning operations (convenience function).
-    
+
     This is a user-friendly wrapper that cleans data using the specified method.
-    
+
     Args:
         dataset: List of data record dictionaries
         remove_duplicates: Whether to remove duplicate records (default: True)
@@ -582,10 +588,10 @@ def clean_data(
             - missing_strategy: Strategy for missing values ("remove", "fill", "impute")
             - schema: Validation schema dictionary
             - duplicate_criteria: Criteria for duplicate detection
-        
+
     Returns:
         list: Cleaned dataset (list of record dictionaries)
-        
+
     Examples:
         >>> from semantica.normalize.methods import clean_data
         >>> cleaned = clean_data(dataset, method="default", remove_duplicates=True)
@@ -593,23 +599,27 @@ def clean_data(
     custom_method = method_registry.get("clean", method)
     if custom_method:
         try:
-            return custom_method(dataset, remove_duplicates, validate, handle_missing, **kwargs)
+            return custom_method(
+                dataset, remove_duplicates, validate, handle_missing, **kwargs
+            )
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = normalize_config.get_method_config("clean")
         config.update(kwargs)
-        
+
         cleaner = DataCleaner(**config)
         return cleaner.clean_data(
             dataset,
             remove_duplicates=remove_duplicates,
             validate=validate,
             handle_missing=handle_missing,
-            **kwargs
+            **kwargs,
         )
-        
+
     except Exception as e:
         logger.error(f"Failed to clean data: {e}")
         raise
@@ -620,23 +630,23 @@ def detect_duplicates(
     threshold: Optional[float] = None,
     key_fields: Optional[List[str]] = None,
     method: str = "default",
-    **kwargs
+    **kwargs,
 ) -> List[Any]:
     """
     Detect duplicate records in dataset (convenience function).
-    
+
     This is a user-friendly wrapper that detects duplicates using the specified method.
-    
+
     Args:
         dataset: List of data record dictionaries
         threshold: Similarity threshold for duplicates (0.0 to 1.0, optional)
         key_fields: List of field names to use for comparison (optional)
         method: Detection method (default: "default")
         **kwargs: Additional options passed to DataCleaner
-        
+
     Returns:
         list: List of DuplicateGroup objects
-        
+
     Examples:
         >>> from semantica.normalize.methods import detect_duplicates
         >>> duplicates = detect_duplicates(dataset, method="default", threshold=0.8)
@@ -646,35 +656,32 @@ def detect_duplicates(
         try:
             return custom_method(dataset, threshold, key_fields, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = normalize_config.get_method_config("clean")
         config.update(kwargs)
-        
+
         cleaner = DataCleaner(**config)
         return cleaner.detect_duplicates(
-            dataset,
-            threshold=threshold,
-            key_fields=key_fields,
-            **kwargs
+            dataset, threshold=threshold, key_fields=key_fields, **kwargs
         )
-        
+
     except Exception as e:
         logger.error(f"Failed to detect duplicates: {e}")
         raise
 
 
 def detect_language(
-    text: str,
-    method: str = "default",
-    **kwargs
+    text: str, method: str = "default", **kwargs
 ) -> Union[str, Tuple[str, float]]:
     """
     Detect language of text (convenience function).
-    
+
     This is a user-friendly wrapper that detects language using the specified method.
-    
+
     Args:
         text: Input text to analyze
         method: Detection method (default: "default")
@@ -682,10 +689,10 @@ def detect_language(
             - "confidence": Detection with confidence scores
             - "batch": Batch language detection
         **kwargs: Additional options passed to LanguageDetector
-        
+
     Returns:
         str or tuple: Language code, or (language_code, confidence_score) if method="confidence"
-        
+
     Examples:
         >>> from semantica.normalize.methods import detect_language
         >>> language = detect_language("Hello world", method="default")
@@ -696,19 +703,21 @@ def detect_language(
         try:
             return custom_method(text, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = normalize_config.get_method_config("language")
         config.update(kwargs)
-        
+
         detector = LanguageDetector(**config)
-        
+
         if method == "confidence":
             return detector.detect_with_confidence(text, **kwargs)
         else:
             return detector.detect(text, **kwargs)
-        
+
     except Exception as e:
         logger.error(f"Failed to detect language: {e}")
         raise
@@ -718,13 +727,13 @@ def handle_encoding(
     data: Union[str, bytes],
     operation: str = "detect",
     method: str = "default",
-    **kwargs
+    **kwargs,
 ) -> Union[Tuple[str, float], str, bytes]:
     """
     Handle encoding detection and conversion (convenience function).
-    
+
     This is a user-friendly wrapper that handles encoding using the specified method.
-    
+
     Args:
         data: Input data (string or bytes)
         operation: Operation to perform (default: "detect")
@@ -738,13 +747,13 @@ def handle_encoding(
         **kwargs: Additional options passed to EncodingHandler
             - source_encoding: Source encoding for conversion
             - target_encoding: Target encoding (default: "utf-8")
-        
+
     Returns:
         tuple, str, or bytes: Result depends on operation:
             - "detect": (encoding_name, confidence_score)
             - "convert": UTF-8 string or bytes
             - "remove_bom": Data with BOM removed
-        
+
     Examples:
         >>> from semantica.normalize.methods import handle_encoding
         >>> encoding, confidence = handle_encoding(data, operation="detect", method="default")
@@ -755,24 +764,28 @@ def handle_encoding(
         try:
             return custom_method(data, operation, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = normalize_config.get_method_config("encoding")
         config.update(kwargs)
-        
+
         handler = EncodingHandler(**config)
-        
+
         if operation == "detect":
             return handler.detect(data, **kwargs)
         elif operation == "convert":
             source_encoding = kwargs.get("source_encoding")
-            return handler.convert_to_utf8(data, source_encoding=source_encoding, **kwargs)
+            return handler.convert_to_utf8(
+                data, source_encoding=source_encoding, **kwargs
+            )
         elif operation == "remove_bom":
             return handler.remove_bom(data, **kwargs)
         else:
             raise ValueError(f"Unknown operation: {operation}")
-        
+
     except Exception as e:
         logger.error(f"Failed to handle encoding: {e}")
         raise
@@ -796,4 +809,3 @@ method_registry.register("date", "default", normalize_date)
 method_registry.register("number", "default", normalize_number)
 method_registry.register("language", "default", detect_language)
 method_registry.register("encoding", "default", handle_encoding)
-

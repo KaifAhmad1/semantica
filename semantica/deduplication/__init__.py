@@ -79,21 +79,26 @@ License: MIT
 
 from typing import Any, Dict, List, Optional, Union
 
-from .entity_merger import EntityMerger, MergeOperation
-from .similarity_calculator import SimilarityCalculator, SimilarityResult
-from .duplicate_detector import DuplicateDetector, DuplicateCandidate, DuplicateGroup
-from .merge_strategy import MergeStrategyManager, MergeStrategy, MergeResult, PropertyMergeRule
-from .cluster_builder import ClusterBuilder, Cluster, ClusterResult
-from .registry import MethodRegistry, method_registry
-from .methods import (
-    detect_duplicates,
-    merge_entities,
-    calculate_similarity,
-    build_clusters,
-    get_deduplication_method,
-    list_available_methods
-)
+from .cluster_builder import Cluster, ClusterBuilder, ClusterResult
 from .config import DeduplicationConfig, dedup_config
+from .duplicate_detector import DuplicateCandidate, DuplicateDetector, DuplicateGroup
+from .entity_merger import EntityMerger, MergeOperation
+from .merge_strategy import (
+    MergeResult,
+    MergeStrategy,
+    MergeStrategyManager,
+    PropertyMergeRule,
+)
+from .methods import (
+    build_clusters,
+    calculate_similarity,
+    detect_duplicates,
+    get_deduplication_method,
+    list_available_methods,
+    merge_entities,
+)
+from .registry import MethodRegistry, method_registry
+from .similarity_calculator import SimilarityCalculator, SimilarityResult
 
 __all__ = [
     # Main classes
@@ -111,11 +116,9 @@ __all__ = [
     "ClusterBuilder",
     "Cluster",
     "ClusterResult",
-    
     # Registry
     "MethodRegistry",
     "method_registry",
-    
     # Methods
     "detect_duplicates",
     "merge_entities",
@@ -123,11 +126,9 @@ __all__ = [
     "build_clusters",
     "get_deduplication_method",
     "list_available_methods",
-    
     # Config
     "DeduplicationConfig",
     "dedup_config",
-    
     # Convenience
     "deduplicate",
 ]
@@ -139,14 +140,14 @@ def deduplicate(
     confidence_threshold: float = 0.6,
     merge_strategy: str = "keep_most_complete",
     preserve_provenance: bool = True,
-    **options
+    **options,
 ) -> Dict[str, Any]:
     """
     Deduplicate entities (module-level convenience function).
-    
+
     This is a user-friendly wrapper that performs comprehensive deduplication
     including duplicate detection and entity merging.
-    
+
     Args:
         entities: List of entity dictionaries to deduplicate
         similarity_threshold: Minimum similarity score to consider duplicates (default: 0.7)
@@ -159,14 +160,14 @@ def deduplicate(
             - "merge_all": Combine all properties and relationships
         preserve_provenance: Whether to preserve provenance information (default: True)
         **options: Additional deduplication options
-        
+
     Returns:
         Dictionary containing:
             - merged_entities: List of merged entities
             - duplicate_groups: List of duplicate groups found
             - merge_operations: List of merge operations performed
             - statistics: Deduplication statistics
-            
+
     Examples:
         >>> import semantica
         >>> entities = [
@@ -185,17 +186,16 @@ def deduplicate(
     detector = DuplicateDetector(
         similarity_threshold=similarity_threshold,
         confidence_threshold=confidence_threshold,
-        **options.get("detection_config", {})
+        **options.get("detection_config", {}),
     )
-    
+
     duplicate_groups = detector.detect_duplicate_groups(entities, **options)
-    
+
     # Merge duplicates
     merger = EntityMerger(
-        preserve_provenance=preserve_provenance,
-        **options.get("merger_config", {})
+        preserve_provenance=preserve_provenance, **options.get("merger_config", {})
     )
-    
+
     # Map strategy string to enum
     strategy_map = {
         "keep_first": MergeStrategy.KEEP_FIRST,
@@ -204,33 +204,28 @@ def deduplicate(
         "keep_highest_confidence": MergeStrategy.KEEP_HIGHEST_CONFIDENCE,
         "merge_all": MergeStrategy.MERGE_ALL,
     }
-    
+
     strategy = strategy_map.get(merge_strategy, MergeStrategy.KEEP_MOST_COMPLETE)
-    
-    merge_operations = merger.merge_duplicates(
-        entities,
-        strategy=strategy,
-        **options
-    )
-    
+
+    merge_operations = merger.merge_duplicates(entities, strategy=strategy, **options)
+
     # Collect merged entities
     merged_entities = [op.merged_entity for op in merge_operations]
-    
+
     # Collect non-duplicate entities
     duplicate_entity_ids = set()
     for group in duplicate_groups:
         for entity in group.entities:
             entity_id = entity.get("id") or id(entity)
             duplicate_entity_ids.add(entity_id)
-    
+
     non_duplicate_entities = [
-        e for e in entities
-        if (e.get("id") or id(e)) not in duplicate_entity_ids
+        e for e in entities if (e.get("id") or id(e)) not in duplicate_entity_ids
     ]
-    
+
     # Combine merged and non-duplicate entities
     all_merged = merged_entities + non_duplicate_entities
-    
+
     # Calculate statistics
     statistics = {
         "total_entities": len(entities),
@@ -240,7 +235,7 @@ def deduplicate(
         "final_entities": len(all_merged),
         "reduction": len(entities) - len(all_merged),
     }
-    
+
     return {
         "merged_entities": all_merged,
         "duplicate_groups": duplicate_groups,

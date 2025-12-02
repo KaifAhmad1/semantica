@@ -44,7 +44,7 @@ from ..utils.progress_tracker import get_progress_tracker
 @dataclass
 class PDFPage:
     """PDF page representation."""
-    
+
     page_number: int
     text: str
     width: float
@@ -56,7 +56,7 @@ class PDFPage:
 @dataclass
 class PDFMetadata:
     """PDF metadata representation."""
-    
+
     title: Optional[str] = None
     author: Optional[str] = None
     subject: Optional[str] = None
@@ -69,22 +69,22 @@ class PDFMetadata:
 
 class PDFParser:
     """PDF document parser."""
-    
+
     def __init__(self, **config):
         """
         Initialize PDF parser.
-        
+
         Args:
             **config: Parser configuration
         """
         self.logger = get_logger("pdf_parser")
         self.config = config
         self.progress_tracker = get_progress_tracker()
-    
+
     def parse(self, file_path: Union[str, Path], **options) -> Dict[str, Any]:
         """
         Parse PDF document.
-        
+
         Args:
             file_path: Path to PDF file
             **options: Parsing options:
@@ -92,136 +92,151 @@ class PDFParser:
                 - extract_tables: Whether to extract tables (default: True)
                 - extract_images: Whether to extract images (default: False)
                 - pages: Specific page numbers to parse (None = all pages)
-                
+
         Returns:
             dict: Parsed PDF data
         """
         file_path = Path(file_path)
-        
+
         # Track PDF parsing
         tracking_id = self.progress_tracker.start_tracking(
             file=str(file_path),
             module="parse",
             submodule="PDFParser",
-            message=f"PDF: {file_path.name}"
+            message=f"PDF: {file_path.name}",
         )
-        
+
         try:
             if not file_path.exists():
                 raise ValidationError(f"PDF file not found: {file_path}")
-            
-            if not file_path.suffix.lower() == '.pdf':
+
+            if not file_path.suffix.lower() == ".pdf":
                 raise ValidationError(f"File is not a PDF: {file_path}")
-            
+
             try:
                 with pdfplumber.open(str(file_path)) as pdf:
                     # Extract metadata
                     metadata = self._extract_metadata(pdf)
                     metadata.page_count = len(pdf.pages)
-                    
+
                     # Extract pages
                     pages = []
                     page_numbers = options.get("pages", range(len(pdf.pages)))
-                    
-                    self.progress_tracker.update_tracking(tracking_id, 
-                                                         message=f"Parsing {len(pdf.pages)} pages")
-                    
+
+                    self.progress_tracker.update_tracking(
+                        tracking_id, message=f"Parsing {len(pdf.pages)} pages"
+                    )
+
                     for page_num in page_numbers:
                         if page_num < len(pdf.pages):
                             page_data = self._parse_page(
-                                pdf.pages[page_num],
-                                page_num + 1,
-                                options
+                                pdf.pages[page_num], page_num + 1, options
                             )
                             pages.append(page_data)
-                    
-                    self.progress_tracker.stop_tracking(tracking_id, status="completed",
-                                                       message=f"Parsed {len(pages)} pages")
+
+                    self.progress_tracker.stop_tracking(
+                        tracking_id,
+                        status="completed",
+                        message=f"Parsed {len(pages)} pages",
+                    )
                     return {
                         "metadata": metadata.__dict__,
                         "pages": [page.__dict__ for page in pages],
                         "full_text": "\n\n".join(page.text for page in pages),
-                        "total_pages": len(pdf.pages)
+                        "total_pages": len(pdf.pages),
                     }
-                    
+
             except Exception as e:
-                self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+                self.progress_tracker.stop_tracking(
+                    tracking_id, status="failed", message=str(e)
+                )
                 self.logger.error(f"Failed to parse PDF {file_path}: {e}")
                 raise ProcessingError(f"Failed to parse PDF: {e}")
-                
+
         except Exception as e:
-            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
+            )
             raise
-    
-    def extract_text(self, file_path: Union[str, Path], pages: Optional[List[int]] = None) -> str:
+
+    def extract_text(
+        self, file_path: Union[str, Path], pages: Optional[List[int]] = None
+    ) -> str:
         """
         Extract text from PDF.
-        
+
         Args:
             file_path: Path to PDF file
             pages: Specific page numbers (None = all pages)
-            
+
         Returns:
             str: Extracted text
         """
-        result = self.parse(file_path, extract_tables=False, extract_images=False, pages=pages)
+        result = self.parse(
+            file_path, extract_tables=False, extract_images=False, pages=pages
+        )
         return result["full_text"]
-    
-    def extract_tables(self, file_path: Union[str, Path], pages: Optional[List[int]] = None) -> List[Dict[str, Any]]:
+
+    def extract_tables(
+        self, file_path: Union[str, Path], pages: Optional[List[int]] = None
+    ) -> List[Dict[str, Any]]:
         """
         Extract tables from PDF.
-        
+
         Args:
             file_path: Path to PDF file
             pages: Specific page numbers (None = all pages)
-            
+
         Returns:
             list: Extracted tables
         """
-        result = self.parse(file_path, extract_text=False, extract_images=False, pages=pages)
-        
+        result = self.parse(
+            file_path, extract_text=False, extract_images=False, pages=pages
+        )
+
         all_tables = []
         for page in result["pages"]:
             for table in page.get("tables", []):
                 table["page_number"] = page["page_number"]
                 all_tables.append(table)
-        
+
         return all_tables
-    
-    def extract_images(self, file_path: Union[str, Path], output_dir: Optional[Path] = None) -> List[Dict[str, Any]]:
+
+    def extract_images(
+        self, file_path: Union[str, Path], output_dir: Optional[Path] = None
+    ) -> List[Dict[str, Any]]:
         """
         Extract images from PDF.
-        
+
         Args:
             file_path: Path to PDF file
             output_dir: Directory to save extracted images
-            
+
         Returns:
             list: Extracted image information
         """
-        result = self.parse(file_path, extract_text=False, extract_tables=False, extract_images=True)
-        
+        result = self.parse(
+            file_path, extract_text=False, extract_tables=False, extract_images=True
+        )
+
         all_images = []
         for page in result["pages"]:
             for img in page.get("images", []):
                 img["page_number"] = page["page_number"]
                 all_images.append(img)
-        
+
         return all_images
-    
+
     def _parse_page(self, page, page_number: int, options: Dict[str, Any]) -> PDFPage:
         """Parse individual PDF page."""
         page_data = PDFPage(
-            page_number=page_number,
-            text="",
-            width=page.width,
-            height=page.height
+            page_number=page_number, text="", width=page.width, height=page.height
         )
-        
+
         # Extract text
         if options.get("extract_text", True):
             page_data.text = page.extract_text() or ""
-        
+
         # Extract tables
         if options.get("extract_tables", True):
             tables = page.extract_tables()
@@ -229,11 +244,11 @@ class PDFParser:
                 page_data.tables = [
                     {
                         "data": table,
-                        "bbox": None  # pdfplumber doesn't provide bbox for tables directly
+                        "bbox": None,  # pdfplumber doesn't provide bbox for tables directly
                     }
                     for table in tables
                 ]
-        
+
         # Extract images
         if options.get("extract_images", False):
             images = page.images
@@ -245,17 +260,17 @@ class PDFParser:
                         "x1": img.get("x1", 0),
                         "y1": img.get("y1", 0),
                         "width": img.get("width", 0),
-                        "height": img.get("height", 0)
+                        "height": img.get("height", 0),
                     }
                     for img in images
                 ]
-        
+
         return page_data
-    
+
     def _extract_metadata(self, pdf) -> PDFMetadata:
         """Extract PDF metadata."""
         metadata = pdf.metadata or {}
-        
+
         return PDFMetadata(
             title=metadata.get("Title"),
             author=metadata.get("Author"),
@@ -263,5 +278,5 @@ class PDFParser:
             creator=metadata.get("Creator"),
             producer=metadata.get("Producer"),
             creation_date=str(metadata.get("CreationDate", "")),
-            modification_date=str(metadata.get("ModDate", ""))
+            modification_date=str(metadata.get("ModDate", "")),
         )

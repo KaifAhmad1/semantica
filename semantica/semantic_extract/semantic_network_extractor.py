@@ -70,7 +70,7 @@ from .relation_extractor import Relation
 @dataclass
 class SemanticNode:
     """Semantic network node representation."""
-    
+
     id: str
     label: str
     type: str
@@ -81,7 +81,7 @@ class SemanticNode:
 @dataclass
 class SemanticEdge:
     """Semantic network edge representation."""
-    
+
     source: str
     target: str
     label: str
@@ -92,7 +92,7 @@ class SemanticEdge:
 @dataclass
 class SemanticNetwork:
     """Semantic network representation."""
-    
+
     nodes: List[SemanticNode]
     edges: List[SemanticEdge]
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -100,11 +100,11 @@ class SemanticNetwork:
 
 class SemanticNetworkExtractor:
     """Semantic network extractor for structured networks."""
-    
+
     def __init__(self, method: Union[str, List[str]] = None, **config):
         """
         Initialize semantic network extractor.
-        
+
         Args:
             method: Extraction method(s) for underlying NER/relation extractors.
                    Can be passed to ner_method and relation_method in config.
@@ -116,84 +116,111 @@ class SemanticNetworkExtractor:
         self.logger = get_logger("semantic_network_extractor")
         self.config = config
         self.progress_tracker = get_progress_tracker()
-        
+
         # Store method for passing to extractors if needed
         if method is not None:
             self.config["ner_method"] = method
             self.config["relation_method"] = method
-    
+
     def extract_network(
         self,
         text: str,
         entities: Optional[List[Entity]] = None,
         relations: Optional[List[Relation]] = None,
-        **options
+        **options,
     ) -> SemanticNetwork:
         """
         Extract semantic network from text.
-        
+
         Args:
             text: Input text
             entities: Pre-extracted entities (optional)
             relations: Pre-extracted relations (optional)
             **options: Extraction options
-            
+
         Returns:
             SemanticNetwork: Extracted semantic network
         """
         tracking_id = self.progress_tracker.start_tracking(
             module="semantic_extract",
             submodule="SemanticNetworkExtractor",
-            message="Extracting semantic network from text"
+            message="Extracting semantic network from text",
         )
-        
+
         try:
             from .ner_extractor import NERExtractor
             from .relation_extractor import RelationExtractor
-            
+
             # Extract entities if not provided
             if entities is None:
-                self.progress_tracker.update_tracking(tracking_id, message="Extracting entities...")
+                self.progress_tracker.update_tracking(
+                    tracking_id, message="Extracting entities..."
+                )
                 ner_config = self.config.get("ner", {})
                 # Pass method if specified
                 if "ner_method" in self.config:
                     ner_config["method"] = self.config["ner_method"]
-                ner = NERExtractor(**ner_config, **{k: v for k, v in self.config.items() if k not in ["ner", "relation"]})
+                ner = NERExtractor(
+                    **ner_config,
+                    **{
+                        k: v
+                        for k, v in self.config.items()
+                        if k not in ["ner", "relation"]
+                    },
+                )
                 entities = ner.extract_entities(text, **options)
-            
+
             # Extract relations if not provided
             if relations is None:
-                self.progress_tracker.update_tracking(tracking_id, message="Extracting relations...")
+                self.progress_tracker.update_tracking(
+                    tracking_id, message="Extracting relations..."
+                )
                 rel_config = self.config.get("relation", {})
                 # Pass method if specified
                 if "relation_method" in self.config:
                     rel_config["method"] = self.config["relation_method"]
-                rel_extractor = RelationExtractor(**rel_config, **{k: v for k, v in self.config.items() if k not in ["ner", "relation"]})
+                rel_extractor = RelationExtractor(
+                    **rel_config,
+                    **{
+                        k: v
+                        for k, v in self.config.items()
+                        if k not in ["ner", "relation"]
+                    },
+                )
                 relations = rel_extractor.extract_relations(text, entities, **options)
-            
+
             # Build network
-            self.progress_tracker.update_tracking(tracking_id, message="Building semantic network...")
+            self.progress_tracker.update_tracking(
+                tracking_id, message="Building semantic network..."
+            )
             network = self._build_network(entities, relations)
-            
-            self.progress_tracker.stop_tracking(tracking_id, status="completed",
-                                              message=f"Extracted network: {len(network.nodes)} nodes, {len(network.edges)} edges")
+
+            self.progress_tracker.stop_tracking(
+                tracking_id,
+                status="completed",
+                message=f"Extracted network: {len(network.nodes)} nodes, {len(network.edges)} edges",
+            )
             return network
-            
+
         except Exception as e:
-            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
+            )
             raise
-    
-    def _build_network(self, entities: List[Entity], relations: List[Relation]) -> SemanticNetwork:
+
+    def _build_network(
+        self, entities: List[Entity], relations: List[Relation]
+    ) -> SemanticNetwork:
         """Build semantic network from entities and relations."""
         nodes = []
         edges = []
         node_map = {}
-        
+
         # Create nodes from entities
         for entity in entities:
             node_id = f"entity_{len(nodes)}"
             node_map[entity.text] = node_id
-            
+
             node = SemanticNode(
                 id=node_id,
                 label=entity.text,
@@ -201,17 +228,17 @@ class SemanticNetworkExtractor:
                 properties={
                     "start_char": entity.start_char,
                     "end_char": entity.end_char,
-                    "confidence": entity.confidence
+                    "confidence": entity.confidence,
                 },
-                metadata=entity.metadata
+                metadata=entity.metadata,
             )
             nodes.append(node)
-        
+
         # Create edges from relations
         for relation in relations:
             subject_id = node_map.get(relation.subject.text)
             object_id = node_map.get(relation.object.text)
-            
+
             if subject_id and object_id:
                 edge = SemanticEdge(
                     source=subject_id,
@@ -219,12 +246,12 @@ class SemanticNetworkExtractor:
                     label=relation.predicate,
                     properties={
                         "confidence": relation.confidence,
-                        "context": relation.context
+                        "context": relation.context,
                     },
-                    metadata=relation.metadata
+                    metadata=relation.metadata,
                 )
                 edges.append(edge)
-        
+
         return SemanticNetwork(
             nodes=nodes,
             edges=edges,
@@ -232,18 +259,20 @@ class SemanticNetworkExtractor:
                 "node_count": len(nodes),
                 "edge_count": len(edges),
                 "entity_types": list(set(e.label for e in entities)),
-                "relation_types": list(set(r.predicate for r in relations))
-            }
+                "relation_types": list(set(r.predicate for r in relations)),
+            },
         )
-    
-    def export_to_yaml(self, network: SemanticNetwork, file_path: Optional[str] = None) -> str:
+
+    def export_to_yaml(
+        self, network: SemanticNetwork, file_path: Optional[str] = None
+    ) -> str:
         """
         Export semantic network to YAML format.
-        
+
         Args:
             network: Semantic network
             file_path: Optional file path to save
-            
+
         Returns:
             str: YAML representation
         """
@@ -255,7 +284,7 @@ class SemanticNetworkExtractor:
                         "label": node.label,
                         "type": node.type,
                         "properties": node.properties,
-                        "metadata": node.metadata
+                        "metadata": node.metadata,
                     }
                     for node in network.nodes
                 ],
@@ -265,29 +294,29 @@ class SemanticNetworkExtractor:
                         "target": edge.target,
                         "label": edge.label,
                         "properties": edge.properties,
-                        "metadata": edge.metadata
+                        "metadata": edge.metadata,
                     }
                     for edge in network.edges
                 ],
-                "metadata": network.metadata
+                "metadata": network.metadata,
             }
         }
-        
+
         yaml_str = yaml.dump(yaml_data, default_flow_style=False, sort_keys=False)
-        
+
         if file_path:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(yaml_str)
-        
+
         return yaml_str
-    
+
     def analyze_network(self, network: SemanticNetwork) -> Dict[str, Any]:
         """
         Analyze semantic network structure.
-        
+
         Args:
             network: Semantic network
-            
+
         Returns:
             dict: Network analysis
         """
@@ -295,25 +324,31 @@ class SemanticNetworkExtractor:
         node_types = {}
         for node in network.nodes:
             node_types[node.type] = node_types.get(node.type, 0) + 1
-        
+
         # Count relation types
         relation_types = {}
         for edge in network.edges:
             relation_types[edge.label] = relation_types.get(edge.label, 0) + 1
-        
+
         # Calculate connectivity
         node_degrees = {}
         for edge in network.edges:
             node_degrees[edge.source] = node_degrees.get(edge.source, 0) + 1
             node_degrees[edge.target] = node_degrees.get(edge.target, 0) + 1
-        
-        avg_degree = sum(node_degrees.values()) / len(node_degrees) if node_degrees else 0
-        
+
+        avg_degree = (
+            sum(node_degrees.values()) / len(node_degrees) if node_degrees else 0
+        )
+
         return {
             "node_count": len(network.nodes),
             "edge_count": len(network.edges),
             "node_types": node_types,
             "relation_types": relation_types,
             "average_degree": avg_degree,
-            "connectivity": "sparse" if avg_degree < 2 else "moderate" if avg_degree < 5 else "dense"
+            "connectivity": "sparse"
+            if avg_degree < 2
+            else "moderate"
+            if avg_degree < 5
+            else "dense",
         }

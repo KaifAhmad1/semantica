@@ -139,41 +139,46 @@ License: MIT
 
 from typing import Any, Dict, List, Optional, Union
 
-from .ontology_generator import OntologyGenerator, ClassInferencer, PropertyInferencer, OntologyOptimizer
+from .associative_class import AssociativeClass, AssociativeClassBuilder
 from .class_inferrer import ClassInferrer
-from .property_generator import PropertyGenerator
-from .ontology_validator import OntologyValidator, ValidationResult
-from .owl_generator import OWLGenerator
-from .ontology_evaluator import OntologyEvaluator, EvaluationResult
-from .requirements_spec import RequirementsSpecManager, RequirementsSpec
-from .competency_questions import CompetencyQuestionsManager, CompetencyQuestion
-from .reuse_manager import ReuseManager, ReuseDecision
-from .version_manager import VersionManager, OntologyVersion
-from .namespace_manager import NamespaceManager
-from .naming_conventions import NamingConventions
-from .module_manager import ModuleManager, OntologyModule
+from .competency_questions import CompetencyQuestion, CompetencyQuestionsManager
+from .config import OntologyConfig, ontology_config
 from .domain_ontologies import DomainOntologies
-from .ontology_documentation import OntologyDocumentationManager, OntologyDocumentation
-from .associative_class import AssociativeClassBuilder, AssociativeClass
-from .registry import MethodRegistry, method_registry
 from .methods import (
+    add_competency_question,
+    create_associative_class,
+    create_requirements_spec,
+    create_version,
+    evaluate_ontology,
     generate_ontology,
+    generate_owl,
+    get_ontology_method,
+    import_external_ontology,
     infer_classes,
     infer_properties,
-    validate_ontology,
-    generate_owl,
-    evaluate_ontology,
-    create_requirements_spec,
-    add_competency_question,
-    research_ontology,
-    import_external_ontology,
-    create_version,
-    manage_namespace,
-    create_associative_class,
-    get_ontology_method,
     list_available_methods,
+    manage_namespace,
+    research_ontology,
+    validate_ontology,
 )
-from .config import OntologyConfig, ontology_config
+from .module_manager import ModuleManager, OntologyModule
+from .namespace_manager import NamespaceManager
+from .naming_conventions import NamingConventions
+from .ontology_documentation import OntologyDocumentation, OntologyDocumentationManager
+from .ontology_evaluator import EvaluationResult, OntologyEvaluator
+from .ontology_generator import (
+    ClassInferencer,
+    OntologyGenerator,
+    OntologyOptimizer,
+    PropertyInferencer,
+)
+from .ontology_validator import OntologyValidator, ValidationResult
+from .owl_generator import OWLGenerator
+from .property_generator import PropertyGenerator
+from .registry import MethodRegistry, method_registry
+from .requirements_spec import RequirementsSpec, RequirementsSpecManager
+from .reuse_manager import ReuseDecision, ReuseManager
+from .version_manager import OntologyVersion, VersionManager
 
 __all__ = [
     # Main generators
@@ -183,22 +188,18 @@ __all__ = [
     "PropertyGenerator",
     "PropertyInferencer",  # Legacy alias
     "OntologyOptimizer",
-    
     # Validation and evaluation
     "OntologyValidator",
     "ValidationResult",
     "OntologyEvaluator",
     "EvaluationResult",
-    
     # OWL/RDF generation
     "OWLGenerator",
-    
     # Requirements and competency questions
     "RequirementsSpecManager",
     "RequirementsSpec",
     "CompetencyQuestionsManager",
     "CompetencyQuestion",
-    
     # Management
     "ReuseManager",
     "ReuseDecision",
@@ -211,11 +212,9 @@ __all__ = [
     "DomainOntologies",
     "OntologyDocumentationManager",
     "OntologyDocumentation",
-    
     # Special classes
     "AssociativeClassBuilder",
     "AssociativeClass",
-    
     # Registry and Methods
     "MethodRegistry",
     "method_registry",
@@ -234,7 +233,6 @@ __all__ = [
     "create_associative_class",
     "get_ontology_method",
     "list_available_methods",
-    
     # Configuration
     "OntologyConfig",
     "ontology_config",

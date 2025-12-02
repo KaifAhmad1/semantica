@@ -106,12 +106,13 @@ Example Usage:
 """
 
 from typing import Any, Dict, List, Optional, Union
+
 from ..semantic_extract.triple_extractor import Triple
-from .triple_manager import TripleManager, TripleStore
-from .query_engine import QueryEngine, QueryResult, QueryPlan
 from .bulk_loader import BulkLoader, LoadProgress
-from .registry import method_registry
 from .config import triple_store_config
+from .query_engine import QueryEngine, QueryPlan, QueryResult
+from .registry import method_registry
+from .triple_manager import TripleManager, TripleStore
 
 # Global manager instances
 _global_manager: Optional[TripleManager] = None
@@ -147,22 +148,18 @@ def _get_bulk_loader() -> BulkLoader:
 
 
 def register_store(
-    store_id: str,
-    store_type: str,
-    endpoint: str,
-    method: str = "default",
-    **options
+    store_id: str, store_type: str, endpoint: str, method: str = "default", **options
 ) -> TripleStore:
     """
     Register a triple store.
-    
+
     Args:
         store_id: Store identifier
         store_type: Store type (blazegraph, jena, rdf4j, virtuoso)
         endpoint: Store endpoint URL
         method: Registration method name (default: "default")
         **options: Additional options
-    
+
     Returns:
         Registered store
     """
@@ -170,27 +167,24 @@ def register_store(
     custom_method = method_registry.get("register", method)
     if custom_method:
         return custom_method(store_id, store_type, endpoint, **options)
-    
+
     # Default implementation
     manager = _get_manager()
     return manager.register_store(store_id, store_type, endpoint, **options)
 
 
 def add_triple(
-    triple: Triple,
-    store_id: Optional[str] = None,
-    method: str = "default",
-    **options
+    triple: Triple, store_id: Optional[str] = None, method: str = "default", **options
 ) -> Dict[str, Any]:
     """
     Add single triple to store.
-    
+
     Args:
         triple: Triple to add
         store_id: Store identifier (uses default if not provided)
         method: Addition method name (default: "default")
         **options: Additional options
-    
+
     Returns:
         Operation result
     """
@@ -198,7 +192,7 @@ def add_triple(
     custom_method = method_registry.get("add", method)
     if custom_method:
         return custom_method(triple, store_id=store_id, **options)
-    
+
     # Default implementation
     manager = _get_manager()
     return manager.add_triple(triple, store_id=store_id, **options)
@@ -208,17 +202,17 @@ def add_triples(
     triples: List[Triple],
     store_id: Optional[str] = None,
     method: str = "default",
-    **options
+    **options,
 ) -> Dict[str, Any]:
     """
     Add multiple triples to store.
-    
+
     Args:
         triples: List of triples to add
         store_id: Store identifier
         method: Addition method name (default: "default")
         **options: Additional options
-    
+
     Returns:
         Operation result
     """
@@ -226,7 +220,7 @@ def add_triples(
     custom_method = method_registry.get("add", method)
     if custom_method:
         return custom_method(triples, store_id=store_id, **options)
-    
+
     # Default implementation
     manager = _get_manager()
     return manager.add_triples(triples, store_id=store_id, **options)
@@ -238,11 +232,11 @@ def get_triples(
     object: Optional[str] = None,
     store_id: Optional[str] = None,
     method: str = "default",
-    **options
+    **options,
 ) -> List[Triple]:
     """
     Get triples matching criteria.
-    
+
     Args:
         subject: Optional subject URI
         predicate: Optional predicate URI
@@ -250,7 +244,7 @@ def get_triples(
         store_id: Store identifier
         method: Retrieval method name (default: "default")
         **options: Additional options
-    
+
     Returns:
         List of matching triples
     """
@@ -258,27 +252,24 @@ def get_triples(
     custom_method = method_registry.get("get", method)
     if custom_method:
         return custom_method(subject, predicate, object, store_id=store_id, **options)
-    
+
     # Default implementation
     manager = _get_manager()
     return manager.get_triple(subject, predicate, object, store_id=store_id, **options)
 
 
 def delete_triple(
-    triple: Triple,
-    store_id: Optional[str] = None,
-    method: str = "default",
-    **options
+    triple: Triple, store_id: Optional[str] = None, method: str = "default", **options
 ) -> Dict[str, Any]:
     """
     Delete triple from store.
-    
+
     Args:
         triple: Triple to delete
         store_id: Store identifier
         method: Deletion method name (default: "default")
         **options: Additional options
-    
+
     Returns:
         Operation result
     """
@@ -286,7 +277,7 @@ def delete_triple(
     custom_method = method_registry.get("delete", method)
     if custom_method:
         return custom_method(triple, store_id=store_id, **options)
-    
+
     # Default implementation
     manager = _get_manager()
     return manager.delete_triple(triple, store_id=store_id, **options)
@@ -297,18 +288,18 @@ def update_triple(
     new_triple: Triple,
     store_id: Optional[str] = None,
     method: str = "default",
-    **options
+    **options,
 ) -> Dict[str, Any]:
     """
     Update triple in store.
-    
+
     Args:
         old_triple: Original triple
         new_triple: Updated triple
         store_id: Store identifier
         method: Update method name (default: "default")
         **options: Additional options
-    
+
     Returns:
         Operation result
     """
@@ -316,27 +307,24 @@ def update_triple(
     custom_method = method_registry.get("update", method)
     if custom_method:
         return custom_method(old_triple, new_triple, store_id=store_id, **options)
-    
+
     # Default implementation
     manager = _get_manager()
     return manager.update_triple(old_triple, new_triple, store_id=store_id, **options)
 
 
 def execute_query(
-    query: str,
-    store_adapter: Any,
-    method: str = "default",
-    **options
+    query: str, store_adapter: Any, method: str = "default", **options
 ) -> QueryResult:
     """
     Execute SPARQL query.
-    
+
     Args:
         query: SPARQL query string
         store_adapter: Triple store adapter instance
         method: Query method name (default: "default")
         **options: Additional options
-    
+
     Returns:
         Query result
     """
@@ -344,25 +332,21 @@ def execute_query(
     custom_method = method_registry.get("query", method)
     if custom_method:
         return custom_method(query, store_adapter, **options)
-    
+
     # Default implementation
     engine = _get_query_engine()
     return engine.execute_query(query, store_adapter, **options)
 
 
-def optimize_query(
-    query: str,
-    method: str = "default",
-    **options
-) -> str:
+def optimize_query(query: str, method: str = "default", **options) -> str:
     """
     Optimize SPARQL query.
-    
+
     Args:
         query: Original SPARQL query
         method: Optimization method name (default: "default")
         **options: Additional options
-    
+
     Returns:
         Optimized query
     """
@@ -370,23 +354,20 @@ def optimize_query(
     custom_method = method_registry.get("optimize", method)
     if custom_method:
         return custom_method(query, **options)
-    
+
     # Default implementation
     engine = _get_query_engine()
     return engine.optimize_query(query, **options)
 
 
-def plan_query(
-    query: str,
-    **options
-) -> QueryPlan:
+def plan_query(query: str, **options) -> QueryPlan:
     """
     Create query execution plan.
-    
+
     Args:
         query: SPARQL query
         **options: Planning options
-    
+
     Returns:
         Query execution plan
     """
@@ -395,20 +376,17 @@ def plan_query(
 
 
 def bulk_load(
-    triples: List[Triple],
-    store_adapter: Any,
-    method: str = "default",
-    **options
+    triples: List[Triple], store_adapter: Any, method: str = "default", **options
 ) -> LoadProgress:
     """
     Load triples in bulk.
-    
+
     Args:
         triples: List of triples to load
         store_adapter: Triple store adapter instance
         method: Loading method name (default: "default")
         **options: Additional options
-    
+
     Returns:
         Load progress information
     """
@@ -416,25 +394,23 @@ def bulk_load(
     custom_method = method_registry.get("bulk_load", method)
     if custom_method:
         return custom_method(triples, store_adapter, **options)
-    
+
     # Default implementation
     loader = _get_bulk_loader()
     return loader.load_triples(triples, store_adapter, **options)
 
 
 def validate_triples(
-    triples: List[Triple],
-    method: str = "default",
-    **options
+    triples: List[Triple], method: str = "default", **options
 ) -> Dict[str, Any]:
     """
     Validate triples before loading.
-    
+
     Args:
         triples: List of triples to validate
         method: Validation method name (default: "default")
         **options: Validation options
-    
+
     Returns:
         Validation results
     """
@@ -442,7 +418,7 @@ def validate_triples(
     custom_method = method_registry.get("validate", method)
     if custom_method:
         return custom_method(triples, **options)
-    
+
     # Default implementation
     loader = _get_bulk_loader()
     return loader.validate_before_load(triples, **options)
@@ -451,11 +427,11 @@ def validate_triples(
 def get_triple_store_method(task: str, method_name: str) -> Optional[Any]:
     """
     Get triple store method by task and name.
-    
+
     Args:
         task: Task type (register, add, get, delete, update, query, optimize, bulk_load, validate)
         method_name: Method name
-    
+
     Returns:
         Method function or None if not found
     """
@@ -465,12 +441,11 @@ def get_triple_store_method(task: str, method_name: str) -> Optional[Any]:
 def list_available_methods(task: Optional[str] = None) -> Dict[str, List[str]]:
     """
     List all available triple store methods.
-    
+
     Args:
         task: Optional task type to filter by
-    
+
     Returns:
         Dictionary mapping task types to lists of method names
     """
     return method_registry.list_all(task)
-

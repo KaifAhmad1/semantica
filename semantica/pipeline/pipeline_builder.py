@@ -30,11 +30,11 @@ Author: Semantica Contributors
 License: MIT
 """
 
-from typing import Any, Dict, List, Optional, Callable, Union
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Union
 
-from ..utils.exceptions import ValidationError, ProcessingError
+from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
 from ..utils.progress_tracker import get_progress_tracker
 from .pipeline_validator import PipelineValidator
@@ -42,6 +42,7 @@ from .pipeline_validator import PipelineValidator
 
 class StepStatus(Enum):
     """Pipeline step status."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -52,6 +53,7 @@ class StepStatus(Enum):
 @dataclass
 class PipelineStep:
     """Pipeline step definition."""
+
     name: str
     step_type: str
     config: Dict[str, Any] = field(default_factory=dict)
@@ -65,6 +67,7 @@ class PipelineStep:
 @dataclass
 class Pipeline:
     """Pipeline definition."""
+
     name: str
     steps: List[PipelineStep] = field(default_factory=list)
     config: Dict[str, Any] = field(default_factory=dict)
@@ -74,7 +77,7 @@ class Pipeline:
 class PipelineBuilder:
     """
     Pipeline construction and configuration handler.
-    
+
     • Constructs processing pipelines using DSL
     • Configures pipeline steps and connections
     • Validates pipeline structure and dependencies
@@ -82,11 +85,11 @@ class PipelineBuilder:
     • Handles pipeline serialization
     • Supports complex pipeline topologies
     """
-    
+
     def __init__(self, config=None, **kwargs):
         """
         Initialize pipeline builder.
-        
+
         Args:
             config: Configuration dictionary
             **kwargs: Additional configuration options
@@ -94,29 +97,24 @@ class PipelineBuilder:
         self.logger = get_logger("pipeline_builder")
         self.config = config or {}
         self.config.update(kwargs)
-        
+
         # Initialize progress tracker
         self.progress_tracker = get_progress_tracker()
-        
+
         self.validator = PipelineValidator(**self.config)
         self.steps: List[PipelineStep] = []
         self.step_registry: Dict[str, Callable] = {}
         self.pipeline_config: Dict[str, Any] = {}
-    
-    def add_step(
-        self,
-        step_name: str,
-        step_type: str,
-        **config
-    ) -> "PipelineBuilder":
+
+    def add_step(self, step_name: str, step_type: str, **config) -> "PipelineBuilder":
         """
         Add step to pipeline.
-        
+
         Args:
             step_name: Step name/identifier
             step_type: Step type/category
             **config: Step configuration
-        
+
         Returns:
             Self for method chaining
         """
@@ -125,28 +123,25 @@ class PipelineBuilder:
             step_type=step_type,
             config=config,
             dependencies=config.get("dependencies", []),
-            handler=config.get("handler")
+            handler=config.get("handler"),
         )
-        
+
         self.steps.append(step)
         self.logger.debug(f"Added step: {step_name} ({step_type})")
-        
+
         return self
-    
+
     def connect_steps(
-        self,
-        from_step: str,
-        to_step: str,
-        **options
+        self, from_step: str, to_step: str, **options
     ) -> "PipelineBuilder":
         """
         Connect pipeline steps.
-        
+
         Args:
             from_step: Source step name
             to_step: Target step name
             **options: Connection options
-        
+
         Returns:
             Self for method chaining
         """
@@ -157,141 +152,154 @@ class PipelineBuilder:
                 target_step.dependencies.append(from_step)
         else:
             raise ValidationError(f"Target step not found: {to_step}")
-        
+
         return self
-    
+
     def set_parallelism(self, level: int) -> "PipelineBuilder":
         """
         Set parallelism level.
-        
+
         Args:
             level: Parallelism level (number of parallel workers)
-        
+
         Returns:
             Self for method chaining
         """
         self.pipeline_config["parallelism"] = level
         return self
-    
+
     def build(self, name: str = "default_pipeline") -> Pipeline:
         """
         Build pipeline from configuration.
-        
+
         Args:
             name: Pipeline name
-        
+
         Returns:
             Built pipeline
         """
         tracking_id = self.progress_tracker.start_tracking(
             module="pipeline",
             submodule="PipelineBuilder",
-            message=f"Building pipeline: {name}"
+            message=f"Building pipeline: {name}",
         )
-        
+
         try:
             # Validate pipeline structure
-            self.progress_tracker.update_tracking(tracking_id, message="Validating pipeline structure...")
+            self.progress_tracker.update_tracking(
+                tracking_id, message="Validating pipeline structure..."
+            )
             validation_result = self.validator.validate_pipeline(self)
             if not validation_result.get("valid", False):
                 errors = validation_result.get("errors", [])
                 raise ValidationError(f"Pipeline validation failed: {errors}")
-            
-            self.progress_tracker.update_tracking(tracking_id, message="Creating pipeline object...")
+
+            self.progress_tracker.update_tracking(
+                tracking_id, message="Creating pipeline object..."
+            )
             pipeline = Pipeline(
                 name=name,
                 steps=list(self.steps),
                 config=self.pipeline_config,
                 metadata={
                     "step_count": len(self.steps),
-                    "parallelism": self.pipeline_config.get("parallelism", 1)
-                }
+                    "parallelism": self.pipeline_config.get("parallelism", 1),
+                },
             )
-            
+
             self.logger.info(f"Built pipeline: {name} with {len(self.steps)} steps")
-            self.progress_tracker.stop_tracking(tracking_id, status="completed",
-                                               message=f"Built pipeline: {name} with {len(self.steps)} steps")
+            self.progress_tracker.stop_tracking(
+                tracking_id,
+                status="completed",
+                message=f"Built pipeline: {name} with {len(self.steps)} steps",
+            )
             return pipeline
-            
+
         except Exception as e:
-            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
+            )
             raise
-    
-    def build_pipeline(
-        self,
-        pipeline_config: Dict[str, Any],
-        **options
-    ) -> Pipeline:
+
+    def build_pipeline(self, pipeline_config: Dict[str, Any], **options) -> Pipeline:
         """
         Build pipeline from configuration dictionary.
-        
+
         Args:
             pipeline_config: Pipeline configuration
             **options: Additional options
-        
+
         Returns:
             Built pipeline
         """
         tracking_id = self.progress_tracker.start_tracking(
             module="pipeline",
             submodule="PipelineBuilder",
-            message="Building pipeline from configuration"
+            message="Building pipeline from configuration",
         )
-        
+
         try:
             # Parse configuration
-            self.progress_tracker.update_tracking(tracking_id, message="Parsing pipeline configuration...")
+            self.progress_tracker.update_tracking(
+                tracking_id, message="Parsing pipeline configuration..."
+            )
             pipeline_name = pipeline_config.get("name", "default_pipeline")
             steps_config = pipeline_config.get("steps", [])
-            
+
             # Add steps from configuration
-            self.progress_tracker.update_tracking(tracking_id, message=f"Adding {len(steps_config)} steps from configuration...")
+            self.progress_tracker.update_tracking(
+                tracking_id,
+                message=f"Adding {len(steps_config)} steps from configuration...",
+            )
             for step_config in steps_config:
                 step_name = step_config.get("name")
                 step_type = step_config.get("type")
                 if step_name and step_type:
                     self.add_step(step_name, step_type, **step_config.get("config", {}))
-            
+
             # Set parallelism if specified
             if "parallelism" in pipeline_config:
-                self.progress_tracker.update_tracking(tracking_id, message="Setting parallelism...")
+                self.progress_tracker.update_tracking(
+                    tracking_id, message="Setting parallelism..."
+                )
                 self.set_parallelism(pipeline_config["parallelism"])
-            
+
             result = self.build(pipeline_name)
-            self.progress_tracker.stop_tracking(tracking_id, status="completed",
-                                               message=f"Built pipeline from configuration: {pipeline_name}")
+            self.progress_tracker.stop_tracking(
+                tracking_id,
+                status="completed",
+                message=f"Built pipeline from configuration: {pipeline_name}",
+            )
             return result
-            
+
         except Exception as e:
-            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
+            )
             raise
-    
-    def register_step_handler(
-        self,
-        step_type: str,
-        handler: Callable
-    ) -> None:
+
+    def register_step_handler(self, step_type: str, handler: Callable) -> None:
         """
         Register step handler function.
-        
+
         Args:
             step_type: Step type
             handler: Handler function
         """
         self.step_registry[step_type] = handler
         self.logger.debug(f"Registered handler for step type: {step_type}")
-    
+
     def get_step(self, step_name: str) -> Optional[PipelineStep]:
         """Get step by name."""
         return next((s for s in self.steps if s.name == step_name), None)
-    
+
     def serialize(self, format: str = "json") -> Union[str, Dict[str, Any]]:
         """
         Serialize pipeline configuration.
-        
+
         Args:
             format: Serialization format
-        
+
         Returns:
             Serialized pipeline
         """
@@ -302,72 +310,75 @@ class PipelineBuilder:
                     "name": step.name,
                     "type": step.step_type,
                     "config": step.config,
-                    "dependencies": step.dependencies
+                    "dependencies": step.dependencies,
                 }
                 for step in self.steps
             ],
-            "config": self.pipeline_config
+            "config": self.pipeline_config,
         }
-        
+
         if format == "json":
             import json
+
             return json.dumps(pipeline_data, indent=2)
         else:
             return pipeline_data
-    
+
     def validate_pipeline(self) -> Dict[str, Any]:
         """
         Validate pipeline structure and configuration.
-        
+
         Returns:
             Validation results
         """
         tracking_id = self.progress_tracker.start_tracking(
             module="pipeline",
             submodule="PipelineBuilder",
-            message="Validating pipeline"
+            message="Validating pipeline",
         )
-        
+
         try:
             result = self.validator.validate_pipeline(self)
-            self.progress_tracker.stop_tracking(tracking_id, status="completed",
-                                               message=f"Validation complete: {'Valid' if result.get('valid', False) else 'Invalid'}")
+            self.progress_tracker.stop_tracking(
+                tracking_id,
+                status="completed",
+                message=f"Validation complete: {'Valid' if result.get('valid', False) else 'Invalid'}",
+            )
             return result
-            
+
         except Exception as e:
-            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
+            )
             raise
 
 
 class PipelineSerializer:
     """
     Pipeline serialization handler.
-    
+
     • Serializes pipelines to various formats
     • Handles pipeline deserialization
     • Manages pipeline versioning
     • Processes pipeline metadata
     """
-    
+
     def __init__(self, **config):
         """Initialize pipeline serializer."""
         self.logger = get_logger("pipeline_serializer")
         self.config = config
-    
+
     def serialize_pipeline(
-        self,
-        pipeline: Pipeline,
-        format: str = "json",
-        **options
+        self, pipeline: Pipeline, format: str = "json", **options
     ) -> Union[str, Dict[str, Any]]:
         """
         Serialize pipeline to specified format.
-        
+
         Args:
             pipeline: Pipeline object
             format: Serialization format
             **options: Additional options
-        
+
         Returns:
             Serialized pipeline
         """
@@ -378,64 +389,62 @@ class PipelineSerializer:
                     "name": step.name,
                     "type": step.step_type,
                     "config": step.config,
-                    "dependencies": step.dependencies
+                    "dependencies": step.dependencies,
                 }
                 for step in pipeline.steps
             ],
             "config": pipeline.config,
-            "metadata": pipeline.metadata
+            "metadata": pipeline.metadata,
         }
-        
+
         if format == "json":
             import json
+
             return json.dumps(pipeline_data, indent=2, default=str)
         else:
             return pipeline_data
-    
+
     def deserialize_pipeline(
-        self,
-        serialized_pipeline: Union[str, Dict[str, Any]],
-        **options
+        self, serialized_pipeline: Union[str, Dict[str, Any]], **options
     ) -> Pipeline:
         """
         Deserialize pipeline from serialized format.
-        
+
         Args:
             serialized_pipeline: Serialized pipeline data
             **options: Additional options
-        
+
         Returns:
             Reconstructed pipeline
         """
         # Parse if string
         if isinstance(serialized_pipeline, str):
             import json
+
             pipeline_data = json.loads(serialized_pipeline)
         else:
             pipeline_data = serialized_pipeline
-        
+
         # Reconstruct pipeline
         builder = PipelineBuilder(**self.config)
         pipeline = builder.build_pipeline(pipeline_data, **options)
-        
+
         return pipeline
-    
+
     def version_pipeline(
-        self,
-        pipeline: Pipeline,
-        version_info: Dict[str, Any]
+        self, pipeline: Pipeline, version_info: Dict[str, Any]
     ) -> Pipeline:
         """
         Add versioning information to pipeline.
-        
+
         Args:
             pipeline: Pipeline object
             version_info: Version information
-        
+
         Returns:
             Versioned pipeline
         """
         pipeline.metadata["version"] = version_info.get("version", "1.0")
         pipeline.metadata["version_info"] = version_info
-        
+
         return pipeline

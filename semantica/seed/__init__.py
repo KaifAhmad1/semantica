@@ -80,11 +80,7 @@ Author: Semantica Contributors
 License: MIT
 """
 
-from .seed_manager import (
-    SeedDataManager,
-    SeedDataSource,
-    SeedData,
-)
+from .seed_manager import SeedData, SeedDataManager, SeedDataSource
 
 __all__ = [
     "SeedDataManager",

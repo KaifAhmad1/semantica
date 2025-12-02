@@ -47,29 +47,29 @@ Author: Semantica Contributors
 License: MIT
 """
 
-from typing import Dict, Type, Callable, Any, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Type
 
 
 class ProviderRegistry:
     """Registry for custom LLM providers."""
-    
+
     _providers: Dict[str, Type] = {}
-    
+
     @classmethod
     def register(cls, name: str, provider_class: Type):
         """Register a custom provider."""
         cls._providers[name] = provider_class
-    
+
     @classmethod
     def get(cls, name: str) -> Optional[Type]:
         """Get provider by name."""
         return cls._providers.get(name)
-    
+
     @classmethod
     def list_all(cls) -> List[str]:
         """List all registered providers."""
         return list(cls._providers.keys())
-    
+
     @classmethod
     def unregister(cls, name: str):
         """Unregister a provider."""
@@ -79,7 +79,7 @@ class ProviderRegistry:
 
 class MethodRegistry:
     """Registry for custom extraction methods."""
-    
+
     _methods: Dict[str, Dict[str, Callable]] = {
         "entity": {},
         "relation": {},
@@ -87,26 +87,26 @@ class MethodRegistry:
         "event": {},
         "coreference": {},
     }
-    
+
     @classmethod
     def register(cls, task: str, name: str, method_func: Callable):
         """Register a custom extraction method."""
         if task not in cls._methods:
             cls._methods[task] = {}
         cls._methods[task][name] = method_func
-    
+
     @classmethod
     def get(cls, task: str, name: str) -> Optional[Callable]:
         """Get method by task and name."""
         return cls._methods.get(task, {}).get(name)
-    
+
     @classmethod
     def list_all(cls, task: Optional[str] = None) -> Dict[str, List[str]]:
         """List all registered methods."""
         if task:
             return {task: list(cls._methods.get(task, {}).keys())}
         return {t: list(m.keys()) for t, m in cls._methods.items()}
-    
+
     @classmethod
     def unregister(cls, task: str, name: str):
         """Unregister a method."""

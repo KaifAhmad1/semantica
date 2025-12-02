@@ -94,16 +94,16 @@ Author: Semantica Contributors
 License: MIT
 """
 
-from typing import Any, Dict, List, Optional, Union, Callable
+from typing import Any, Callable, Dict, List, Optional, Union
 
-from ..utils.logging import get_logger
 from ..utils.exceptions import ProcessingError
-from .duplicate_detector import DuplicateDetector, DuplicateCandidate, DuplicateGroup
+from ..utils.logging import get_logger
+from .cluster_builder import Cluster, ClusterBuilder, ClusterResult
+from .duplicate_detector import DuplicateCandidate, DuplicateDetector, DuplicateGroup
 from .entity_merger import EntityMerger, MergeOperation
-from .similarity_calculator import SimilarityCalculator, SimilarityResult
-from .cluster_builder import ClusterBuilder, Cluster, ClusterResult
 from .merge_strategy import MergeStrategy, MergeStrategyManager
 from .registry import method_registry
+from .similarity_calculator import SimilarityCalculator, SimilarityResult
 
 logger = get_logger("deduplication_methods")
 
@@ -112,13 +112,13 @@ def calculate_similarity(
     entity1: Dict[str, Any],
     entity2: Dict[str, Any],
     method: str = "multi_factor",
-    **kwargs
+    **kwargs,
 ) -> SimilarityResult:
     """
     Calculate similarity between two entities (convenience function).
-    
+
     This is a user-friendly wrapper that calculates similarity using the specified method.
-    
+
     Args:
         entity1: First entity dictionary
         entity2: Second entity dictionary
@@ -132,14 +132,14 @@ def calculate_similarity(
             - "embedding": Cosine similarity of vector embeddings
             - "multi_factor": Weighted aggregation of all components
         **kwargs: Additional options passed to SimilarityCalculator
-        
+
     Returns:
         SimilarityResult object containing:
             - score: Similarity score (0.0 to 1.0)
             - method: Calculation method used
             - components: Dict of individual component scores
             - metadata: Additional metadata
-            
+
     Examples:
         >>> from semantica.deduplication.methods import calculate_similarity
         >>> entity1 = {"name": "Apple Inc.", "type": "Company"}
@@ -151,10 +151,10 @@ def calculate_similarity(
     custom_method = method_registry.get("similarity", method)
     if custom_method:
         return custom_method(entity1, entity2, **kwargs)
-    
+
     # Use default SimilarityCalculator
     calculator = SimilarityCalculator(**kwargs)
-    
+
     # Map method to calculator method
     if method == "exact":
         name1 = entity1.get("name", "")
@@ -164,12 +164,16 @@ def calculate_similarity(
     elif method == "levenshtein":
         name1 = entity1.get("name", "")
         name2 = entity2.get("name", "")
-        score = calculator.calculate_string_similarity(name1, name2, method="levenshtein")
+        score = calculator.calculate_string_similarity(
+            name1, name2, method="levenshtein"
+        )
         return SimilarityResult(score=score, method="levenshtein")
     elif method == "jaro_winkler":
         name1 = entity1.get("name", "")
         name2 = entity2.get("name", "")
-        score = calculator.calculate_string_similarity(name1, name2, method="jaro_winkler")
+        score = calculator.calculate_string_similarity(
+            name1, name2, method="jaro_winkler"
+        )
         return SimilarityResult(score=score, method="jaro_winkler")
     elif method == "cosine":
         name1 = entity1.get("name", "")
@@ -185,8 +189,7 @@ def calculate_similarity(
     elif method == "embedding":
         if "embedding" in entity1 and "embedding" in entity2:
             score = calculator.calculate_embedding_similarity(
-                entity1["embedding"],
-                entity2["embedding"]
+                entity1["embedding"], entity2["embedding"]
             )
             return SimilarityResult(score=score, method="embedding")
         else:
@@ -200,13 +203,13 @@ def detect_duplicates(
     method: str = "pairwise",
     similarity_threshold: float = 0.7,
     confidence_threshold: float = 0.6,
-    **kwargs
+    **kwargs,
 ) -> List[Union[DuplicateCandidate, DuplicateGroup]]:
     """
     Detect duplicate entities (convenience function).
-    
+
     This is a user-friendly wrapper that detects duplicates using the specified method.
-    
+
     Args:
         entities: List of entity dictionaries to check for duplicates
         method: Detection method (default: "pairwise")
@@ -217,11 +220,11 @@ def detect_duplicates(
         similarity_threshold: Minimum similarity score to consider duplicates (default: 0.7)
         confidence_threshold: Minimum confidence score for duplicate candidates (default: 0.6)
         **kwargs: Additional options passed to DuplicateDetector
-        
+
     Returns:
         List of DuplicateCandidate objects (for pairwise/batch/incremental) or
         List of DuplicateGroup objects (for group method)
-        
+
     Examples:
         >>> from semantica.deduplication.methods import detect_duplicates
         >>> entities = [
@@ -235,22 +238,24 @@ def detect_duplicates(
     # Check for custom method in registry
     custom_method = method_registry.get("detection", method)
     if custom_method:
-        return custom_method(entities, similarity_threshold=similarity_threshold, **kwargs)
-    
+        return custom_method(
+            entities, similarity_threshold=similarity_threshold, **kwargs
+        )
+
     # Use default DuplicateDetector
     detector = DuplicateDetector(
         similarity_threshold=similarity_threshold,
         confidence_threshold=confidence_threshold,
-        **kwargs
+        **kwargs,
     )
-    
+
     # Map method to detector method
     if method == "group":
         return detector.detect_duplicate_groups(entities, **kwargs)
     elif method == "incremental":
         # For incremental, need to split entities
-        existing = kwargs.pop("existing_entities", entities[:len(entities)//2])
-        new = kwargs.pop("new_entities", entities[len(entities)//2:])
+        existing = kwargs.pop("existing_entities", entities[: len(entities) // 2])
+        new = kwargs.pop("new_entities", entities[len(entities) // 2 :])
         return detector.incremental_detect(new, existing, **kwargs)
     else:  # pairwise or batch (default)
         return detector.detect_duplicates(entities, **kwargs)
@@ -260,13 +265,13 @@ def merge_entities(
     entities: List[Dict[str, Any]],
     method: str = "keep_most_complete",
     preserve_provenance: bool = True,
-    **kwargs
+    **kwargs,
 ) -> List[MergeOperation]:
     """
     Merge duplicate entities (convenience function).
-    
+
     This is a user-friendly wrapper that merges entities using the specified method.
-    
+
     Args:
         entities: List of entity dictionaries to merge (should be duplicates)
         method: Merge strategy (default: "keep_most_complete")
@@ -278,10 +283,10 @@ def merge_entities(
             - "custom": User-defined merge logic
         preserve_provenance: Whether to preserve provenance information (default: True)
         **kwargs: Additional options passed to EntityMerger
-        
+
     Returns:
         List of MergeOperation objects containing merge results
-        
+
     Examples:
         >>> from semantica.deduplication.methods import merge_entities
         >>> duplicate_entities = [
@@ -294,11 +299,13 @@ def merge_entities(
     # Check for custom method in registry
     custom_method = method_registry.get("merging", method)
     if custom_method:
-        return custom_method(entities, preserve_provenance=preserve_provenance, **kwargs)
-    
+        return custom_method(
+            entities, preserve_provenance=preserve_provenance, **kwargs
+        )
+
     # Use default EntityMerger
     merger = EntityMerger(preserve_provenance=preserve_provenance, **kwargs)
-    
+
     # Map method to merge strategy
     strategy_map = {
         "keep_first": MergeStrategy.KEEP_FIRST,
@@ -307,9 +314,9 @@ def merge_entities(
         "keep_highest_confidence": MergeStrategy.KEEP_HIGHEST_CONFIDENCE,
         "merge_all": MergeStrategy.MERGE_ALL,
     }
-    
+
     strategy = strategy_map.get(method, MergeStrategy.KEEP_MOST_COMPLETE)
-    
+
     # Merge duplicates
     return merger.merge_duplicates(entities, strategy=strategy, **kwargs)
 
@@ -318,13 +325,13 @@ def build_clusters(
     entities: List[Dict[str, Any]],
     method: str = "graph_based",
     similarity_threshold: float = 0.7,
-    **kwargs
+    **kwargs,
 ) -> ClusterResult:
     """
     Build clusters of similar entities (convenience function).
-    
+
     This is a user-friendly wrapper that builds clusters using the specified method.
-    
+
     Args:
         entities: List of entity dictionaries to cluster
         method: Clustering method (default: "graph_based")
@@ -332,14 +339,14 @@ def build_clusters(
             - "hierarchical": Agglomerative clustering for large datasets
         similarity_threshold: Minimum similarity for entities in same cluster (default: 0.7)
         **kwargs: Additional options passed to ClusterBuilder
-        
+
     Returns:
         ClusterResult object containing:
             - clusters: List of Cluster objects
             - unclustered: List of entities not in any cluster
             - quality_metrics: Cluster quality metrics
             - metadata: Additional metadata
-            
+
     Examples:
         >>> from semantica.deduplication.methods import build_clusters
         >>> entities = [{"id": str(i), "name": f"Entity {i}"} for i in range(100)]
@@ -349,32 +356,34 @@ def build_clusters(
     # Check for custom method in registry
     custom_method = method_registry.get("clustering", method)
     if custom_method:
-        return custom_method(entities, similarity_threshold=similarity_threshold, **kwargs)
-    
+        return custom_method(
+            entities, similarity_threshold=similarity_threshold, **kwargs
+        )
+
     # Use default ClusterBuilder
     builder = ClusterBuilder(
         similarity_threshold=similarity_threshold,
         use_hierarchical=(method == "hierarchical"),
-        **kwargs
+        **kwargs,
     )
-    
+
     return builder.build_clusters(entities, **kwargs)
 
 
 def get_deduplication_method(task: str, name: str) -> Optional[Callable]:
     """
     Get deduplication method by task and name.
-    
+
     This function retrieves a registered deduplication method from the registry
     or returns a built-in method if available.
-    
+
     Args:
         task: Task type ("detection", "merging", "similarity", "clustering")
         name: Method name
-        
+
     Returns:
         Method function or None if not found
-        
+
     Examples:
         >>> from semantica.deduplication.methods import get_deduplication_method
         >>> method = get_deduplication_method("similarity", "custom_method")
@@ -385,54 +394,92 @@ def get_deduplication_method(task: str, name: str) -> Optional[Callable]:
     method = method_registry.get(task, name)
     if method:
         return method
-    
+
     # Check built-in methods
     builtin_methods = {
         "similarity": {
-            "exact": lambda e1, e2, **kw: calculate_similarity(e1, e2, method="exact", **kw),
-            "levenshtein": lambda e1, e2, **kw: calculate_similarity(e1, e2, method="levenshtein", **kw),
-            "jaro_winkler": lambda e1, e2, **kw: calculate_similarity(e1, e2, method="jaro_winkler", **kw),
-            "cosine": lambda e1, e2, **kw: calculate_similarity(e1, e2, method="cosine", **kw),
-            "property": lambda e1, e2, **kw: calculate_similarity(e1, e2, method="property", **kw),
-            "relationship": lambda e1, e2, **kw: calculate_similarity(e1, e2, method="relationship", **kw),
-            "embedding": lambda e1, e2, **kw: calculate_similarity(e1, e2, method="embedding", **kw),
-            "multi_factor": lambda e1, e2, **kw: calculate_similarity(e1, e2, method="multi_factor", **kw),
+            "exact": lambda e1, e2, **kw: calculate_similarity(
+                e1, e2, method="exact", **kw
+            ),
+            "levenshtein": lambda e1, e2, **kw: calculate_similarity(
+                e1, e2, method="levenshtein", **kw
+            ),
+            "jaro_winkler": lambda e1, e2, **kw: calculate_similarity(
+                e1, e2, method="jaro_winkler", **kw
+            ),
+            "cosine": lambda e1, e2, **kw: calculate_similarity(
+                e1, e2, method="cosine", **kw
+            ),
+            "property": lambda e1, e2, **kw: calculate_similarity(
+                e1, e2, method="property", **kw
+            ),
+            "relationship": lambda e1, e2, **kw: calculate_similarity(
+                e1, e2, method="relationship", **kw
+            ),
+            "embedding": lambda e1, e2, **kw: calculate_similarity(
+                e1, e2, method="embedding", **kw
+            ),
+            "multi_factor": lambda e1, e2, **kw: calculate_similarity(
+                e1, e2, method="multi_factor", **kw
+            ),
         },
         "detection": {
-            "pairwise": lambda entities, **kw: detect_duplicates(entities, method="pairwise", **kw),
-            "batch": lambda entities, **kw: detect_duplicates(entities, method="batch", **kw),
-            "incremental": lambda entities, **kw: detect_duplicates(entities, method="incremental", **kw),
-            "group": lambda entities, **kw: detect_duplicates(entities, method="group", **kw),
+            "pairwise": lambda entities, **kw: detect_duplicates(
+                entities, method="pairwise", **kw
+            ),
+            "batch": lambda entities, **kw: detect_duplicates(
+                entities, method="batch", **kw
+            ),
+            "incremental": lambda entities, **kw: detect_duplicates(
+                entities, method="incremental", **kw
+            ),
+            "group": lambda entities, **kw: detect_duplicates(
+                entities, method="group", **kw
+            ),
         },
         "merging": {
-            "keep_first": lambda entities, **kw: merge_entities(entities, method="keep_first", **kw),
-            "keep_last": lambda entities, **kw: merge_entities(entities, method="keep_last", **kw),
-            "keep_most_complete": lambda entities, **kw: merge_entities(entities, method="keep_most_complete", **kw),
-            "keep_highest_confidence": lambda entities, **kw: merge_entities(entities, method="keep_highest_confidence", **kw),
-            "merge_all": lambda entities, **kw: merge_entities(entities, method="merge_all", **kw),
+            "keep_first": lambda entities, **kw: merge_entities(
+                entities, method="keep_first", **kw
+            ),
+            "keep_last": lambda entities, **kw: merge_entities(
+                entities, method="keep_last", **kw
+            ),
+            "keep_most_complete": lambda entities, **kw: merge_entities(
+                entities, method="keep_most_complete", **kw
+            ),
+            "keep_highest_confidence": lambda entities, **kw: merge_entities(
+                entities, method="keep_highest_confidence", **kw
+            ),
+            "merge_all": lambda entities, **kw: merge_entities(
+                entities, method="merge_all", **kw
+            ),
         },
         "clustering": {
-            "graph_based": lambda entities, **kw: build_clusters(entities, method="graph_based", **kw),
-            "hierarchical": lambda entities, **kw: build_clusters(entities, method="hierarchical", **kw),
+            "graph_based": lambda entities, **kw: build_clusters(
+                entities, method="graph_based", **kw
+            ),
+            "hierarchical": lambda entities, **kw: build_clusters(
+                entities, method="hierarchical", **kw
+            ),
         },
     }
-    
+
     if task in builtin_methods and name in builtin_methods[task]:
         return builtin_methods[task][name]
-    
+
     return None
 
 
 def list_available_methods(task: Optional[str] = None) -> Dict[str, List[str]]:
     """
     List all available deduplication methods.
-    
+
     Args:
         task: Optional task type to filter by
-        
+
     Returns:
         Dictionary mapping task types to method names
-        
+
     Examples:
         >>> from semantica.deduplication.methods import list_available_methods
         >>> all_methods = list_available_methods()
@@ -440,24 +487,41 @@ def list_available_methods(task: Optional[str] = None) -> Dict[str, List[str]]:
     """
     # Get registered methods
     registered = method_registry.list_all(task=task)
-    
+
     # Add built-in methods
     builtin_methods = {
-        "similarity": ["exact", "levenshtein", "jaro_winkler", "cosine", "property", "relationship", "embedding", "multi_factor"],
+        "similarity": [
+            "exact",
+            "levenshtein",
+            "jaro_winkler",
+            "cosine",
+            "property",
+            "relationship",
+            "embedding",
+            "multi_factor",
+        ],
         "detection": ["pairwise", "batch", "incremental", "group"],
-        "merging": ["keep_first", "keep_last", "keep_most_complete", "keep_highest_confidence", "merge_all"],
+        "merging": [
+            "keep_first",
+            "keep_last",
+            "keep_most_complete",
+            "keep_highest_confidence",
+            "merge_all",
+        ],
         "clustering": ["graph_based", "hierarchical"],
     }
-    
+
     if task:
         # Merge for specific task
-        result = {task: list(set(registered.get(task, []) + builtin_methods.get(task, [])))}
+        result = {
+            task: list(set(registered.get(task, []) + builtin_methods.get(task, [])))
+        }
     else:
         # Merge for all tasks
         result = {}
         for t in set(list(registered.keys()) + list(builtin_methods.keys())):
             result[t] = list(set(registered.get(t, []) + builtin_methods.get(t, [])))
-    
+
     return result
 
 
@@ -465,17 +529,20 @@ def list_available_methods(task: Optional[str] = None) -> Dict[str, List[str]]:
 def _multi_factor_similarity(e1, e2, **kw):
     return calculate_similarity(e1, e2, method="multi_factor", **kw)
 
+
 def _pairwise_detection(entities, **kw):
     return detect_duplicates(entities, method="pairwise", **kw)
+
 
 def _keep_most_complete_merging(entities, **kw):
     return merge_entities(entities, method="keep_most_complete", **kw)
 
+
 def _graph_based_clustering(entities, **kw):
     return build_clusters(entities, method="graph_based", **kw)
+
 
 method_registry.register("similarity", "multi_factor", _multi_factor_similarity)
 method_registry.register("detection", "pairwise", _pairwise_detection)
 method_registry.register("merging", "keep_most_complete", _keep_most_complete_merging)
 method_registry.register("clustering", "graph_based", _graph_based_clustering)
-

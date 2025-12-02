@@ -30,27 +30,27 @@ Author: Semantica Contributors
 License: MIT
 """
 
-from typing import Any, Dict, List, Optional, Union
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
-import plotly.graph_objects as go
 import plotly.express as px
+import plotly.graph_objects as go
 
-from ..utils.logging import get_logger
 from ..utils.exceptions import ProcessingError
+from ..utils.logging import get_logger
 from ..utils.progress_tracker import get_progress_tracker
-from .utils.layout_algorithms import ForceDirectedLayout
 from .utils.color_schemes import ColorPalette, ColorScheme
 from .utils.export_formats import export_plotly_figure
+from .utils.layout_algorithms import ForceDirectedLayout
 
 
 class SemanticNetworkVisualizer:
     """
     Semantic network visualizer.
-    
+
     Provides visualization methods for semantic networks.
     """
-    
+
     def __init__(self, **config):
         """Initialize semantic network visualizer."""
         self.logger = get_logger("semantic_network_visualizer")
@@ -61,249 +61,298 @@ class SemanticNetworkVisualizer:
             self.color_scheme = ColorScheme[color_scheme_name.upper()]
         except (KeyError, AttributeError):
             self.color_scheme = ColorScheme.DEFAULT
-    
+
     def visualize_network(
         self,
         semantic_network: Any,
         output: str = "interactive",
         file_path: Optional[Union[str, Path]] = None,
-        **options
+        **options,
     ) -> Optional[Any]:
         """
         Visualize semantic network.
-        
+
         Supports multiple input formats:
         - SemanticNetwork dataclass object
         - Dictionary with 'nodes' and 'edges' keys
         - Semantic model from ontology generator
         - Entities and relationships lists
-        
+
         Args:
             semantic_network: SemanticNetwork object, dict, or semantic model
             output: Output type
             file_path: Output file path
             **options: Additional options
-            
+
         Returns:
             Visualization figure or None
         """
         tracking_id = self.progress_tracker.start_tracking(
             module="visualization",
             submodule="SemanticNetworkVisualizer",
-            message="Visualizing semantic network"
+            message="Visualizing semantic network",
         )
-        
+
         try:
             self.logger.info("Visualizing semantic network")
-            
+
             # Extract nodes and edges from semantic network
-            self.progress_tracker.update_tracking(tracking_id, message="Extracting nodes and edges...")
+            self.progress_tracker.update_tracking(
+                tracking_id, message="Extracting nodes and edges..."
+            )
             nodes = []
             edges = []
-            
+
             # Handle SemanticNetwork dataclass
-            if hasattr(semantic_network, "nodes") and hasattr(semantic_network, "edges"):
+            if hasattr(semantic_network, "nodes") and hasattr(
+                semantic_network, "edges"
+            ):
                 for node in semantic_network.nodes:
-                    nodes.append({
-                        "id": getattr(node, "id", ""),
-                        "label": getattr(node, "label", ""),
-                        "type": getattr(node, "type", "entity"),
-                        "metadata": getattr(node, "metadata", {}) or {},
-                        "properties": getattr(node, "properties", {}) or {}
-                    })
-                
-                for edge in semantic_network.edges:
-                    edges.append({
-                        "source": getattr(edge, "source", ""),
-                        "target": getattr(edge, "target", ""),
-                        "label": getattr(edge, "label", ""),
-                        "type": getattr(edge, "label", ""),
-                        "metadata": getattr(edge, "metadata", {}) or {},
-                        "properties": getattr(edge, "properties", {}) or {}
-                    })
-            
-            # Handle dictionary format
-            elif isinstance(semantic_network, dict):
-                # Check if it's a semantic model from ontology generator
-                if "semantic_network" in semantic_network:
-                    semantic_network = semantic_network["semantic_network"]
-                
-                # Extract nodes
-                network_nodes = semantic_network.get("nodes", [])
-                for node in network_nodes:
-                    if isinstance(node, dict):
-                        nodes.append({
-                            "id": node.get("id", node.get("uri", "")),
-                            "label": node.get("label", node.get("name", "")),
-                            "type": node.get("type", node.get("class", "entity")),
-                            "metadata": node.get("metadata", {}),
-                            "properties": node.get("properties", {})
-                        })
-                    elif hasattr(node, "id"):
-                        nodes.append({
+                    nodes.append(
+                        {
                             "id": getattr(node, "id", ""),
                             "label": getattr(node, "label", ""),
                             "type": getattr(node, "type", "entity"),
                             "metadata": getattr(node, "metadata", {}) or {},
-                            "properties": getattr(node, "properties", {}) or {}
-                        })
-                
-                # Extract edges
-                network_edges = semantic_network.get("edges", semantic_network.get("relationships", []))
-                for edge in network_edges:
-                    if isinstance(edge, dict):
-                        edges.append({
-                            "source": edge.get("source", edge.get("subject", "")),
-                            "target": edge.get("target", edge.get("object", "")),
-                            "label": edge.get("label", edge.get("predicate", edge.get("type", ""))),
-                            "type": edge.get("type", edge.get("predicate", "")),
-                            "metadata": edge.get("metadata", {}),
-                            "properties": edge.get("properties", {})
-                        })
-                    elif hasattr(edge, "source"):
-                        edges.append({
+                            "properties": getattr(node, "properties", {}) or {},
+                        }
+                    )
+
+                for edge in semantic_network.edges:
+                    edges.append(
+                        {
                             "source": getattr(edge, "source", ""),
                             "target": getattr(edge, "target", ""),
                             "label": getattr(edge, "label", ""),
                             "type": getattr(edge, "label", ""),
                             "metadata": getattr(edge, "metadata", {}) or {},
-                            "properties": getattr(edge, "properties", {}) or {}
-                        })
-            
+                            "properties": getattr(edge, "properties", {}) or {},
+                        }
+                    )
+
+            # Handle dictionary format
+            elif isinstance(semantic_network, dict):
+                # Check if it's a semantic model from ontology generator
+                if "semantic_network" in semantic_network:
+                    semantic_network = semantic_network["semantic_network"]
+
+                # Extract nodes
+                network_nodes = semantic_network.get("nodes", [])
+                for node in network_nodes:
+                    if isinstance(node, dict):
+                        nodes.append(
+                            {
+                                "id": node.get("id", node.get("uri", "")),
+                                "label": node.get("label", node.get("name", "")),
+                                "type": node.get("type", node.get("class", "entity")),
+                                "metadata": node.get("metadata", {}),
+                                "properties": node.get("properties", {}),
+                            }
+                        )
+                    elif hasattr(node, "id"):
+                        nodes.append(
+                            {
+                                "id": getattr(node, "id", ""),
+                                "label": getattr(node, "label", ""),
+                                "type": getattr(node, "type", "entity"),
+                                "metadata": getattr(node, "metadata", {}) or {},
+                                "properties": getattr(node, "properties", {}) or {},
+                            }
+                        )
+
+                # Extract edges
+                network_edges = semantic_network.get(
+                    "edges", semantic_network.get("relationships", [])
+                )
+                for edge in network_edges:
+                    if isinstance(edge, dict):
+                        edges.append(
+                            {
+                                "source": edge.get("source", edge.get("subject", "")),
+                                "target": edge.get("target", edge.get("object", "")),
+                                "label": edge.get(
+                                    "label", edge.get("predicate", edge.get("type", ""))
+                                ),
+                                "type": edge.get("type", edge.get("predicate", "")),
+                                "metadata": edge.get("metadata", {}),
+                                "properties": edge.get("properties", {}),
+                            }
+                        )
+                    elif hasattr(edge, "source"):
+                        edges.append(
+                            {
+                                "source": getattr(edge, "source", ""),
+                                "target": getattr(edge, "target", ""),
+                                "label": getattr(edge, "label", ""),
+                                "type": getattr(edge, "label", ""),
+                                "metadata": getattr(edge, "metadata", {}) or {},
+                                "properties": getattr(edge, "properties", {}) or {},
+                            }
+                        )
+
             # Handle entities/relationships format (for semantic models)
             elif isinstance(semantic_network, (list, tuple)):
                 # Assume it's a list of entities/relationships
                 for item in semantic_network:
                     if isinstance(item, dict):
                         if "source" in item or "subject" in item:
-                            edges.append({
-                                "source": item.get("source", item.get("subject", "")),
-                                "target": item.get("target", item.get("object", "")),
-                                "label": item.get("label", item.get("predicate", item.get("type", ""))),
-                                "type": item.get("type", ""),
-                                "metadata": item.get("metadata", {})
-                            })
+                            edges.append(
+                                {
+                                    "source": item.get(
+                                        "source", item.get("subject", "")
+                                    ),
+                                    "target": item.get(
+                                        "target", item.get("object", "")
+                                    ),
+                                    "label": item.get(
+                                        "label",
+                                        item.get("predicate", item.get("type", "")),
+                                    ),
+                                    "type": item.get("type", ""),
+                                    "metadata": item.get("metadata", {}),
+                                }
+                            )
                         else:
-                            nodes.append({
-                                "id": item.get("id", item.get("uri", "")),
-                                "label": item.get("label", item.get("name", "")),
-                                "type": item.get("type", "entity"),
-                                "metadata": item.get("metadata", {})
-                            })
-            
+                            nodes.append(
+                                {
+                                    "id": item.get("id", item.get("uri", "")),
+                                    "label": item.get("label", item.get("name", "")),
+                                    "type": item.get("type", "entity"),
+                                    "metadata": item.get("metadata", {}),
+                                }
+                            )
+
             if not nodes and not edges:
-                self.progress_tracker.stop_tracking(tracking_id, status="failed",
-                                                  message="Could not extract nodes and edges from semantic network")
+                self.progress_tracker.stop_tracking(
+                    tracking_id,
+                    status="failed",
+                    message="Could not extract nodes and edges from semantic network",
+                )
                 raise ProcessingError(
                     "Could not extract nodes and edges from semantic network. "
                     "Please provide a SemanticNetwork object, dict with 'nodes'/'edges', or semantic model."
                 )
-            
+
             # Use KG visualizer for network visualization
-            self.progress_tracker.update_tracking(tracking_id, message="Generating visualization...")
+            self.progress_tracker.update_tracking(
+                tracking_id, message="Generating visualization..."
+            )
             from .kg_visualizer import KGVisualizer
+
             graph = {"entities": nodes, "relationships": edges}
             kg_viz = KGVisualizer(**self.config)
             result = kg_viz.visualize_network(graph, output, file_path, **options)
-            
-            self.progress_tracker.stop_tracking(tracking_id, status="completed",
-                                              message=f"Visualization generated: {len(nodes)} nodes, {len(edges)} edges")
+
+            self.progress_tracker.stop_tracking(
+                tracking_id,
+                status="completed",
+                message=f"Visualization generated: {len(nodes)} nodes, {len(edges)} edges",
+            )
             return result
         except Exception as e:
-            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
+            )
             raise
-    
+
     def visualize_node_types(
         self,
         semantic_network: Any,
         output: str = "interactive",
         file_path: Optional[Union[str, Path]] = None,
-        **options
+        **options,
     ) -> Optional[Any]:
         """
         Visualize node type distribution.
-        
+
         Args:
             semantic_network: SemanticNetwork object
             output: Output type
             file_path: Output file path
             **options: Additional options
-            
+
         Returns:
             Visualization figure or None
         """
         self.logger.info("Visualizing semantic network node types")
-        
+
         # Extract nodes
         nodes = []
         if hasattr(semantic_network, "nodes"):
             nodes = semantic_network.nodes
         elif isinstance(semantic_network, dict):
             nodes = semantic_network.get("nodes", [])
-        
+
         # Count node types
         type_counts = {}
         for node in nodes:
-            node_type = node.type if hasattr(node, "type") else node.get("type", "Unknown")
+            node_type = (
+                node.type if hasattr(node, "type") else node.get("type", "Unknown")
+            )
             type_counts[node_type] = type_counts.get(node_type, 0) + 1
-        
+
         fig = px.bar(
             x=list(type_counts.keys()),
             y=list(type_counts.values()),
             labels={"x": "Node Type", "y": "Count"},
-            title="Semantic Network Node Type Distribution"
+            title="Semantic Network Node Type Distribution",
         )
-        
+
         if output == "interactive":
             return fig
         elif file_path:
-            export_plotly_figure(fig, file_path, format=output if output != "interactive" else "html")
+            export_plotly_figure(
+                fig, file_path, format=output if output != "interactive" else "html"
+            )
             return None
-    
+
     def visualize_edge_types(
         self,
         semantic_network: Any,
         output: str = "interactive",
         file_path: Optional[Union[str, Path]] = None,
-        **options
+        **options,
     ) -> Optional[Any]:
         """
         Visualize edge type distribution.
-        
+
         Args:
             semantic_network: SemanticNetwork object
             output: Output type
             file_path: Output file path
             **options: Additional options
-            
+
         Returns:
             Visualization figure or None
         """
         self.logger.info("Visualizing semantic network edge types")
-        
+
         # Extract edges
         edges = []
         if hasattr(semantic_network, "edges"):
             edges = semantic_network.edges
         elif isinstance(semantic_network, dict):
             edges = semantic_network.get("edges", [])
-        
+
         # Count edge types
         type_counts = {}
         for edge in edges:
-            edge_type = edge.label if hasattr(edge, "label") else edge.get("label", "Unknown")
+            edge_type = (
+                edge.label if hasattr(edge, "label") else edge.get("label", "Unknown")
+            )
             type_counts[edge_type] = type_counts.get(edge_type, 0) + 1
-        
+
         fig = px.bar(
             x=list(type_counts.keys()),
             y=list(type_counts.values()),
             labels={"x": "Edge Type", "y": "Count"},
-            title="Semantic Network Edge Type Distribution"
+            title="Semantic Network Edge Type Distribution",
         )
-        
+
         if output == "interactive":
             return fig
         elif file_path:
-            export_plotly_figure(fig, file_path, format=output if output != "interactive" else "html")
+            export_plotly_figure(
+                fig, file_path, format=output if output != "interactive" else "html"
+            )
             return None
-

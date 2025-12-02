@@ -43,12 +43,12 @@ Example Usage:
     >>> available = method_registry.list_all("json")
 """
 
-from typing import Dict, Callable, Any, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 
 class MethodRegistry:
     """Registry for custom export methods."""
-    
+
     _methods: Dict[str, Dict[str, Callable]] = {
         "rdf": {},
         "json": {},
@@ -61,12 +61,12 @@ class MethodRegistry:
         "report": {},
         "export": {},
     }
-    
+
     @classmethod
     def register(cls, task: str, name: str, method_func: Callable):
         """
         Register a custom export method.
-        
+
         Args:
             task: Task type ("rdf", "json", "csv", "graph", "yaml", "owl", "vector", "lpg", "report", "export")
             name: Method name
@@ -75,53 +75,53 @@ class MethodRegistry:
         if task not in cls._methods:
             cls._methods[task] = {}
         cls._methods[task][name] = method_func
-    
+
     @classmethod
     def get(cls, task: str, name: str) -> Optional[Callable]:
         """
         Get method by task and name.
-        
+
         Args:
             task: Task type ("rdf", "json", "csv", "graph", "yaml", "owl", "vector", "lpg", "report", "export")
             name: Method name
-            
+
         Returns:
             Method function or None
         """
         return cls._methods.get(task, {}).get(name)
-    
+
     @classmethod
     def list_all(cls, task: Optional[str] = None) -> Dict[str, List[str]]:
         """
         List all registered methods.
-        
+
         Args:
             task: Optional task type to filter by
-            
+
         Returns:
             Dictionary mapping task types to method names
         """
         if task:
             return {task: list(cls._methods.get(task, {}).keys())}
         return {t: list(m.keys()) for t, m in cls._methods.items()}
-    
+
     @classmethod
     def unregister(cls, task: str, name: str):
         """
         Unregister a method.
-        
+
         Args:
             task: Task type ("rdf", "json", "csv", "graph", "yaml", "owl", "vector", "lpg", "report", "export")
             name: Method name
         """
         if task in cls._methods and name in cls._methods[task]:
             del cls._methods[task][name]
-    
+
     @classmethod
     def clear(cls, task: Optional[str] = None):
         """
         Clear all registered methods for a task or all tasks.
-        
+
         Args:
             task: Optional task type to clear (clears all if None)
         """
@@ -135,4 +135,3 @@ class MethodRegistry:
 
 # Global registry
 method_registry = MethodRegistry()
-

@@ -67,14 +67,14 @@ from ..utils.exceptions import ProcessingError
 from ..utils.logging import get_logger
 from ..utils.progress_tracker import get_progress_tracker
 from .ner_extractor import Entity
-from .relation_extractor import Relation
 from .providers import create_provider
+from .relation_extractor import Relation
 
 
 @dataclass
 class LLMResponse:
     """LLM response representation."""
-    
+
     content: str
     model: str
     usage: Dict[str, Any]
@@ -83,11 +83,11 @@ class LLMResponse:
 
 class LLMEnhancer:
     """LLM-based extraction enhancer."""
-    
+
     def __init__(self, provider: str = "openai", **config):
         """
         Initialize LLM enhancer.
-        
+
         Args:
             provider: LLM provider ("openai", "gemini", "groq", "anthropic", "ollama", "huggingface_llm")
             **config: Configuration options:
@@ -98,89 +98,116 @@ class LLMEnhancer:
         self.logger = get_logger("llm_enhancer")
         self.config = config
         self.progress_tracker = get_progress_tracker()
-        
+
         self.provider_name = provider
         self.model = config.get("model")
         self.temperature = config.get("temperature", 0.3)
-        
+
         # Initialize provider using new system
         try:
             self.provider = create_provider(provider, **config)
         except Exception as e:
             self.logger.warning(f"Failed to initialize {provider} provider: {e}")
             self.provider = None
-    
-    def enhance_entities(self, text: str, entities: List[Entity], **options) -> List[Entity]:
+
+    def enhance_entities(
+        self, text: str, entities: List[Entity], **options
+    ) -> List[Entity]:
         """
         Enhance entity extraction using LLM.
-        
+
         Args:
             text: Input text
             entities: Pre-extracted entities
             **options: Enhancement options
-            
+
         Returns:
             list: Enhanced entities
         """
         tracking_id = self.progress_tracker.start_tracking(
             module="semantic_extract",
             submodule="LLMEnhancer",
-            message="Enhancing entities using LLM"
+            message="Enhancing entities using LLM",
         )
-        
+
         try:
             if not self.provider or not self.provider.is_available():
-                self.logger.warning("LLM provider not available. Returning original entities.")
-                self.progress_tracker.stop_tracking(tracking_id, status="completed", message="LLM provider not available")
+                self.logger.warning(
+                    "LLM provider not available. Returning original entities."
+                )
+                self.progress_tracker.stop_tracking(
+                    tracking_id,
+                    status="completed",
+                    message="LLM provider not available",
+                )
                 return entities
-            
-            self.progress_tracker.update_tracking(tracking_id, message="Building prompt...")
+
+            self.progress_tracker.update_tracking(
+                tracking_id, message="Building prompt..."
+            )
             prompt = self._build_entity_prompt(text, entities)
-            
-            self.progress_tracker.update_tracking(tracking_id, message="Calling LLM API...")
-            response = self.provider.generate(prompt, temperature=options.get("temperature", self.temperature))
-            
-            self.progress_tracker.update_tracking(tracking_id, message="Parsing LLM response...")
+
+            self.progress_tracker.update_tracking(
+                tracking_id, message="Calling LLM API..."
+            )
+            response = self.provider.generate(
+                prompt, temperature=options.get("temperature", self.temperature)
+            )
+
+            self.progress_tracker.update_tracking(
+                tracking_id, message="Parsing LLM response..."
+            )
             enhanced_entities = self._parse_entity_response(response, entities)
-            
-            self.progress_tracker.stop_tracking(tracking_id, status="completed",
-                                              message=f"Enhanced {len(enhanced_entities)} entities")
+
+            self.progress_tracker.stop_tracking(
+                tracking_id,
+                status="completed",
+                message=f"Enhanced {len(enhanced_entities)} entities",
+            )
             return enhanced_entities
         except Exception as e:
             self.logger.error(f"Failed to enhance entities with LLM: {e}")
-            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
+            )
             return entities
-    
-    def enhance_relations(self, text: str, relations: List[Relation], **options) -> List[Relation]:
+
+    def enhance_relations(
+        self, text: str, relations: List[Relation], **options
+    ) -> List[Relation]:
         """
         Enhance relation extraction using LLM.
-        
+
         Args:
             text: Input text
             relations: Pre-extracted relations
             **options: Enhancement options
-            
+
         Returns:
             list: Enhanced relations
         """
         if not self.provider or not self.provider.is_available():
-            self.logger.warning("LLM provider not available. Returning original relations.")
+            self.logger.warning(
+                "LLM provider not available. Returning original relations."
+            )
             return relations
-        
+
         prompt = self._build_relation_prompt(text, relations)
-        
+
         try:
-            response = self.provider.generate(prompt, temperature=options.get("temperature", self.temperature))
+            response = self.provider.generate(
+                prompt, temperature=options.get("temperature", self.temperature)
+            )
             enhanced_relations = self._parse_relation_response(response, relations)
             return enhanced_relations
         except Exception as e:
             self.logger.error(f"Failed to enhance relations with LLM: {e}")
             return relations
-    
+
     def _build_entity_prompt(self, text: str, entities: List[Entity]) -> str:
         """Build prompt for entity enhancement."""
         entities_str = "\n".join([f"- {e.text} ({e.label})" for e in entities])
-        
+
         return f"""Analyze the following text and enhance the entity extraction:
 
 Text:
@@ -196,14 +223,16 @@ Please:
 4. Provide confidence scores
 
 Return the enhanced entity list in JSON format."""
-    
+
     def _build_relation_prompt(self, text: str, relations: List[Relation]) -> str:
         """Build prompt for relation enhancement."""
-        relations_str = "\n".join([
-            f"- {r.subject.text} --[{r.predicate}]--> {r.object.text}"
-            for r in relations
-        ])
-        
+        relations_str = "\n".join(
+            [
+                f"- {r.subject.text} --[{r.predicate}]--> {r.object.text}"
+                for r in relations
+            ]
+        )
+
         return f"""Analyze the following text and enhance the relation extraction:
 
 Text:
@@ -219,14 +248,18 @@ Please:
 4. Provide confidence scores
 
 Return the enhanced relation list in JSON format."""
-    
-    def _parse_entity_response(self, response: str, original_entities: List[Entity]) -> List[Entity]:
+
+    def _parse_entity_response(
+        self, response: str, original_entities: List[Entity]
+    ) -> List[Entity]:
         """Parse LLM response for entities."""
         # Simplified parsing - in practice would parse JSON
         # For now, return original entities
         return original_entities
-    
-    def _parse_relation_response(self, response: str, original_relations: List[Relation]) -> List[Relation]:
+
+    def _parse_relation_response(
+        self, response: str, original_relations: List[Relation]
+    ) -> List[Relation]:
         """Parse LLM response for relations."""
         # Simplified parsing - in practice would parse JSON
         # For now, return original relations

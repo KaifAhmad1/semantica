@@ -107,30 +107,35 @@ License: MIT
 
 from typing import Any, Dict, List, Optional, Union
 
-from .kg_quality_assessor import (
-    KGQualityAssessor,
-    ConsistencyChecker,
-    CompletenessValidator,
-)
-from .quality_metrics import QualityMetrics, CompletenessMetrics, ConsistencyMetrics
-from .validation_engine import ValidationEngine, RuleValidator, ConstraintValidator
-from .reporting import QualityReporter, IssueTracker, ImprovementSuggestions, QualityReport
 from .automated_fixes import AutomatedFixer, AutoMerger, AutoResolver, FixResult
-from .registry import MethodRegistry, method_registry
+from .config import KGQAConfig, kg_qa_config
+from .kg_quality_assessor import (
+    CompletenessValidator,
+    ConsistencyChecker,
+    KGQualityAssessor,
+)
 from .methods import (
     assess_quality,
-    generate_quality_report,
-    identify_quality_issues,
-    check_consistency,
-    validate_completeness,
     calculate_quality_metrics,
-    validate_graph,
+    check_consistency,
     export_report,
     fix_issues,
+    generate_quality_report,
     get_qa_method,
+    identify_quality_issues,
     list_available_methods,
+    validate_completeness,
+    validate_graph,
 )
-from .config import KGQAConfig, kg_qa_config
+from .quality_metrics import CompletenessMetrics, ConsistencyMetrics, QualityMetrics
+from .registry import MethodRegistry, method_registry
+from .reporting import (
+    ImprovementSuggestions,
+    IssueTracker,
+    QualityReport,
+    QualityReporter,
+)
+from .validation_engine import ConstraintValidator, RuleValidator, ValidationEngine
 
 __all__ = [
     # Main classes
@@ -173,4 +178,3 @@ __all__ = [
     "KGQAConfig",
     "kg_qa_config",
 ]
-

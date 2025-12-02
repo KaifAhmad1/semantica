@@ -93,15 +93,15 @@ Author: Semantica Contributors
 License: MIT
 """
 
-from typing import Any, Dict, List, Optional, Callable, Union
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Union
 
+from ..utils.exceptions import ConfigurationError, ProcessingError
 from ..utils.logging import get_logger
-from ..utils.exceptions import ProcessingError, ConfigurationError
-from .context_graph import ContextGraphBuilder, ContextNode, ContextEdge
 from .agent_memory import AgentMemory, MemoryItem
+from .context_graph import ContextEdge, ContextGraphBuilder, ContextNode
 from .context_retriever import ContextRetriever, RetrievedContext
-from .entity_linker import EntityLinker, EntityLink, LinkedEntity
+from .entity_linker import EntityLink, EntityLinker, LinkedEntity
 from .registry import method_registry
 
 logger = get_logger("context_methods")
@@ -112,13 +112,13 @@ def build_context_graph(
     relationships: Optional[List[Dict[str, Any]]] = None,
     conversations: Optional[List[Union[str, Dict[str, Any]]]] = None,
     method: str = "entities_relationships",
-    **kwargs
+    **kwargs,
 ) -> Dict[str, Any]:
     """
     Build context graph from various sources (convenience function).
-    
+
     This is a user-friendly wrapper that builds context graphs using the specified method.
-    
+
     Args:
         entities: List of entity dictionaries
         relationships: List of relationship dictionaries
@@ -128,13 +128,13 @@ def build_context_graph(
             - "conversations": Build from conversations
             - "hybrid": Hybrid construction combining multiple sources
         **kwargs: Additional options passed to ContextGraphBuilder
-        
+
     Returns:
         Context graph dictionary containing:
             - nodes: List of context nodes
             - edges: List of context edges
             - statistics: Graph statistics
-            
+
     Examples:
         >>> from semantica.context.methods import build_context_graph
         >>> entities = [{"id": "e1", "text": "Python", "type": "PROGRAMMING_LANGUAGE"}]
@@ -148,25 +148,33 @@ def build_context_graph(
         try:
             return custom_method(entities, relationships, conversations, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         builder = ContextGraphBuilder(**kwargs)
-        
+
         if method == "entities_relationships":
             if not entities or not relationships:
-                raise ProcessingError("entities and relationships required for entities_relationships method")
-            return builder.build_from_entities_and_relationships(entities, relationships, **kwargs)
-        
+                raise ProcessingError(
+                    "entities and relationships required for entities_relationships method"
+                )
+            return builder.build_from_entities_and_relationships(
+                entities, relationships, **kwargs
+            )
+
         elif method == "conversations":
             if not conversations:
                 raise ProcessingError("conversations required for conversations method")
             return builder.build_from_conversations(conversations, **kwargs)
-        
+
         elif method == "hybrid":
             graph = {}
             if entities and relationships:
-                graph1 = builder.build_from_entities_and_relationships(entities, relationships, **kwargs)
+                graph1 = builder.build_from_entities_and_relationships(
+                    entities, relationships, **kwargs
+                )
                 graph = graph1
             if conversations:
                 graph2 = builder.build_from_conversations(conversations, **kwargs)
@@ -177,10 +185,10 @@ def build_context_graph(
                 else:
                     graph = graph2
             return graph
-        
+
         else:
             raise ProcessingError(f"Unknown graph construction method: {method}")
-            
+
     except Exception as e:
         logger.error(f"Failed to build context graph: {e}")
         raise
@@ -191,13 +199,13 @@ def store_memory(
     vector_store: Optional[Any] = None,
     knowledge_graph: Optional[Any] = None,
     method: str = "store",
-    **kwargs
+    **kwargs,
 ) -> str:
     """
     Store memory item (convenience function).
-    
+
     This is a user-friendly wrapper that stores memory using the specified method.
-    
+
     Args:
         content: Memory content
         vector_store: Vector store instance
@@ -206,10 +214,10 @@ def store_memory(
             - "store": Standard memory storage with RAG
             - "conversation": Conversation memory storage
         **kwargs: Additional options passed to AgentMemory
-        
+
     Returns:
         Memory ID
-        
+
     Examples:
         >>> from semantica.context.methods import store_memory
         >>> memory_id = store_memory("User asked about Python", vector_store=vs, method="store")
@@ -221,27 +229,31 @@ def store_memory(
         try:
             return custom_method(content, vector_store, knowledge_graph, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         memory = AgentMemory(
-            vector_store=vector_store,
-            knowledge_graph=knowledge_graph,
-            **kwargs
+            vector_store=vector_store, knowledge_graph=knowledge_graph, **kwargs
         )
-        
+
         metadata = kwargs.get("metadata", {})
         if method == "conversation":
             metadata["type"] = "conversation"
-        
+
         return memory.store(
             content,
             metadata=metadata,
             entities=kwargs.get("entities"),
             relationships=kwargs.get("relationships"),
-            **{k: v for k, v in kwargs.items() if k not in ["metadata", "entities", "relationships"]}
+            **{
+                k: v
+                for k, v in kwargs.items()
+                if k not in ["metadata", "entities", "relationships"]
+            },
         )
-        
+
     except Exception as e:
         logger.error(f"Failed to store memory: {e}")
         raise
@@ -254,13 +266,13 @@ def retrieve_context(
     vector_store: Optional[Any] = None,
     method: str = "hybrid",
     max_results: int = 5,
-    **kwargs
+    **kwargs,
 ) -> List[RetrievedContext]:
     """
     Retrieve relevant context (convenience function).
-    
+
     This is a user-friendly wrapper that retrieves context using the specified method.
-    
+
     Args:
         query: Search query
         memory_store: Memory store instance
@@ -273,10 +285,10 @@ def retrieve_context(
             - "hybrid": Hybrid retrieval combining all sources
         max_results: Maximum number of results
         **kwargs: Additional options passed to ContextRetriever
-        
+
     Returns:
         List of RetrievedContext objects
-        
+
     Examples:
         >>> from semantica.context.methods import retrieve_context
         >>> results = retrieve_context("Python programming", vector_store=vs, method="hybrid")
@@ -287,18 +299,27 @@ def retrieve_context(
     custom_method = method_registry.get("retrieval", method)
     if custom_method:
         try:
-            return custom_method(query, memory_store, knowledge_graph, vector_store, max_results, **kwargs)
+            return custom_method(
+                query,
+                memory_store,
+                knowledge_graph,
+                vector_store,
+                max_results,
+                **kwargs,
+            )
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         retriever = ContextRetriever(
             memory_store=memory_store,
             knowledge_graph=knowledge_graph,
             vector_store=vector_store,
-            **kwargs
+            **kwargs,
         )
-        
+
         if method == "vector":
             retriever.use_graph_expansion = False
             retriever.memory_store = None
@@ -308,9 +329,9 @@ def retrieve_context(
         elif method == "memory":
             retriever.vector_store = None
             retriever.use_graph_expansion = False
-        
+
         return retriever.retrieve(query, max_results=max_results, **kwargs)
-        
+
     except Exception as e:
         logger.error(f"Failed to retrieve context: {e}")
         raise
@@ -320,13 +341,13 @@ def link_entities(
     entities: List[Dict[str, Any]],
     knowledge_graph: Optional[Any] = None,
     method: str = "similarity",
-    **kwargs
+    **kwargs,
 ) -> List[LinkedEntity]:
     """
     Link entities across sources (convenience function).
-    
+
     This is a user-friendly wrapper that links entities using the specified method.
-    
+
     Args:
         entities: List of entity dictionaries
         knowledge_graph: Knowledge graph instance
@@ -336,10 +357,10 @@ def link_entities(
             - "knowledge_graph": Knowledge graph-based linking
             - "cross_document": Cross-document linking
         **kwargs: Additional options passed to EntityLinker
-        
+
     Returns:
         List of LinkedEntity objects
-        
+
     Examples:
         >>> from semantica.context.methods import link_entities
         >>> entities = [{"id": "e1", "text": "Python", "type": "PROGRAMMING_LANGUAGE"}]
@@ -353,41 +374,44 @@ def link_entities(
         try:
             return custom_method(entities, knowledge_graph, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
-        linker = EntityLinker(
-            knowledge_graph=knowledge_graph,
-            **kwargs
-        )
-        
+        linker = EntityLinker(knowledge_graph=knowledge_graph, **kwargs)
+
         if method == "uri":
             # Just assign URIs
             linked = []
             for entity in entities:
                 entity_id = entity.get("id") or entity.get("entity_id")
-                entity_text = entity.get("text") or entity.get("label") or entity.get("name", "")
+                entity_text = (
+                    entity.get("text") or entity.get("label") or entity.get("name", "")
+                )
                 entity_type = entity.get("type") or entity.get("entity_type")
                 uri = linker.assign_uri(entity_id, entity_text, entity_type)
-                linked.append(LinkedEntity(
-                    entity_id=entity_id,
-                    uri=uri,
-                    text=entity_text,
-                    type=entity_type or "UNKNOWN",
-                    linked_entities=[],
-                    context=entity.get("metadata", {}),
-                    confidence=entity.get("confidence", 1.0)
-                ))
+                linked.append(
+                    LinkedEntity(
+                        entity_id=entity_id,
+                        uri=uri,
+                        text=entity_text,
+                        type=entity_type or "UNKNOWN",
+                        linked_entities=[],
+                        context=entity.get("metadata", {}),
+                        confidence=entity.get("confidence", 1.0),
+                    )
+                )
             return linked
-        
+
         else:
             # Use full linking
             return linker.link(
                 text="",  # Not used for entity list
                 entities=entities,
-                context=kwargs.get("context")
+                context=kwargs.get("context"),
             )
-        
+
     except Exception as e:
         logger.error(f"Failed to link entities: {e}")
         raise
@@ -396,14 +420,14 @@ def link_entities(
 def get_context_method(task: str, name: str) -> Optional[Callable]:
     """
     Get a registered context method.
-    
+
     Args:
         task: Task type ("graph", "memory", "retrieval", "linking")
         name: Method name
-        
+
     Returns:
         Registered method or None if not found
-        
+
     Examples:
         >>> from semantica.context.methods import get_context_method
         >>> method = get_context_method("graph", "custom_method")
@@ -416,13 +440,13 @@ def get_context_method(task: str, name: str) -> Optional[Callable]:
 def list_available_methods(task: Optional[str] = None) -> Dict[str, List[str]]:
     """
     List all available context methods.
-    
+
     Args:
         task: Optional task type filter
-        
+
     Returns:
         Dictionary mapping task types to method names
-        
+
     Examples:
         >>> from semantica.context.methods import list_available_methods
         >>> all_methods = list_available_methods()
@@ -445,4 +469,3 @@ method_registry.register("linking", "uri", link_entities)
 method_registry.register("linking", "similarity", link_entities)
 method_registry.register("linking", "knowledge_graph", link_entities)
 method_registry.register("linking", "cross_document", link_entities)
-

@@ -29,11 +29,11 @@ Author: Semantica Contributors
 License: MIT
 """
 
-from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from ..utils.exceptions import ValidationError, ProcessingError
+from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
 from ..utils.progress_tracker import get_progress_tracker
 
@@ -42,10 +42,10 @@ from ..utils.progress_tracker import get_progress_tracker
 class CompetencyQuestion:
     """
     Competency question definition.
-    
+
     Represents a question that the ontology should be able to answer, serving as
     a functional requirement for ontology design.
-    
+
     Attributes:
         question: Question text in natural language
         category: Question category (e.g., "general", "organizational", "temporal")
@@ -53,7 +53,7 @@ class CompetencyQuestion:
         answerable: Whether the ontology can currently answer this question
         trace_to_elements: List of ontology element names relevant to this question
         metadata: Additional metadata dictionary
-    
+
     Example:
         ```python
         cq = CompetencyQuestion(
@@ -63,6 +63,7 @@ class CompetencyQuestion:
         )
         ```
     """
+
     question: str
     category: str = "general"
     priority: int = 1  # 1=high, 2=medium, 3=low
@@ -74,11 +75,11 @@ class CompetencyQuestion:
 class CompetencyQuestionsManager:
     """
     Competency questions manager for ontology requirements.
-    
+
     This class manages competency questions that serve as functional requirements
     for ontology design. It validates whether an ontology can answer these questions
     and traces questions to relevant ontology elements.
-    
+
     Features:
         - Define and manage competency questions
         - Validate ontology against competency questions
@@ -87,7 +88,7 @@ class CompetencyQuestionsManager:
         - Generate question-answer validation reports
         - Support natural language question formulation
         - Categorize and prioritize questions
-    
+
     Example:
         ```python
         manager = CompetencyQuestionsManager()
@@ -95,15 +96,15 @@ class CompetencyQuestionsManager:
         results = manager.validate_ontology(ontology)
         ```
     """
-    
+
     def __init__(self, config: Optional[Dict[str, Any]] = None, **kwargs):
         """
         Initialize competency questions manager.
-        
+
         Args:
             config: Configuration dictionary
             **kwargs: Additional configuration options
-        
+
         Example:
             ```python
             manager = CompetencyQuestionsManager()
@@ -112,34 +113,30 @@ class CompetencyQuestionsManager:
         self.logger = get_logger("competency_questions_manager")
         self.config = config or {}
         self.config.update(kwargs)
-        
+
         # Initialize progress tracker
         self.progress_tracker = get_progress_tracker()
-        
+
         self.questions: List[CompetencyQuestion] = []
-    
+
     def add_question(
-        self,
-        question: str,
-        category: str = "general",
-        priority: int = 1,
-        **metadata
+        self, question: str, category: str = "general", priority: int = 1, **metadata
     ) -> CompetencyQuestion:
         """
         Add a competency question.
-        
+
         Adds a new competency question to the manager. Competency questions define
         what the ontology should be able to answer.
-        
+
         Args:
             question: Question text in natural language
             category: Question category (default: "general")
             priority: Priority level (1=high, 2=medium, 3=low, default: 1)
             **metadata: Additional metadata dictionary
-        
+
         Returns:
             Created CompetencyQuestion instance
-        
+
         Example:
             ```python
             cq = manager.add_question(
@@ -150,33 +147,26 @@ class CompetencyQuestionsManager:
             ```
         """
         cq = CompetencyQuestion(
-            question=question,
-            category=category,
-            priority=priority,
-            metadata=metadata
+            question=question, category=category, priority=priority, metadata=metadata
         )
-        
+
         self.questions.append(cq)
         self.logger.info(f"Added competency question: {question[:50]}...")
-        
+
         return cq
-    
-    def validate_ontology(
-        self,
-        ontology: Dict[str, Any],
-        **options
-    ) -> Dict[str, Any]:
+
+    def validate_ontology(self, ontology: Dict[str, Any], **options) -> Dict[str, Any]:
         """
         Validate ontology against competency questions.
-        
+
         Checks whether the ontology can answer each competency question by analyzing
         the presence of relevant classes and properties. Updates the answerable
         status of each question.
-        
+
         Args:
             ontology: Ontology dictionary containing classes and properties
             **options: Additional options (currently unused)
-        
+
         Returns:
             Dictionary with validation results:
                 - total_questions: Total number of questions
@@ -184,7 +174,7 @@ class CompetencyQuestionsManager:
                 - unanswerable: Number of unanswerable questions
                 - by_category: Breakdown by category
                 - by_priority: Breakdown by priority
-        
+
         Example:
             ```python
             results = manager.validate_ontology(ontology)
@@ -194,87 +184,105 @@ class CompetencyQuestionsManager:
         tracking_id = self.progress_tracker.start_tracking(
             module="ontology",
             submodule="CompetencyQuestionsManager",
-            message=f"Validating ontology against {len(self.questions)} competency questions"
+            message=f"Validating ontology against {len(self.questions)} competency questions",
         )
-        
+
         try:
             results = {
                 "total_questions": len(self.questions),
                 "answerable": 0,
                 "unanswerable": 0,
                 "by_category": {},
-                "by_priority": {}
+                "by_priority": {},
             }
-            
-            self.progress_tracker.update_tracking(tracking_id, message="Checking if ontology can answer questions...")
+
+            self.progress_tracker.update_tracking(
+                tracking_id, message="Checking if ontology can answer questions..."
+            )
             for question in self.questions:
                 # Basic check if ontology can answer the question
                 answerable = self._can_ontology_answer(ontology, question)
                 question.answerable = answerable
-                
+
                 if answerable:
                     results["answerable"] += 1
                 else:
                     results["unanswerable"] += 1
-                
+
                 # Track by category
                 category = question.category
                 if category not in results["by_category"]:
-                    results["by_category"][category] = {"answerable": 0, "unanswerable": 0}
-                
+                    results["by_category"][category] = {
+                        "answerable": 0,
+                        "unanswerable": 0,
+                    }
+
                 if answerable:
                     results["by_category"][category]["answerable"] += 1
                 else:
                     results["by_category"][category]["unanswerable"] += 1
-            
-            self.progress_tracker.stop_tracking(tracking_id, status="completed",
-                                               message=f"Validation complete: {results['answerable']}/{results['total_questions']} answerable")
+
+            self.progress_tracker.stop_tracking(
+                tracking_id,
+                status="completed",
+                message=f"Validation complete: {results['answerable']}/{results['total_questions']} answerable",
+            )
             return results
-            
+
         except Exception as e:
-            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
+            )
             raise
-    
-    def _can_ontology_answer(self, ontology: Dict[str, Any], question: CompetencyQuestion) -> bool:
+
+    def _can_ontology_answer(
+        self, ontology: Dict[str, Any], question: CompetencyQuestion
+    ) -> bool:
         """Check if ontology can answer the question (basic heuristic)."""
         # Extract keywords from question
         question_lower = question.question.lower()
-        
+
         # Check if ontology has relevant classes
         classes = ontology.get("classes", [])
         for cls in classes:
             class_name_lower = cls.get("name", "").lower()
-            if any(word in class_name_lower for word in question_lower.split() if len(word) > 3):
+            if any(
+                word in class_name_lower
+                for word in question_lower.split()
+                if len(word) > 3
+            ):
                 return True
-        
+
         # Check if ontology has relevant properties
         properties = ontology.get("properties", [])
         for prop in properties:
             prop_name_lower = prop.get("name", "").lower()
-            if any(word in prop_name_lower for word in question_lower.split() if len(word) > 3):
+            if any(
+                word in prop_name_lower
+                for word in question_lower.split()
+                if len(word) > 3
+            ):
                 return True
-        
+
         return False
-    
+
     def trace_to_elements(
-        self,
-        question: CompetencyQuestion,
-        ontology: Dict[str, Any]
+        self, question: CompetencyQuestion, ontology: Dict[str, Any]
     ) -> List[str]:
         """
         Trace question to ontology elements.
-        
+
         Identifies which ontology elements (classes and properties) are relevant
         to answering a specific competency question. Uses keyword matching to find
         relevant elements.
-        
+
         Args:
             question: CompetencyQuestion instance to trace
             ontology: Ontology dictionary containing classes and properties
-        
+
         Returns:
             List of relevant ontology element names (classes and properties)
-        
+
         Example:
             ```python
             elements = manager.trace_to_elements(question, ontology)
@@ -284,40 +292,40 @@ class CompetencyQuestionsManager:
         elements = []
         question_lower = question.question.lower()
         keywords = [w for w in question_lower.split() if len(w) > 3]
-        
+
         # Find relevant classes
         classes = ontology.get("classes", [])
         for cls in classes:
             class_name_lower = cls.get("name", "").lower()
             if any(keyword in class_name_lower for keyword in keywords):
                 elements.append(cls["name"])
-        
+
         # Find relevant properties
         properties = ontology.get("properties", [])
         for prop in properties:
             prop_name_lower = prop.get("name", "").lower()
             if any(keyword in prop_name_lower for keyword in keywords):
                 elements.append(prop["name"])
-        
+
         question.trace_to_elements = elements
         return elements
-    
+
     def generate_report(self, ontology: Dict[str, Any]) -> Dict[str, Any]:
         """
         Generate competency question validation report.
-        
+
         Generates a comprehensive report showing which questions are answerable,
         which elements trace to each question, and overall coverage statistics.
-        
+
         Args:
             ontology: Ontology dictionary to validate
-        
+
         Returns:
             Dictionary containing:
                 - validation: Validation results dictionary
                 - questions: List of question details with trace information
                 - generated_at: Timestamp of report generation
-        
+
         Example:
             ```python
             report = manager.generate_report(ontology)
@@ -328,18 +336,23 @@ class CompetencyQuestionsManager:
         tracking_id = self.progress_tracker.start_tracking(
             module="ontology",
             submodule="CompetencyQuestionsManager",
-            message="Generating competency question validation report"
+            message="Generating competency question validation report",
         )
-        
+
         try:
-            self.progress_tracker.update_tracking(tracking_id, message="Validating ontology...")
+            self.progress_tracker.update_tracking(
+                tracking_id, message="Validating ontology..."
+            )
             validation = self.validate_ontology(ontology)
-            
+
             # Trace all questions
-            self.progress_tracker.update_tracking(tracking_id, message=f"Tracing {len(self.questions)} questions to ontology elements...")
+            self.progress_tracker.update_tracking(
+                tracking_id,
+                message=f"Tracing {len(self.questions)} questions to ontology elements...",
+            )
             for question in self.questions:
                 self.trace_to_elements(question, ontology)
-            
+
             result = {
                 "validation": validation,
                 "questions": [
@@ -348,25 +361,30 @@ class CompetencyQuestionsManager:
                         "category": q.category,
                         "priority": q.priority,
                         "answerable": q.answerable,
-                        "trace_to_elements": q.trace_to_elements
+                        "trace_to_elements": q.trace_to_elements,
                     }
                     for q in self.questions
                 ],
-                "generated_at": datetime.now().isoformat()
+                "generated_at": datetime.now().isoformat(),
             }
-            
-            self.progress_tracker.stop_tracking(tracking_id, status="completed",
-                                               message=f"Generated report for {len(self.questions)} questions")
+
+            self.progress_tracker.stop_tracking(
+                tracking_id,
+                status="completed",
+                message=f"Generated report for {len(self.questions)} questions",
+            )
             return result
-            
+
         except Exception as e:
-            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
+            )
             raise
-    
+
     def get_questions_by_category(self, category: str) -> List[CompetencyQuestion]:
         """Get questions by category."""
         return [q for q in self.questions if q.category == category]
-    
+
     def get_questions_by_priority(self, priority: int) -> List[CompetencyQuestion]:
         """Get questions by priority."""
         return [q for q in self.questions if q.priority == priority]

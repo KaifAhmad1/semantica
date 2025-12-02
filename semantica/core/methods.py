@@ -79,13 +79,13 @@ Author: Semantica Contributors
 License: MIT
 """
 
-from typing import Any, Dict, List, Optional, Union, Callable
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Union
 
+from ..utils.exceptions import ConfigurationError, ProcessingError
 from ..utils.logging import get_logger
-from ..utils.exceptions import ProcessingError, ConfigurationError
-from .orchestrator import Semantica
 from .config_manager import Config, ConfigManager
+from .orchestrator import Semantica
 from .registry import method_registry
 
 logger = get_logger("core_methods")
@@ -95,14 +95,14 @@ def build_knowledge_base(
     sources: Union[str, List[Union[str, Path]]],
     method: str = "default",
     config: Optional[Union[Config, Dict[str, Any]]] = None,
-    **kwargs
+    **kwargs,
 ) -> Dict[str, Any]:
     """
     Build knowledge base from data sources (convenience function).
-    
+
     This is a user-friendly wrapper that constructs a knowledge base from
     various data sources using the specified method.
-    
+
     Args:
         sources: Single source or list of sources (files, URLs, streams)
         method: Knowledge base construction method (default: "default")
@@ -112,7 +112,7 @@ def build_knowledge_base(
             - graph: Whether to build knowledge graph (default: True)
             - pipeline: Custom pipeline configuration
             - fail_fast: Whether to stop on first error (default: False)
-            
+
     Returns:
         Dictionary containing:
             - knowledge_graph: Knowledge graph data
@@ -120,7 +120,7 @@ def build_knowledge_base(
             - results: Processing results
             - statistics: Processing statistics
             - metadata: Processing metadata
-            
+
     Examples:
         >>> from semantica.core.methods import build_knowledge_base
         >>> result = build_knowledge_base(
@@ -134,16 +134,16 @@ def build_knowledge_base(
     # Normalize sources to list
     if isinstance(sources, str):
         sources = [sources]
-    
+
     # Check for custom method in registry
     custom_method = method_registry.get("knowledge_base", method)
     if custom_method:
         return custom_method(sources, config=config, **kwargs)
-    
+
     # Use default Semantica framework
     framework = Semantica(config=config)
     framework.initialize()
-    
+
     try:
         # Map method to kwargs
         if method == "minimal":
@@ -155,7 +155,7 @@ def build_knowledge_base(
         else:  # default
             kwargs.setdefault("embeddings", True)
             kwargs.setdefault("graph", True)
-        
+
         result = framework.build_knowledge_base(sources, **kwargs)
         return result
     finally:
@@ -167,27 +167,27 @@ def run_pipeline(
     data: Any,
     method: str = "default",
     config: Optional[Union[Config, Dict[str, Any]]] = None,
-    **kwargs
+    **kwargs,
 ) -> Dict[str, Any]:
     """
     Execute a processing pipeline (convenience function).
-    
+
     This is a user-friendly wrapper that executes a processing pipeline
     on input data using the specified method.
-    
+
     Args:
         pipeline: Pipeline object or configuration dictionary
         data: Input data for pipeline
         method: Pipeline execution method (default: "default")
         config: Optional configuration object or dictionary
         **kwargs: Additional pipeline options
-        
+
     Returns:
         Dictionary containing:
             - output: Pipeline output data
             - metadata: Processing metadata
             - metrics: Performance metrics
-            
+
     Examples:
         >>> from semantica.core.methods import run_pipeline
         >>> result = run_pipeline(
@@ -200,11 +200,11 @@ def run_pipeline(
     custom_method = method_registry.get("pipeline", method)
     if custom_method:
         return custom_method(pipeline, data, config=config, **kwargs)
-    
+
     # Use default Semantica framework
     framework = Semantica(config=config)
     framework.initialize()
-    
+
     try:
         result = framework.run_pipeline(pipeline, data, **kwargs)
         return result
@@ -215,22 +215,22 @@ def run_pipeline(
 def initialize_framework(
     config: Optional[Union[Config, Dict[str, Any]]] = None,
     method: str = "default",
-    **kwargs
+    **kwargs,
 ) -> Semantica:
     """
     Initialize Semantica framework (convenience function).
-    
+
     This is a user-friendly wrapper that initializes the framework
     using the specified method.
-    
+
     Args:
         config: Optional configuration object or dictionary
         method: Initialization method (default: "default")
         **kwargs: Additional initialization options
-        
+
     Returns:
         Initialized Semantica framework instance
-        
+
     Examples:
         >>> from semantica.core.methods import initialize_framework
         >>> framework = initialize_framework(
@@ -243,10 +243,10 @@ def initialize_framework(
     custom_method = method_registry.get("orchestration", method)
     if custom_method:
         return custom_method(config=config, **kwargs)
-    
+
     # Use default initialization
     framework = Semantica(config=config, **kwargs)
-    
+
     if method == "minimal":
         # Minimal initialization - just create instance, don't initialize
         pass
@@ -255,26 +255,24 @@ def initialize_framework(
         framework.initialize()
     else:  # default
         framework.initialize()
-    
+
     return framework
 
 
 def get_status(
-    framework: Optional[Semantica] = None,
-    method: str = "default",
-    **kwargs
+    framework: Optional[Semantica] = None, method: str = "default", **kwargs
 ) -> Dict[str, Any]:
     """
     Get system status (convenience function).
-    
+
     This is a user-friendly wrapper that retrieves system status
     using the specified method.
-    
+
     Args:
         framework: Optional Semantica framework instance (creates new if None)
         method: Status retrieval method (default: "default")
         **kwargs: Additional options
-        
+
     Returns:
         Dictionary containing:
             - state: System state
@@ -282,7 +280,7 @@ def get_status(
             - modules: Module status
             - plugins: Plugin status
             - config: Configuration status
-            
+
     Examples:
         >>> from semantica.core.methods import get_status
         >>> status = get_status(framework=my_framework, method="detailed")
@@ -292,7 +290,7 @@ def get_status(
     custom_method = method_registry.get("orchestration", f"get_status_{method}")
     if custom_method:
         return custom_method(framework=framework, **kwargs)
-    
+
     # Use default status retrieval
     if framework is None:
         framework = Semantica()
@@ -300,18 +298,20 @@ def get_status(
         should_shutdown = True
     else:
         should_shutdown = False
-    
+
     try:
         status = framework.get_status()
-        
+
         # Filter based on method
         if method == "summary":
             return {
                 "state": status.get("state"),
                 "health": {
                     "is_healthy": status.get("health", {}).get("is_healthy"),
-                    "healthy_components": status.get("health", {}).get("healthy_components"),
-                }
+                    "healthy_components": status.get("health", {}).get(
+                        "healthy_components"
+                    ),
+                },
             }
         elif method == "detailed":
             return status
@@ -325,17 +325,17 @@ def get_status(
 def get_orchestration_method(task: str, name: str) -> Optional[Callable]:
     """
     Get orchestration method by task and name.
-    
+
     This function retrieves a registered orchestration method from the registry
     or returns a built-in method if available.
-    
+
     Args:
         task: Task type ("pipeline", "knowledge_base", "orchestration", "lifecycle")
         name: Method name
-        
+
     Returns:
         Method function or None if not found
-        
+
     Examples:
         >>> from semantica.core.methods import get_orchestration_method
         >>> method = get_orchestration_method("knowledge_base", "custom_method")
@@ -346,40 +346,48 @@ def get_orchestration_method(task: str, name: str) -> Optional[Callable]:
     method = method_registry.get(task, name)
     if method:
         return method
-    
+
     # Check built-in methods
     builtin_methods = {
         "knowledge_base": {
             "default": build_knowledge_base,
-            "minimal": lambda sources, **kwargs: build_knowledge_base(sources, method="minimal", **kwargs),
-            "full": lambda sources, **kwargs: build_knowledge_base(sources, method="full", **kwargs),
+            "minimal": lambda sources, **kwargs: build_knowledge_base(
+                sources, method="minimal", **kwargs
+            ),
+            "full": lambda sources, **kwargs: build_knowledge_base(
+                sources, method="full", **kwargs
+            ),
         },
         "pipeline": {
             "default": run_pipeline,
         },
         "orchestration": {
             "default": initialize_framework,
-            "minimal": lambda config=None, **kwargs: initialize_framework(config=config, method="minimal", **kwargs),
-            "full": lambda config=None, **kwargs: initialize_framework(config=config, method="full", **kwargs),
+            "minimal": lambda config=None, **kwargs: initialize_framework(
+                config=config, method="minimal", **kwargs
+            ),
+            "full": lambda config=None, **kwargs: initialize_framework(
+                config=config, method="full", **kwargs
+            ),
         },
     }
-    
+
     if task in builtin_methods and name in builtin_methods[task]:
         return builtin_methods[task][name]
-    
+
     return None
 
 
 def list_available_methods(task: Optional[str] = None) -> Dict[str, List[str]]:
     """
     List all available orchestration methods.
-    
+
     Args:
         task: Optional task type to filter by
-        
+
     Returns:
         Dictionary mapping task types to method names
-        
+
     Examples:
         >>> from semantica.core.methods import list_available_methods
         >>> all_methods = list_available_methods()
@@ -387,7 +395,7 @@ def list_available_methods(task: Optional[str] = None) -> Dict[str, List[str]]:
     """
     # Get registered methods
     registered = method_registry.list_all(task=task)
-    
+
     # Add built-in methods
     builtin_methods = {
         "knowledge_base": ["default", "minimal", "full"],
@@ -395,16 +403,18 @@ def list_available_methods(task: Optional[str] = None) -> Dict[str, List[str]]:
         "orchestration": ["default", "minimal", "full"],
         "lifecycle": [],
     }
-    
+
     if task:
         # Merge for specific task
-        result = {task: list(set(registered.get(task, []) + builtin_methods.get(task, [])))}
+        result = {
+            task: list(set(registered.get(task, []) + builtin_methods.get(task, [])))
+        }
     else:
         # Merge for all tasks
         result = {}
         for t in set(list(registered.keys()) + list(builtin_methods.keys())):
             result[t] = list(set(registered.get(t, []) + builtin_methods.get(t, [])))
-    
+
     return result
 
 
@@ -412,4 +422,3 @@ def list_available_methods(task: Optional[str] = None) -> Dict[str, List[str]]:
 method_registry.register("knowledge_base", "default", build_knowledge_base)
 method_registry.register("pipeline", "default", run_pipeline)
 method_registry.register("orchestration", "default", initialize_framework)
-

@@ -208,3 +208,73 @@ __all__ = [
     "KGConfig",
     "kg_config",
 ]
+<<<<<<< HEAD
+=======
+
+
+def build(
+    sources: Union[List[Any], Any],
+    merge_entities: bool = True,
+    entity_resolution_strategy: str = "fuzzy",
+    resolve_conflicts: bool = True,
+    enable_temporal: bool = False,
+    temporal_granularity: str = "day",
+    track_history: bool = False,
+    version_snapshots: bool = False,
+    entity_resolver: Optional[EntityResolver] = None,
+    **options,
+) -> Dict[str, Any]:
+    """
+    Build knowledge graph from sources (module-level convenience function).
+
+    This is a user-friendly wrapper around GraphBuilder.build() that creates
+    a GraphBuilder instance and builds the knowledge graph.
+
+    Args:
+        sources: List of sources (documents, entities, relationships, or dicts with entities/relationships)
+        merge_entities: Whether to merge duplicate entities (default: True)
+        entity_resolution_strategy: Strategy for entity resolution - "fuzzy", "exact", "semantic" (default: "fuzzy")
+        resolve_conflicts: Whether to resolve conflicts (default: True)
+        enable_temporal: Enable temporal knowledge graph features (default: False)
+        temporal_granularity: Time granularity - "second", "minute", "hour", "day", etc. (default: "day")
+        track_history: Track historical changes (default: False)
+        version_snapshots: Create version snapshots (default: False)
+        entity_resolver: Optional EntityResolver instance (default: None, creates one if needed)
+        **options: Additional build options
+
+    Returns:
+        Dictionary containing:
+            - entities: List of entities
+            - relationships: List of relationships
+            - metadata: Graph metadata including counts and timestamps
+
+    Examples:
+        >>> import semantica
+        >>> result = semantica.kg.build(
+        ...     sources=[{"entities": [...], "relationships": [...]}],
+        ...     merge_entities=True,
+        ...     resolve_conflicts=True
+        ... )
+        >>> print(f"Built graph with {result['metadata']['num_entities']} entities")
+    """
+    # Normalize sources to list
+    if not isinstance(sources, list):
+        sources = [sources]
+
+    # Create GraphBuilder instance
+    graph_builder = GraphBuilder(
+        merge_entities=merge_entities,
+        entity_resolution_strategy=entity_resolution_strategy,
+        resolve_conflicts=resolve_conflicts,
+        enable_temporal=enable_temporal,
+        temporal_granularity=temporal_granularity,
+        track_history=track_history,
+        version_snapshots=version_snapshots,
+        **options,
+    )
+
+    # Build knowledge graph
+    graph = graph_builder.build(sources, entity_resolver=entity_resolver, **options)
+
+    return graph
+>>>>>>> origin/main

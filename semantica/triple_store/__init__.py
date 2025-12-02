@@ -107,75 +107,47 @@ Author: Semantica Contributors
 License: MIT
 """
 
-from .triple_manager import (
-    TripleManager,
-    TripleStore
-)
-from .blazegraph_adapter import (
-    BlazegraphAdapter
-)
-from .jena_adapter import (
-    JenaAdapter
-)
-from .rdf4j_adapter import (
-    RDF4JAdapter
-)
-from .virtuoso_adapter import (
-    VirtuosoAdapter
-)
-from .query_engine import (
-    QueryEngine,
-    QueryResult,
-    QueryPlan
-)
-from .bulk_loader import (
-    BulkLoader,
-    LoadProgress
-)
+from .blazegraph_adapter import BlazegraphAdapter
+from .bulk_loader import BulkLoader, LoadProgress
+from .config import TripleStoreConfig, triple_store_config
+from .jena_adapter import JenaAdapter
 from .methods import (
-    register_store,
     add_triple,
     add_triples,
-    get_triples,
+    bulk_load,
     delete_triple,
-    update_triple,
     execute_query,
+    get_triple_store_method,
+    get_triples,
+    list_available_methods,
     optimize_query,
     plan_query,
-    bulk_load,
+    register_store,
+    update_triple,
     validate_triples,
-    get_triple_store_method,
-    list_available_methods,
 )
-from .config import (
-    TripleStoreConfig,
-    triple_store_config,
-)
-from .registry import (
-    MethodRegistry,
-    method_registry,
-)
+from .query_engine import QueryEngine, QueryPlan, QueryResult
+from .rdf4j_adapter import RDF4JAdapter
+from .registry import MethodRegistry, method_registry
+from .triple_manager import TripleManager, TripleStore
+from .virtuoso_adapter import VirtuosoAdapter
 
 __all__ = [
     # Triple management
     "TripleManager",
     "TripleStore",
-    
     # Store adapters
     "BlazegraphAdapter",
     "JenaAdapter",
     "RDF4JAdapter",
     "VirtuosoAdapter",
-    
     # Query engine
     "QueryEngine",
     "QueryResult",
     "QueryPlan",
-    
     # Bulk loading
     "BulkLoader",
     "LoadProgress",
-    
     # Convenience functions
     "register_store",
     "add_triple",
@@ -190,7 +162,6 @@ __all__ = [
     "validate_triples",
     "get_triple_store_method",
     "list_available_methods",
-    
     # Configuration and registry
     "TripleStoreConfig",
     "triple_store_config",

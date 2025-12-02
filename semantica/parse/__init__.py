@@ -120,40 +120,54 @@ Author: Semantica Contributors
 License: MIT
 """
 
+from .code_parser import (
+    CodeComment,
+    CodeParser,
+    CodeStructure,
+    CommentExtractor,
+    DependencyAnalyzer,
+    SyntaxTreeParser,
+)
+from .config import ParseConfig, parse_config
+from .csv_parser import CSVData, CSVParser
 from .document_parser import DocumentParser
-from .web_parser import WebParser, HTMLContentParser, JavaScriptRenderer
-from .structured_data_parser import StructuredDataParser
-from .email_parser import EmailParser, EmailHeaders, EmailBody, EmailData, MIMEParser, EmailThreadAnalyzer
-from .code_parser import CodeParser, CodeStructure, CodeComment, SyntaxTreeParser, CommentExtractor, DependencyAnalyzer
-from .media_parser import MediaParser
-from .pdf_parser import PDFParser, PDFPage, PDFMetadata
-from .docx_parser import DOCXParser, DocxSection, DocxMetadata
-from .pptx_parser import PPTXParser, SlideContent, PPTXData
-from .excel_parser import ExcelParser, ExcelSheet, ExcelData
-from .html_parser import HTMLParser, HTMLMetadata, HTMLElement
-from .json_parser import JSONParser, JSONData
-from .csv_parser import CSVParser, CSVData
-from .xml_parser import XMLParser, XMLElement, XMLData
-from .image_parser import ImageParser, ImageMetadata, OCRResult
+from .docx_parser import DocxMetadata, DOCXParser, DocxSection
+from .email_parser import (
+    EmailBody,
+    EmailData,
+    EmailHeaders,
+    EmailParser,
+    EmailThreadAnalyzer,
+    MIMEParser,
+)
+from .excel_parser import ExcelData, ExcelParser, ExcelSheet
+from .html_parser import HTMLElement, HTMLMetadata, HTMLParser
+from .image_parser import ImageMetadata, ImageParser, OCRResult
+from .json_parser import JSONData, JSONParser
 from .mcp_parser import MCPParser
+from .media_parser import MediaParser
 from .methods import (
-    parse_document,
-    parse_web_content,
-    parse_structured_data,
-    parse_email,
-    parse_code,
-    parse_media,
-    parse_pdf,
-    parse_docx,
-    parse_json,
-    parse_csv,
-    parse_xml,
-    parse_image,
     get_parse_method,
     list_available_methods,
+    parse_code,
+    parse_csv,
+    parse_document,
+    parse_docx,
+    parse_email,
+    parse_image,
+    parse_json,
+    parse_media,
+    parse_pdf,
+    parse_structured_data,
+    parse_web_content,
+    parse_xml,
 )
-from .registry import method_registry, MethodRegistry
-from .config import parse_config, ParseConfig
+from .pdf_parser import PDFMetadata, PDFPage, PDFParser
+from .pptx_parser import PPTXData, PPTXParser, SlideContent
+from .registry import MethodRegistry, method_registry
+from .structured_data_parser import StructuredDataParser
+from .web_parser import HTMLContentParser, JavaScriptRenderer, WebParser
+from .xml_parser import XMLData, XMLElement, XMLParser
 
 __all__ = [
     # Main parsers

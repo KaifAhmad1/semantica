@@ -35,6 +35,7 @@ License: MIT
 """
 
 from typing import Any, Dict, List, Optional, Union
+
 import numpy as np
 
 from ..utils.exceptions import ProcessingError, ValidationError
@@ -45,6 +46,7 @@ from ..utils.progress_tracker import get_progress_tracker
 try:
     import weaviate
     from weaviate.classes.query import MetadataQuery, QueryReturn
+
     WEAVIATE_AVAILABLE = True
 except ImportError:
     WEAVIATE_AVAILABLE = False
@@ -55,44 +57,44 @@ except ImportError:
 
 class WeaviateClient:
     """Weaviate client wrapper."""
-    
+
     def __init__(self, client: Any):
         """Initialize Weaviate client wrapper."""
         self.client = client
         self.logger = get_logger("weaviate_client")
-    
+
     def create_class(self, class_name: str, schema: Dict[str, Any], **options) -> bool:
         """Create a class (collection) in Weaviate."""
         if not WEAVIATE_AVAILABLE:
             raise ProcessingError("Weaviate not available")
-        
+
         try:
             # Convert schema to Weaviate format
             class_obj = self.client.collections.create(
                 name=class_name,
                 vectorizer_config=weaviate.classes.config.Configure.vectorizer.none(),
                 **schema,
-                **options
+                **options,
             )
             return True
         except Exception as e:
             raise ProcessingError(f"Failed to create class: {str(e)}")
-    
+
     def get_collection(self, class_name: str) -> Any:
         """Get collection by class name."""
         if not WEAVIATE_AVAILABLE:
             raise ProcessingError("Weaviate not available")
-        
+
         try:
             return self.client.collections.get(class_name)
         except Exception as e:
             raise ProcessingError(f"Failed to get collection: {str(e)}")
-    
+
     def query_graphql(self, query: str, **options) -> Dict[str, Any]:
         """Execute GraphQL query."""
         if not WEAVIATE_AVAILABLE:
             raise ProcessingError("Weaviate not available")
-        
+
         try:
             result = self.client.query.raw(query)
             return result
@@ -102,112 +104,107 @@ class WeaviateClient:
 
 class WeaviateSchema:
     """Weaviate schema builder."""
-    
+
     @staticmethod
     def build_schema(
         class_name: str,
         properties: List[Dict[str, Any]],
         vectorizer: Optional[str] = None,
-        **options
+        **options,
     ) -> Dict[str, Any]:
         """Build Weaviate schema."""
-        schema = {
-            "class": class_name,
-            "properties": properties
-        }
-        
+        schema = {"class": class_name, "properties": properties}
+
         if vectorizer:
             schema["vectorizer"] = vectorizer
-        
+
         return schema
-    
+
     @staticmethod
     def build_property(
-        name: str,
-        data_type: str = "text",
-        description: Optional[str] = None,
-        **options
+        name: str, data_type: str = "text", description: Optional[str] = None, **options
     ) -> Dict[str, Any]:
         """Build property definition."""
-        prop = {
-            "name": name,
-            "dataType": [data_type]
-        }
-        
+        prop = {"name": name, "dataType": [data_type]}
+
         if description:
             prop["description"] = description
-        
+
         return {**prop, **options}
 
 
 class WeaviateQuery:
     """Weaviate query builder."""
-    
+
     def __init__(self, collection: Any):
         """Initialize Weaviate query builder."""
         self.collection = collection
         self.logger = get_logger("weaviate_query")
-    
+
     def similarity_search(
         self,
         query_vector: np.ndarray,
         limit: int = 10,
         where: Optional[Dict[str, Any]] = None,
-        **options
+        **options,
     ) -> List[Dict[str, Any]]:
         """
         Perform similarity search.
-        
+
         Args:
             query_vector: Query vector
             limit: Number of results
             where: Filter conditions
             **options: Additional options
-            
+
         Returns:
             List of search results
         """
         if not WEAVIATE_AVAILABLE:
             raise ProcessingError("Weaviate not available")
-        
+
         try:
             response = self.collection.query.near_vector(
                 near_vector=query_vector.tolist(),
                 limit=limit,
                 where=where,
                 return_metadata=MetadataQuery(distance=True),
-                **options
+                **options,
             )
-            
+
             results = []
             for obj in response.objects:
-                results.append({
-                    "id": str(obj.uuid),
-                    "properties": obj.properties,
-                    "distance": obj.metadata.distance if obj.metadata else None,
-                    "score": 1.0 - (obj.metadata.distance if obj.metadata and obj.metadata.distance else 0.0)
-                })
-            
+                results.append(
+                    {
+                        "id": str(obj.uuid),
+                        "properties": obj.properties,
+                        "distance": obj.metadata.distance if obj.metadata else None,
+                        "score": 1.0
+                        - (
+                            obj.metadata.distance
+                            if obj.metadata and obj.metadata.distance
+                            else 0.0
+                        ),
+                    }
+                )
+
             return results
-        
+
         except Exception as e:
             raise ProcessingError(f"Failed to execute similarity search: {str(e)}")
-    
+
     def get_all(self, limit: int = 100, **options) -> List[Dict[str, Any]]:
         """Get all objects from collection."""
         if not WEAVIATE_AVAILABLE:
             raise ProcessingError("Weaviate not available")
-        
+
         try:
             response = self.collection.query.fetch_objects(limit=limit, **options)
-            
+
             results = []
             for obj in response.objects:
-                results.append({
-                    "id": str(obj.uuid),
-                    "properties": obj.properties
-                })
-            
+                results.append({"id": str(obj.uuid), "properties": obj.properties})
+
             return results
         except Exception as e:
             raise ProcessingError(f"Failed to get objects: {str(e)}")
@@ -216,7 +213,7 @@ class WeaviateQuery:
 class WeaviateAdapter:
     """
     Weaviate adapter for vector storage and similarity search.
-    
+
     • Weaviate connection and authentication
     • Schema and class management
     • Vector storage and retrieval
@@ -224,12 +221,9 @@ class WeaviateAdapter:
     • Performance optimization
     • Error handling and recovery
     """
-    
+
     def __init__(
-        self,
-        url: Optional[str] = None,
-        api_key: Optional[str] = None,
-        **config
+        self, url: Optional[str] = None, api_key: Optional[str] = None, **config
     ):
         """Initialize Weaviate adapter."""
         self.logger = get_logger("weaviate_adapter")
@@ -237,26 +231,28 @@ class WeaviateAdapter:
         self.progress_tracker = get_progress_tracker()
         self.url = url or config.get("url", "http://localhost:8080")
         self.api_key = api_key or config.get("api_key")
-        
+
         self.client: Optional[Any] = None
         self.collection: Optional[Any] = None
         self.query_builder: Optional[WeaviateQuery] = None
-        
+
         # Check Weaviate availability
         if not WEAVIATE_AVAILABLE:
             self.logger.warning(
                 "Weaviate not available. Install with: pip install weaviate-client"
             )
-    
-    def connect(self, url: Optional[str] = None, api_key: Optional[str] = None, **options) -> bool:
+
+    def connect(
+        self, url: Optional[str] = None, api_key: Optional[str] = None, **options
+    ) -> bool:
         """
         Connect to Weaviate service.
-        
+
         Args:
             url: Weaviate URL
             api_key: API key for authentication
             **options: Connection options
-            
+
         Returns:
             True if connected successfully
         """
@@ -264,230 +260,256 @@ class WeaviateAdapter:
             raise ProcessingError(
                 "Weaviate is not available. Install it with: pip install weaviate-client"
             )
-        
+
         url = url or self.url
         api_key = api_key or self.api_key
-        
+
         try:
             auth_config = None
             if api_key:
                 auth_config = weaviate.auth.AuthApiKey(api_key=api_key)
-            
+
             self.client = weaviate.connect_to_local(
                 host=url.replace("http://", "").replace("https://", ""),
                 auth_credentials=auth_config,
-                **options
+                **options,
             )
-            
+
             self.logger.info(f"Connected to Weaviate at {url}")
             return True
-        
+
         except Exception as e:
             raise ProcessingError(f"Failed to connect to Weaviate: {str(e)}")
-    
+
     def create_schema(
         self,
         class_name: str,
         properties: List[Dict[str, Any]],
         vectorizer: Optional[str] = None,
-        **options
+        **options,
     ) -> bool:
         """
         Create Weaviate schema.
-        
+
         Args:
             class_name: Name of the class
             properties: List of property definitions
             vectorizer: Vectorizer configuration
             **options: Additional options
-            
+
         Returns:
             True if successful
         """
         if self.client is None:
             self.connect()
-        
+
         if not WEAVIATE_AVAILABLE:
             raise ProcessingError("Weaviate not available")
-        
+
         try:
             client_wrapper = WeaviateClient(self.client)
-            schema = WeaviateSchema.build_schema(class_name, properties, vectorizer, **options)
+            schema = WeaviateSchema.build_schema(
+                class_name, properties, vectorizer, **options
+            )
             client_wrapper.create_class(class_name, schema, **options)
-            
+
             self.logger.info(f"Created Weaviate schema for class: {class_name}")
             return True
-        
+
         except Exception as e:
             raise ProcessingError(f"Failed to create schema: {str(e)}")
-    
+
     def get_collection(self, class_name: str) -> Any:
         """
         Get collection by class name.
-        
+
         Args:
             class_name: Name of the class
-            
+
         Returns:
             Collection instance
         """
         if self.client is None:
             self.connect()
-        
+
         if not WEAVIATE_AVAILABLE:
             raise ProcessingError("Weaviate not available")
-        
+
         try:
             self.collection = self.client.collections.get(class_name)
             self.query_builder = WeaviateQuery(self.collection)
             return self.collection
         except Exception as e:
             raise ProcessingError(f"Failed to get collection: {str(e)}")
-    
+
     def add_objects(
         self,
         objects: List[Dict[str, Any]],
         vectors: Optional[List[np.ndarray]] = None,
         class_name: Optional[str] = None,
-        **options
+        **options,
     ) -> List[str]:
         """
         Add objects to Weaviate.
-        
+
         Args:
             objects: List of objects with properties
             vectors: Optional list of vectors
             class_name: Class name (if not using default collection)
             **options: Additional options
-            
+
         Returns:
             List of object IDs
         """
         tracking_id = self.progress_tracker.start_tracking(
             module="vector_store",
             submodule="WeaviateAdapter",
-            message=f"Adding {len(objects)} objects to Weaviate"
+            message=f"Adding {len(objects)} objects to Weaviate",
         )
-        
+
         try:
             if self.collection is None and class_name:
-                self.progress_tracker.update_tracking(tracking_id, message="Getting collection...")
+                self.progress_tracker.update_tracking(
+                    tracking_id, message="Getting collection..."
+                )
                 self.get_collection(class_name)
-            
+
             if self.collection is None:
-                self.progress_tracker.stop_tracking(tracking_id, status="failed",
-                                                  message="Collection not initialized")
-                raise ProcessingError("Collection not initialized. Call get_collection() first.")
-            
+                self.progress_tracker.stop_tracking(
+                    tracking_id, status="failed", message="Collection not initialized"
+                )
+                raise ProcessingError(
+                    "Collection not initialized. Call get_collection() first."
+                )
+
             if not WEAVIATE_AVAILABLE:
-                self.progress_tracker.stop_tracking(tracking_id, status="failed",
-                                                  message="Weaviate not available")
+                self.progress_tracker.stop_tracking(
+                    tracking_id, status="failed", message="Weaviate not available"
+                )
                 raise ProcessingError("Weaviate not available")
-            
-            self.progress_tracker.update_tracking(tracking_id, message="Adding objects in batch...")
+
+            self.progress_tracker.update_tracking(
+                tracking_id, message="Adding objects in batch..."
+            )
             object_ids = []
-            
+
             with self.collection.batch.dynamic() as batch:
                 for i, obj in enumerate(objects):
-                    vector = vectors[i].tolist() if vectors and i < len(vectors) else None
-                    uuid = batch.add_object(
-                        properties=obj,
-                        vector=vector,
-                        **options
+                    vector = (
+                        vectors[i].tolist() if vectors and i < len(vectors) else None
                     )
+                    uuid = batch.add_object(properties=obj, vector=vector, **options)
                     object_ids.append(str(uuid))
-            
+
             self.logger.info(f"Added {len(objects)} objects to Weaviate")
-            self.progress_tracker.stop_tracking(tracking_id, status="completed",
-                                              message=f"Added {len(objects)} objects to Weaviate")
+            self.progress_tracker.stop_tracking(
+                tracking_id,
+                status="completed",
+                message=f"Added {len(objects)} objects to Weaviate",
+            )
             return object_ids
-        
+
         except Exception as e:
-            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
+            )
             raise ProcessingError(f"Failed to add objects: {str(e)}")
-    
+
     def query_vectors(
         self,
         query_vector: np.ndarray,
         limit: int = 10,
         where: Optional[Dict[str, Any]] = None,
         class_name: Optional[str] = None,
-        **options
+        **options,
     ) -> List[Dict[str, Any]]:
         """
         Query similar vectors.
-        
+
         Args:
             query_vector: Query vector
             limit: Number of results
             where: Filter conditions
             class_name: Class name (if not using default collection)
             **options: Additional options
-            
+
         Returns:
             List of search results
         """
         tracking_id = self.progress_tracker.start_tracking(
             module="vector_store",
             submodule="WeaviateAdapter",
-            message=f"Querying {limit} similar vectors from Weaviate"
+            message=f"Querying {limit} similar vectors from Weaviate",
         )
-        
+
         try:
             if self.collection is None and class_name:
-                self.progress_tracker.update_tracking(tracking_id, message="Getting collection...")
+                self.progress_tracker.update_tracking(
+                    tracking_id, message="Getting collection..."
+                )
                 self.get_collection(class_name)
-            
+
             if self.query_builder is None:
-                self.progress_tracker.stop_tracking(tracking_id, status="failed",
-                                                  message="Collection not initialized")
-                raise ProcessingError("Collection not initialized. Call get_collection() first.")
-            
-            self.progress_tracker.update_tracking(tracking_id, message="Performing similarity search...")
-            results = self.query_builder.similarity_search(query_vector, limit, where, **options)
-            
-            self.progress_tracker.stop_tracking(tracking_id, status="completed",
-                                              message=f"Query completed: {len(results)} results")
+                self.progress_tracker.stop_tracking(
+                    tracking_id, status="failed", message="Collection not initialized"
+                )
+                raise ProcessingError(
+                    "Collection not initialized. Call get_collection() first."
+                )
+
+            self.progress_tracker.update_tracking(
+                tracking_id, message="Performing similarity search..."
+            )
+            results = self.query_builder.similarity_search(
+                query_vector, limit, where, **options
+            )
+
+            self.progress_tracker.stop_tracking(
+                tracking_id,
+                status="completed",
+                message=f"Query completed: {len(results)} results",
+            )
             return results
         except Exception as e:
-            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
+            )
             raise
-    
+
     def graphql_query(self, query: str, **options) -> Dict[str, Any]:
         """
         Execute GraphQL query.
-        
+
         Args:
             query: GraphQL query string
             **options: Additional options
-            
+
         Returns:
             Query results
         """
         if self.client is None:
             self.connect()
-        
+
         if not WEAVIATE_AVAILABLE:
             raise ProcessingError("Weaviate not available")
-        
+
         client_wrapper = WeaviateClient(self.client)
         return client_wrapper.query_graphql(query, **options)
-    
+
     def get_stats(self, class_name: Optional[str] = None) -> Dict[str, Any]:
         """Get collection statistics."""
         if self.collection is None and class_name:
             self.get_collection(class_name)
-        
+
         if self.collection is None:
-            raise ProcessingError("Collection not initialized. Call get_collection() first.")
-        
+            raise ProcessingError(
+                "Collection not initialized. Call get_collection() first."
+            )
+
         try:
             # Get approximate count
             count = len(self.query_builder.get_all(limit=10000))
-            return {
-                "object_count": count,
-                "class_name": class_name or "default"
-            }
+            return {"object_count": count, "class_name": class_name or "default"}
         except Exception as e:
             self.logger.warning(f"Failed to get stats: {str(e)}")
             return {"status": "unknown"}

@@ -29,20 +29,21 @@ Author: Semantica Contributors
 License: MIT
 """
 
-from typing import Any, Dict, List, Optional, Union
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
-from ..utils.exceptions import ValidationError, ProcessingError
+from ..utils.exceptions import ProcessingError, ValidationError
+from ..utils.helpers import ensure_directory
 from ..utils.logging import get_logger
 from ..utils.progress_tracker import get_progress_tracker
-from ..utils.helpers import ensure_directory
 
 
 @dataclass
 class OntologyDocumentation:
     """Ontology documentation structure."""
+
     name: str
     description: str
     purpose: str
@@ -59,7 +60,7 @@ class OntologyDocumentation:
 class OntologyDocumentationManager:
     """
     Ontology documentation management system.
-    
+
     • Ontology metadata management (description, purpose, scope)
     • Author and contributor tracking
     • Creation date and version tracking
@@ -67,11 +68,11 @@ class OntologyDocumentationManager:
     • Documentation generation and export
     • Documentation validation
     """
-    
+
     def __init__(self, config: Optional[Dict[str, Any]] = None, **kwargs):
         """
         Initialize documentation manager.
-        
+
         Args:
             config: Configuration dictionary
             **kwargs: Additional configuration options
@@ -79,23 +80,18 @@ class OntologyDocumentationManager:
         self.logger = get_logger("ontology_documentation_manager")
         self.config = config or {}
         self.config.update(kwargs)
-        
+
         # Initialize progress tracker
         self.progress_tracker = get_progress_tracker()
-        
+
         self.documentation: Dict[str, OntologyDocumentation] = {}
-    
+
     def create_documentation(
-        self,
-        name: str,
-        description: str,
-        purpose: str,
-        scope: str,
-        **options
+        self, name: str, description: str, purpose: str, scope: str, **options
     ) -> OntologyDocumentation:
         """
         Create ontology documentation.
-        
+
         Args:
             name: Ontology name
             description: Description
@@ -107,7 +103,7 @@ class OntologyDocumentationManager:
                 - version: Version string
                 - license: License information
                 - namespace: Namespace URI
-        
+
         Returns:
             Created documentation
         """
@@ -122,107 +118,109 @@ class OntologyDocumentationManager:
             version=options.get("version", "1.0"),
             license=options.get("license", ""),
             namespace=options.get("namespace", ""),
-            metadata=options.get("metadata", {})
+            metadata=options.get("metadata", {}),
         )
-        
+
         self.documentation[name] = doc
         self.logger.info(f"Created documentation for: {name}")
-        
+
         return doc
-    
+
     def add_author(self, ontology_name: str, author: str) -> None:
         """Add author to documentation."""
         if ontology_name not in self.documentation:
             raise ValidationError(f"Documentation not found: {ontology_name}")
-        
+
         doc = self.documentation[ontology_name]
         if author not in doc.authors:
             doc.authors.append(author)
-    
+
     def add_contributor(self, ontology_name: str, contributor: str) -> None:
         """Add contributor to documentation."""
         if ontology_name not in self.documentation:
             raise ValidationError(f"Documentation not found: {ontology_name}")
-        
+
         doc = self.documentation[ontology_name]
         if contributor not in doc.contributors:
             doc.contributors.append(contributor)
-    
+
     def generate_markdown(
-        self,
-        ontology_name: str,
-        ontology: Optional[Dict[str, Any]] = None
+        self, ontology_name: str, ontology: Optional[Dict[str, Any]] = None
     ) -> str:
         """
         Generate Markdown documentation.
-        
+
         Args:
             ontology_name: Ontology name
             ontology: Optional ontology dictionary
-        
+
         Returns:
             Markdown documentation string
         """
         tracking_id = self.progress_tracker.start_tracking(
             module="ontology",
             submodule="OntologyDocumentationManager",
-            message=f"Generating Markdown documentation for: {ontology_name}"
+            message=f"Generating Markdown documentation for: {ontology_name}",
         )
-        
+
         try:
             if ontology_name not in self.documentation:
                 raise ValidationError(f"Documentation not found: {ontology_name}")
-            
+
             doc = self.documentation[ontology_name]
-            
-            self.progress_tracker.update_tracking(tracking_id, message="Generating documentation sections...")
+
+            self.progress_tracker.update_tracking(
+                tracking_id, message="Generating documentation sections..."
+            )
             lines = []
             lines.append(f"# {doc.name}")
             lines.append("")
             lines.append(f"**Version:** {doc.version}")
             lines.append(f"**Namespace:** {doc.namespace}")
             lines.append("")
-            
+
             lines.append("## Description")
             lines.append("")
             lines.append(doc.description)
             lines.append("")
-            
+
             lines.append("## Purpose")
             lines.append("")
             lines.append(doc.purpose)
             lines.append("")
-            
+
             lines.append("## Scope")
             lines.append("")
             lines.append(doc.scope)
             lines.append("")
-            
+
             if doc.authors:
                 lines.append("## Authors")
                 lines.append("")
                 for author in doc.authors:
                     lines.append(f"- {author}")
                 lines.append("")
-            
+
             if doc.contributors:
                 lines.append("## Contributors")
                 lines.append("")
                 for contributor in doc.contributors:
                     lines.append(f"- {contributor}")
                 lines.append("")
-            
+
             if doc.license:
                 lines.append("## License")
                 lines.append("")
                 lines.append(doc.license)
                 lines.append("")
-            
+
             if ontology:
-                self.progress_tracker.update_tracking(tracking_id, message="Adding ontology classes and properties...")
+                self.progress_tracker.update_tracking(
+                    tracking_id, message="Adding ontology classes and properties..."
+                )
                 classes = ontology.get("classes", [])
                 properties = ontology.get("properties", [])
-                
+
                 lines.append("## Classes")
                 lines.append("")
                 for cls in classes:
@@ -230,7 +228,7 @@ class OntologyDocumentationManager:
                     if cls.get("comment"):
                         lines.append(f"{cls['comment']}")
                     lines.append("")
-                
+
                 lines.append("## Properties")
                 lines.append("")
                 for prop in properties:
@@ -239,27 +237,32 @@ class OntologyDocumentationManager:
                     if prop.get("comment"):
                         lines.append(f"{prop['comment']}")
                     lines.append("")
-            
+
             result = "\n".join(lines)
-            self.progress_tracker.stop_tracking(tracking_id, status="completed",
-                                               message=f"Generated Markdown documentation: {len(result)} characters")
+            self.progress_tracker.stop_tracking(
+                tracking_id,
+                status="completed",
+                message=f"Generated Markdown documentation: {len(result)} characters",
+            )
             return result
-            
+
         except Exception as e:
-            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
+            )
             raise
-    
+
     def export_documentation(
         self,
         ontology_name: str,
         file_path: Union[str, Path],
         format: str = "markdown",
         ontology: Optional[Dict[str, Any]] = None,
-        **options
+        **options,
     ) -> None:
         """
         Export documentation to file.
-        
+
         Args:
             ontology_name: Ontology name
             file_path: Output file path
@@ -269,42 +272,44 @@ class OntologyDocumentationManager:
         """
         file_path = Path(file_path)
         ensure_directory(file_path.parent)
-        
+
         if format == "markdown":
             content = self.generate_markdown(ontology_name, ontology)
         else:
             raise ValidationError(f"Unsupported format: {format}")
-        
+
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)
-        
+
         self.logger.info(f"Exported documentation to: {file_path}")
-    
+
     def validate_documentation(self, ontology_name: str) -> Dict[str, Any]:
         """
         Validate documentation completeness.
-        
+
         Args:
             ontology_name: Ontology name
-        
+
         Returns:
             Validation results
         """
         tracking_id = self.progress_tracker.start_tracking(
             module="ontology",
             submodule="OntologyDocumentationManager",
-            message=f"Validating documentation for: {ontology_name}"
+            message=f"Validating documentation for: {ontology_name}",
         )
-        
+
         try:
             if ontology_name not in self.documentation:
                 raise ValidationError(f"Documentation not found: {ontology_name}")
-            
+
             doc = self.documentation[ontology_name]
             errors = []
             warnings = []
-            
-            self.progress_tracker.update_tracking(tracking_id, message="Checking required fields...")
+
+            self.progress_tracker.update_tracking(
+                tracking_id, message="Checking required fields..."
+            )
             if not doc.description:
                 errors.append("Documentation missing description")
             if not doc.purpose:
@@ -315,21 +320,22 @@ class OntologyDocumentationManager:
                 warnings.append("Documentation has no authors")
             if not doc.namespace:
                 warnings.append("Documentation missing namespace")
-            
-            result = {
-                "valid": len(errors) == 0,
-                "errors": errors,
-                "warnings": warnings
-            }
-            
-            self.progress_tracker.stop_tracking(tracking_id, status="completed",
-                                               message=f"Validation complete: {'Valid' if result['valid'] else 'Invalid'} ({len(errors)} errors, {len(warnings)} warnings)")
+
+            result = {"valid": len(errors) == 0, "errors": errors, "warnings": warnings}
+
+            self.progress_tracker.stop_tracking(
+                tracking_id,
+                status="completed",
+                message=f"Validation complete: {'Valid' if result['valid'] else 'Invalid'} ({len(errors)} errors, {len(warnings)} warnings)",
+            )
             return result
-            
+
         except Exception as e:
-            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
+            )
             raise
-    
+
     def get_documentation(self, ontology_name: str) -> Optional[OntologyDocumentation]:
         """Get documentation by name."""
         return self.documentation.get(ontology_name)

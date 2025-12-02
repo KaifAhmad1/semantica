@@ -53,24 +53,23 @@ Author: Semantica Contributors
 License: MIT
 """
 
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
-    Union,
-    Tuple,
     Callable,
-    Protocol,
-    TypeVar,
+    Dict,
     Generic,
     Iterator,
+    List,
+    Optional,
+    Protocol,
     Sequence,
+    Tuple,
+    TypeVar,
+    Union,
 )
-from dataclasses import dataclass, field
-from enum import Enum
-from datetime import datetime
-
 
 # Type Aliases
 JSONType = Union[Dict[str, Any], List[Any], str, int, float, bool, None]
@@ -89,7 +88,7 @@ V = TypeVar("V")
 # Entity Types
 class EntityType(str, Enum):
     """Entity type enumeration."""
-    
+
     PERSON = "PERSON"
     ORGANIZATION = "ORGANIZATION"
     LOCATION = "LOCATION"
@@ -109,7 +108,7 @@ class EntityType(str, Enum):
 # Data Types
 class DataType(str, Enum):
     """Data type enumeration."""
-    
+
     TEXT = "text"
     IMAGE = "image"
     AUDIO = "audio"
@@ -122,7 +121,7 @@ class DataType(str, Enum):
 # Processing Status
 class ProcessingStatus(str, Enum):
     """Processing status enumeration."""
-    
+
     PENDING = "pending"
     PROCESSING = "processing"
     COMPLETED = "completed"
@@ -135,7 +134,7 @@ class ProcessingStatus(str, Enum):
 # Quality Levels
 class QualityLevel(str, Enum):
     """Quality level enumeration."""
-    
+
     HIGH = "high"
     MEDIUM = "medium"
     LOW = "low"
@@ -145,7 +144,7 @@ class QualityLevel(str, Enum):
 # Relationship Types
 class RelationshipType(str, Enum):
     """Relationship type enumeration."""
-    
+
     WORKS_FOR = "WORKS_FOR"
     LOCATED_IN = "LOCATED_IN"
     PART_OF = "PART_OF"
@@ -165,7 +164,7 @@ class RelationshipType(str, Enum):
 @dataclass
 class Entity:
     """Structured entity data."""
-    
+
     id: str
     text: str
     type: Union[str, EntityType]
@@ -179,7 +178,7 @@ class Entity:
 @dataclass
 class Relationship:
     """Structured relationship data."""
-    
+
     id: str
     source_id: str
     target_id: str
@@ -192,7 +191,7 @@ class Relationship:
 @dataclass
 class ProcessingResult:
     """Result of a processing operation."""
-    
+
     status: ProcessingStatus
     data: Optional[Any] = None
     entities: List[Entity] = field(default_factory=list)
@@ -205,7 +204,7 @@ class ProcessingResult:
 @dataclass
 class QualityMetrics:
     """Data quality metrics."""
-    
+
     score: float
     completeness: Optional[float] = None
     accuracy: Optional[float] = None
@@ -218,7 +217,7 @@ class QualityMetrics:
 # Protocol Definitions
 class Processor(Protocol):
     """Protocol for data processors."""
-    
+
     def process(self, data: Any, **options: Any) -> ProcessingResult:
         """Process data and return result."""
         ...
@@ -226,7 +225,7 @@ class Processor(Protocol):
 
 class Validator(Protocol):
     """Protocol for validators."""
-    
+
     def validate(self, data: Any, **options: Any) -> bool:
         """Validate data and return True if valid."""
         ...
@@ -234,7 +233,7 @@ class Validator(Protocol):
 
 class Exporter(Protocol):
     """Protocol for data exporters."""
-    
+
     def export(self, data: Any, destination: str, **options: Any) -> bool:
         """Export data to destination and return True if successful."""
         ...
@@ -242,7 +241,7 @@ class Exporter(Protocol):
 
 class Importer(Protocol):
     """Protocol for data importers."""
-    
+
     def import_data(self, source: str, **options: Any) -> Any:
         """Import data from source and return imported data."""
         ...
@@ -257,15 +256,15 @@ DataValidator = Callable[[Any], Tuple[bool, Optional[str]]]
 # Generic Container Types
 class Result(Generic[T]):
     """Generic result container."""
-    
+
     def __init__(self, value: Optional[T] = None, error: Optional[str] = None):
         self.value = value
         self.error = error
         self.success = error is None
-    
+
     def __bool__(self) -> bool:
         return self.success
-    
+
     def __repr__(self) -> str:
         if self.success:
             return f"Result(value={self.value})"
@@ -275,24 +274,24 @@ class Result(Generic[T]):
 
 class BatchResult(Generic[T]):
     """Generic batch result container."""
-    
+
     def __init__(self, results: List[Result[T]]):
         self.results = results
         self.successful = [r for r in results if r.success]
         self.failed = [r for r in results if not r.success]
-    
+
     @property
     def success_count(self) -> int:
         return len(self.successful)
-    
+
     @property
     def failure_count(self) -> int:
         return len(self.failed)
-    
+
     @property
     def total_count(self) -> int:
         return len(self.results)
-    
+
     @property
     def success_rate(self) -> float:
         if self.total_count == 0:
@@ -303,31 +302,26 @@ class BatchResult(Generic[T]):
 # Type Guards
 def is_entity_dict(obj: Any) -> bool:
     """Type guard to check if object is an entity dictionary."""
-    return (
-        isinstance(obj, dict) and
-        "id" in obj and
-        "text" in obj and
-        "type" in obj
-    )
+    return isinstance(obj, dict) and "id" in obj and "text" in obj and "type" in obj
 
 
 def is_relationship_dict(obj: Any) -> bool:
     """Type guard to check if object is a relationship dictionary."""
     return (
-        isinstance(obj, dict) and
-        "id" in obj and
-        "source_id" in obj and
-        "target_id" in obj and
-        "type" in obj
+        isinstance(obj, dict)
+        and "id" in obj
+        and "source_id" in obj
+        and "target_id" in obj
+        and "type" in obj
     )
 
 
 def is_processing_result(obj: Any) -> bool:
     """Type guard to check if object is a processing result."""
     return (
-        isinstance(obj, dict) and
-        "status" in obj and
-        obj["status"] in [s.value for s in ProcessingStatus]
+        isinstance(obj, dict)
+        and "status" in obj
+        and obj["status"] in [s.value for s in ProcessingStatus]
     )
 
 
@@ -337,7 +331,9 @@ def entity_to_dict(entity: Entity) -> EntityDict:
     return {
         "id": entity.id,
         "text": entity.text,
-        "type": entity.type.value if isinstance(entity.type, EntityType) else entity.type,
+        "type": entity.type.value
+        if isinstance(entity.type, EntityType)
+        else entity.type,
         "confidence": entity.confidence,
         "start": entity.start,
         "end": entity.end,

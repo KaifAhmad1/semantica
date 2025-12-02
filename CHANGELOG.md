@@ -7,11 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.5] - 2025-11-26
+
+### Changed
+- Configured Trusted Publishing for secure automated PyPI deployments
+
+## [0.0.4] - 2025-11-26
+
+### Changed
+- Fixed PyPI deployment issues from v0.0.3
+
+## [0.0.3] - 2025-11-25
+
+### Changed
+- Simplified CI/CD workflows - removed failing tests and strict linting
+- Combined release and PyPI publishing into single workflow
+- Simplified security scanning to weekly pip-audit only
+- Streamlined GitHub Actions configuration
+
 ### Added
-- Initial open source project structure
-- Comprehensive documentation framework
-- Contributing guidelines and code of conduct
-- Security policy and vulnerability reporting process
+- Comprehensive issue templates (Bug, Feature, Documentation, Support, Grant/Partnership)
+- Updated pull request template with clear guidelines
+- Community support documentation (SUPPORT.md)
+- Funding and sponsorship configuration (FUNDING.yml)
+- GitHub configuration README for maintainers
+- 10+ new domain-specific cookbook examples (Finance, Healthcare, Cybersecurity, etc.)
+
+### Removed
+- Redundant scripts folder (8 shell/PowerShell scripts)
+- Unnecessary automation workflows (label-issues, mark-answered)
+- Excessive issue templates
+
+## [0.0.2] - 2025-11-25
+
+### Changed
+- Updated README with streamlined content and better examples
+- Added more notebooks to cookbook
+- Improved documentation structure
 
 ## [0.0.1] - 2024-01-XX
 

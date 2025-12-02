@@ -151,22 +151,22 @@ Example Usage:
     >>> export_lpg(kg, "output.cypher", method="cypher")
 """
 
-from typing import Any, Dict, List, Optional, Callable, Union
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Union
 
+from ..utils.exceptions import ConfigurationError, ProcessingError
 from ..utils.logging import get_logger
-from ..utils.exceptions import ProcessingError, ConfigurationError
-from .rdf_exporter import RDFExporter
-from .json_exporter import JSONExporter
+from .config import export_config
 from .csv_exporter import CSVExporter
 from .graph_exporter import GraphExporter
-from .yaml_exporter import SemanticNetworkYAMLExporter, YAMLSchemaExporter
-from .owl_exporter import OWLExporter
-from .vector_exporter import VectorExporter
+from .json_exporter import JSONExporter
 from .lpg_exporter import LPGExporter
-from .report_generator import ReportGenerator
+from .owl_exporter import OWLExporter
+from .rdf_exporter import RDFExporter
 from .registry import method_registry
-from .config import export_config
+from .report_generator import ReportGenerator
+from .vector_exporter import VectorExporter
+from .yaml_exporter import SemanticNetworkYAMLExporter, YAMLSchemaExporter
 
 logger = get_logger("export_methods")
 
@@ -176,13 +176,13 @@ def export_rdf(
     file_path: Union[str, Path],
     format: str = "turtle",
     method: str = "default",
-    **kwargs
+    **kwargs,
 ) -> None:
     """
     Export data to RDF format (convenience function).
-    
+
     This is a user-friendly wrapper that exports data to RDF using the specified format.
-    
+
     Args:
         data: Data to export (knowledge graph, entities, relationships, or triples)
         file_path: Output RDF file path
@@ -194,7 +194,7 @@ def export_rdf(
             - "n3": N3 format
         method: Export method (default: "default")
         **kwargs: Additional options passed to RDFExporter
-        
+
     Examples:
         >>> from semantica.export.methods import export_rdf
         >>> export_rdf(kg, "output.ttl", format="turtle")
@@ -206,16 +206,18 @@ def export_rdf(
         try:
             return custom_method(data, file_path, format=format, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         # Get config
         config = export_config.get_method_config("rdf")
         config.update(kwargs)
-        
+
         exporter = RDFExporter(**config)
         exporter.export(data, file_path, format=format, **kwargs)
-            
+
     except Exception as e:
         logger.error(f"Failed to export RDF: {e}")
         raise
@@ -226,13 +228,13 @@ def export_json(
     file_path: Union[str, Path],
     format: str = "json",
     method: str = "default",
-    **kwargs
+    **kwargs,
 ) -> None:
     """
     Export data to JSON/JSON-LD format (convenience function).
-    
+
     This is a user-friendly wrapper that exports data to JSON or JSON-LD format.
-    
+
     Args:
         data: Data to export (knowledge graph, entities, relationships)
         file_path: Output JSON file path
@@ -241,7 +243,7 @@ def export_json(
             - "json-ld": JSON-LD format
         method: Export method (default: "default")
         **kwargs: Additional options passed to JSONExporter
-        
+
     Examples:
         >>> from semantica.export.methods import export_json
         >>> export_json(kg, "output.json", format="json")
@@ -253,17 +255,19 @@ def export_json(
         try:
             return custom_method(data, file_path, format=format, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         # Get config
         config = export_config.get_method_config("json")
         config.update(kwargs)
         config["format"] = format
-        
+
         exporter = JSONExporter(**config)
         exporter.export(data, file_path, format=format, **kwargs)
-            
+
     except Exception as e:
         logger.error(f"Failed to export JSON: {e}")
         raise
@@ -273,19 +277,19 @@ def export_csv(
     data: Union[List[Dict[str, Any]], Dict[str, List[Dict[str, Any]]]],
     file_path: Union[str, Path],
     method: str = "default",
-    **kwargs
+    **kwargs,
 ) -> None:
     """
     Export data to CSV format (convenience function).
-    
+
     This is a user-friendly wrapper that exports data to CSV format.
-    
+
     Args:
         data: Data to export (list of dicts or dict with list values)
         file_path: Output CSV file path (or base path for multiple files)
         method: Export method (default: "default")
         **kwargs: Additional options passed to CSVExporter
-        
+
     Examples:
         >>> from semantica.export.methods import export_csv
         >>> export_csv(entities, "entities.csv")
@@ -297,16 +301,18 @@ def export_csv(
         try:
             return custom_method(data, file_path, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         # Get config
         config = export_config.get_method_config("csv")
         config.update(kwargs)
-        
+
         exporter = CSVExporter(**config)
         exporter.export(data, file_path, **kwargs)
-            
+
     except Exception as e:
         logger.error(f"Failed to export CSV: {e}")
         raise
@@ -317,13 +323,13 @@ def export_graph(
     file_path: Union[str, Path],
     format: str = "json",
     method: str = "default",
-    **kwargs
+    **kwargs,
 ) -> None:
     """
     Export graph data to graph format (convenience function).
-    
+
     This is a user-friendly wrapper that exports graph data to various graph formats.
-    
+
     Args:
         graph_data: Graph data dictionary with nodes and edges
         file_path: Output graph file path
@@ -334,7 +340,7 @@ def export_graph(
             - "json": JSON graph format
         method: Export method (default: "default")
         **kwargs: Additional options passed to GraphExporter
-        
+
     Examples:
         >>> from semantica.export.methods import export_graph
         >>> export_graph(graph_data, "graph.graphml", format="graphml")
@@ -346,17 +352,19 @@ def export_graph(
         try:
             return custom_method(graph_data, file_path, format=format, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         # Get config
         config = export_config.get_method_config("graph")
         config.update(kwargs)
         config["format"] = format
-        
+
         exporter = GraphExporter(**config)
         exporter.export(graph_data, file_path, format=format, **kwargs)
-            
+
     except Exception as e:
         logger.error(f"Failed to export graph: {e}")
         raise
@@ -366,13 +374,13 @@ def export_yaml(
     data: Union[Dict[str, Any], List[Dict[str, Any]]],
     file_path: Union[str, Path],
     method: str = "semantic_network",
-    **kwargs
+    **kwargs,
 ) -> None:
     """
     Export data to YAML format (convenience function).
-    
+
     This is a user-friendly wrapper that exports data to YAML format.
-    
+
     Args:
         data: Data to export (semantic network, entities, relationships)
         file_path: Output YAML file path
@@ -380,7 +388,7 @@ def export_yaml(
             - "semantic_network": Semantic network YAML export
             - "schema": Schema YAML export
         **kwargs: Additional options passed to YAML exporters
-        
+
     Examples:
         >>> from semantica.export.methods import export_yaml
         >>> export_yaml(semantic_network, "network.yaml", method="semantic_network")
@@ -392,13 +400,15 @@ def export_yaml(
         try:
             return custom_method(data, file_path, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         # Get config
         config = export_config.get_method_config("yaml")
         config.update(kwargs)
-        
+
         if method == "semantic_network":
             exporter = SemanticNetworkYAMLExporter(**config)
             exporter.export(data, file_path, **kwargs)
@@ -407,7 +417,7 @@ def export_yaml(
             exporter.export(data, file_path, **kwargs)
         else:
             raise ProcessingError(f"Unknown YAML export method: {method}")
-            
+
     except Exception as e:
         logger.error(f"Failed to export YAML: {e}")
         raise
@@ -418,13 +428,13 @@ def export_owl(
     file_path: Union[str, Path],
     format: str = "owl-xml",
     method: str = "default",
-    **kwargs
+    **kwargs,
 ) -> None:
     """
     Export ontology to OWL format (convenience function).
-    
+
     This is a user-friendly wrapper that exports ontologies to OWL format.
-    
+
     Args:
         ontology: Ontology data dictionary
         file_path: Output OWL file path
@@ -433,7 +443,7 @@ def export_owl(
             - "turtle": OWL in Turtle format
         method: Export method (default: "default")
         **kwargs: Additional options passed to OWLExporter
-        
+
     Examples:
         >>> from semantica.export.methods import export_owl
         >>> export_owl(ontology, "ontology.owl", format="owl-xml")
@@ -445,17 +455,19 @@ def export_owl(
         try:
             return custom_method(ontology, file_path, format=format, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         # Get config
         config = export_config.get_method_config("owl")
         config.update(kwargs)
         config["format"] = format
-        
+
         exporter = OWLExporter(**config)
         exporter.export(ontology, file_path, format=format, **kwargs)
-            
+
     except Exception as e:
         logger.error(f"Failed to export OWL: {e}")
         raise
@@ -466,13 +478,13 @@ def export_vector(
     file_path: Union[str, Path],
     format: str = "json",
     method: str = "default",
-    **kwargs
+    **kwargs,
 ) -> None:
     """
     Export vectors to vector format (convenience function).
-    
+
     This is a user-friendly wrapper that exports vectors to various vector formats.
-    
+
     Args:
         vectors: Vector data (list of vectors or dict with vector data)
         file_path: Output vector file path
@@ -483,7 +495,7 @@ def export_vector(
             - "faiss": FAISS format
         method: Export method (default: "default")
         **kwargs: Additional options passed to VectorExporter
-        
+
     Examples:
         >>> from semantica.export.methods import export_vector
         >>> export_vector(vectors, "vectors.json", format="json")
@@ -495,17 +507,19 @@ def export_vector(
         try:
             return custom_method(vectors, file_path, format=format, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         # Get config
         config = export_config.get_method_config("vector")
         config.update(kwargs)
         config["format"] = format
-        
+
         exporter = VectorExporter(**config)
         exporter.export(vectors, file_path, format=format, **kwargs)
-            
+
     except Exception as e:
         logger.error(f"Failed to export vector: {e}")
         raise
@@ -515,14 +529,14 @@ def export_lpg(
     knowledge_graph: Dict[str, Any],
     file_path: Union[str, Path],
     method: str = "cypher",
-    **kwargs
+    **kwargs,
 ) -> None:
     """
     Export knowledge graph to LPG format (convenience function).
-    
+
     This is a user-friendly wrapper that exports knowledge graphs to LPG format
     (Cypher queries for Neo4j, Memgraph, etc.).
-    
+
     Args:
         knowledge_graph: Knowledge graph dictionary with entities and relationships
         file_path: Output Cypher file path
@@ -530,7 +544,7 @@ def export_lpg(
             - "cypher": Cypher query format
             - "lpg": Labeled Property Graph format
         **kwargs: Additional options passed to LPGExporter
-        
+
     Examples:
         >>> from semantica.export.methods import export_lpg
         >>> export_lpg(kg, "graph.cypher", method="cypher")
@@ -541,16 +555,18 @@ def export_lpg(
         try:
             return custom_method(knowledge_graph, file_path, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         # Get config
         config = export_config.get_method_config("lpg")
         config.update(kwargs)
-        
+
         exporter = LPGExporter(**config)
         exporter.export_knowledge_graph(knowledge_graph, file_path, **kwargs)
-            
+
     except Exception as e:
         logger.error(f"Failed to export LPG: {e}")
         raise
@@ -561,13 +577,13 @@ def generate_report(
     file_path: Union[str, Path],
     format: str = "markdown",
     method: str = "default",
-    **kwargs
+    **kwargs,
 ) -> None:
     """
     Generate report (convenience function).
-    
+
     This is a user-friendly wrapper that generates reports in various formats.
-    
+
     Args:
         data: Report data dictionary
         file_path: Output report file path
@@ -578,7 +594,7 @@ def generate_report(
             - "text": Plain text report format
         method: Report generation method (default: "default")
         **kwargs: Additional options passed to ReportGenerator
-        
+
     Examples:
         >>> from semantica.export.methods import generate_report
         >>> generate_report(metrics, "report.html", format="html")
@@ -590,17 +606,19 @@ def generate_report(
         try:
             return custom_method(data, file_path, format=format, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         # Get config
         config = export_config.get_method_config("report")
         config.update(kwargs)
         config["format"] = format
-        
+
         generator = ReportGenerator(**config)
         generator.generate_report(data, file_path, format=format, **kwargs)
-            
+
     except Exception as e:
         logger.error(f"Failed to generate report: {e}")
         raise
@@ -611,14 +629,14 @@ def export_knowledge_graph(
     file_path: Union[str, Path],
     format: str = "json",
     method: Optional[str] = None,
-    **kwargs
+    **kwargs,
 ) -> None:
     """
     Export knowledge graph to specified format (unified convenience function).
-    
+
     This is a user-friendly wrapper that automatically routes to the appropriate
     exporter based on the file extension or format parameter.
-    
+
     Args:
         knowledge_graph: Knowledge graph dictionary with entities and relationships
         file_path: Output file path (format auto-detected from extension if format not specified)
@@ -635,7 +653,7 @@ def export_knowledge_graph(
             - "cypher": LPGExporter
         method: Optional specific export method
         **kwargs: Additional options passed to exporter
-        
+
     Examples:
         >>> from semantica.export.methods import export_knowledge_graph
         >>> export_knowledge_graph(kg, "output.json", format="json")
@@ -661,7 +679,7 @@ def export_knowledge_graph(
             ".cypher": "cypher",
         }
         format = format_map.get(ext, "json")
-    
+
     # Route to appropriate exporter
     if format in ["json", "json-ld"]:
         export_json(knowledge_graph, file_path, format=format, method=method, **kwargs)
@@ -684,14 +702,14 @@ def export_knowledge_graph(
 def get_export_method(task: str, name: str) -> Optional[Callable]:
     """
     Get a registered export method.
-    
+
     Args:
         task: Task type ("rdf", "json", "csv", "graph", "yaml", "owl", "vector", "lpg", "report", "export")
         name: Method name
-        
+
     Returns:
         Registered method or None if not found
-        
+
     Examples:
         >>> from semantica.export.methods import get_export_method
         >>> method = get_export_method("json", "custom_method")
@@ -704,13 +722,13 @@ def get_export_method(task: str, name: str) -> Optional[Callable]:
 def list_available_methods(task: Optional[str] = None) -> Dict[str, List[str]]:
     """
     List all available export methods.
-    
+
     Args:
         task: Optional task type filter
-        
+
     Returns:
         Dictionary mapping task types to method names
-        
+
     Examples:
         >>> from semantica.export.methods import list_available_methods
         >>> all_methods = list_available_methods()
@@ -749,4 +767,3 @@ method_registry.register("report", "html", generate_report)
 method_registry.register("report", "markdown", generate_report)
 method_registry.register("export", "default", export_knowledge_graph)
 method_registry.register("export", "knowledge_graph", export_knowledge_graph)
-

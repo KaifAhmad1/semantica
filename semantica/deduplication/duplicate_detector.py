@@ -40,8 +40,8 @@ Author: Semantica Contributors
 License: MIT
 """
 
-from typing import Any, Dict, List, Optional, Set, Tuple
 from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from ..utils.exceptions import ProcessingError
 from ..utils.logging import get_logger
@@ -52,7 +52,7 @@ from .similarity_calculator import SimilarityCalculator, SimilarityResult
 @dataclass
 class DuplicateCandidate:
     """Duplicate candidate representation."""
-    
+
     entity1: Dict[str, Any]
     entity2: Dict[str, Any]
     similarity_score: float
@@ -64,7 +64,7 @@ class DuplicateCandidate:
 @dataclass
 class DuplicateGroup:
     """Group of duplicate entities."""
-    
+
     entities: List[Dict[str, Any]]
     similarity_scores: Dict[Tuple[str, str], float] = field(default_factory=dict)
     representative: Optional[Dict[str, Any]] = None
@@ -75,11 +75,11 @@ class DuplicateGroup:
 class DuplicateDetector:
     """
     Duplicate detection engine for knowledge graphs.
-    
+
     This class provides comprehensive duplicate detection capabilities, identifying
     duplicate entities and relationships using similarity metrics, confidence scoring,
     and group formation algorithms.
-    
+
     Features:
         - Entity duplicate detection using multi-factor similarity
         - Relationship duplicate detection
@@ -87,27 +87,27 @@ class DuplicateDetector:
         - Incremental detection for new entities
         - Confidence scoring with multiple factors
         - Representative entity selection
-    
+
     Example Usage:
         >>> detector = DuplicateDetector(similarity_threshold=0.8, confidence_threshold=0.7)
         >>> candidates = detector.detect_duplicates(entities)
         >>> groups = detector.detect_duplicate_groups(entities)
     """
-    
+
     def __init__(
         self,
         similarity_threshold: float = 0.7,
         confidence_threshold: float = 0.6,
         use_clustering: bool = True,
         config: Optional[Dict[str, Any]] = None,
-        **kwargs
+        **kwargs,
     ):
         """
         Initialize duplicate detector.
-        
+
         Sets up the detector with similarity calculator and configurable thresholds
         for duplicate detection and confidence scoring.
-        
+
         Args:
             similarity_threshold: Minimum similarity score to consider entities as duplicates
                                 (0.0 to 1.0, default: 0.7)
@@ -119,47 +119,47 @@ class DuplicateDetector:
                 - similarity: Configuration for SimilarityCalculator
         """
         self.logger = get_logger("duplicate_detector")
-        
+
         # Merge configuration
         self.config = config or {}
         self.config.update(kwargs)
-        
+
         # Initialize similarity calculator
         similarity_config = self.config.get("similarity", {})
         self.similarity_calculator = SimilarityCalculator(**similarity_config)
-        
+
         # Detection thresholds
         self.similarity_threshold = similarity_threshold
         self.confidence_threshold = confidence_threshold
         self.use_clustering = use_clustering
-        
+
         # Initialize progress tracker
         self.progress_tracker = get_progress_tracker()
-        
+
         self.logger.debug(
             f"Duplicate detector initialized: similarity_threshold={similarity_threshold}, "
             f"confidence_threshold={confidence_threshold}"
         )
-    
+
     def detect_duplicates(
         self,
         entities: List[Dict[str, Any]],
         threshold: Optional[float] = None,
-        **options
+        **options,
     ) -> List[DuplicateCandidate]:
         """
         Detect duplicate entities from a list.
-        
+
         This method compares all pairs of entities and identifies duplicates based
         on similarity scores and confidence thresholds. Returns candidates sorted
         by confidence (highest first).
-        
+
         Args:
             entities: List of entity dictionaries to check for duplicates.
                      Each entity should have at least a "name" field.
             threshold: Minimum similarity threshold (overrides instance default)
             **options: Additional detection options passed to similarity calculator
-            
+
         Returns:
             List of DuplicateCandidate objects, sorted by confidence (highest first).
             Each candidate contains:
@@ -168,7 +168,7 @@ class DuplicateDetector:
                 - confidence: Confidence score (0.0 to 1.0)
                 - reasons: List of reasons why they're considered duplicates
                 - metadata: Additional metadata
-                
+
         Example:
             >>> entities = [
             ...     {"id": "1", "name": "Apple Inc."},
@@ -183,77 +183,89 @@ class DuplicateDetector:
             file=None,
             module="deduplication",
             submodule="DuplicateDetector",
-            message=f"Detecting duplicates in {len(entities)} entities"
+            message=f"Detecting duplicates in {len(entities)} entities",
         )
-        
+
         try:
             # Use provided threshold or instance default
-            detection_threshold = threshold if threshold is not None else self.similarity_threshold
-            
+            detection_threshold = (
+                threshold if threshold is not None else self.similarity_threshold
+            )
+
             self.logger.info(
                 f"Detecting duplicates in {len(entities)} entities "
                 f"(threshold: {detection_threshold})"
             )
-            
-            self.progress_tracker.update_tracking(tracking_id, message="Calculating similarities...")
+
+            self.progress_tracker.update_tracking(
+                tracking_id, message="Calculating similarities..."
+            )
             # Calculate similarity for all entity pairs
             similarities = self.similarity_calculator.batch_calculate_similarity(
-                entities,
-                threshold=detection_threshold
+                entities, threshold=detection_threshold
             )
-            
-            self.logger.debug(f"Found {len(similarities)} similar pairs above threshold")
-            
-            self.progress_tracker.update_tracking(tracking_id, message="Creating duplicate candidates...")
+
+            self.logger.debug(
+                f"Found {len(similarities)} similar pairs above threshold"
+            )
+
+            self.progress_tracker.update_tracking(
+                tracking_id, message="Creating duplicate candidates..."
+            )
             # Create duplicate candidates from similar pairs
             candidates = []
             for entity1, entity2, score in similarities:
                 candidate = self._create_duplicate_candidate(entity1, entity2, score)
-                
+
                 # Filter by confidence threshold
                 if candidate.confidence >= self.confidence_threshold:
                     candidates.append(candidate)
-            
+
             # Sort by confidence (highest first)
             candidates.sort(key=lambda c: c.confidence, reverse=True)
-            
+
             self.logger.info(
                 f"Detected {len(candidates)} duplicate candidate(s) "
                 f"(confidence >= {self.confidence_threshold})"
             )
-            
-            self.progress_tracker.stop_tracking(tracking_id, status="completed",
-                                               message=f"Detected {len(candidates)} duplicate candidates")
+
+            self.progress_tracker.stop_tracking(
+                tracking_id,
+                status="completed",
+                message=f"Detected {len(candidates)} duplicate candidates",
+            )
             return candidates
-            
+
         except Exception as e:
-            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
+            )
             raise
-    
+
     def detect_duplicate_groups(
         self,
         entities: List[Dict[str, Any]],
         threshold: Optional[float] = None,
-        **options
+        **options,
     ) -> List[DuplicateGroup]:
         """
         Detect groups of duplicate entities.
-        
+
         This method identifies duplicate entities and groups them together using
         a union-find algorithm. Each group represents entities that are duplicates
         of each other, with confidence scores and representative entities.
-        
+
         Process:
             1. Detect duplicate candidates using similarity
             2. Build groups using union-find (entities in same group are duplicates)
             3. Calculate group confidence scores
             4. Select representative entity for each group
-        
+
         Args:
             entities: List of entity dictionaries to group
             threshold: Minimum similarity threshold (overrides instance default)
             **options: Additional detection options passed to detect_duplicates()
-            
+
         Returns:
             List of DuplicateGroup objects, each containing:
                 - entities: List of duplicate entities in the group
@@ -261,7 +273,7 @@ class DuplicateDetector:
                 - representative: Representative entity (most complete)
                 - confidence: Group confidence score (0.0 to 1.0)
                 - metadata: Additional group metadata
-                
+
         Example:
             >>> groups = detector.detect_duplicate_groups(entities, threshold=0.8)
             >>> for group in groups:
@@ -273,202 +285,208 @@ class DuplicateDetector:
             file=None,
             module="deduplication",
             submodule="DuplicateDetector",
-            message=f"Detecting duplicate groups from {len(entities)} entities"
+            message=f"Detecting duplicate groups from {len(entities)} entities",
         )
-        
+
         try:
-            self.logger.info(f"Detecting duplicate groups from {len(entities)} entities")
-            
+            self.logger.info(
+                f"Detecting duplicate groups from {len(entities)} entities"
+            )
+
             # Detect duplicate candidates
-            candidates = self.detect_duplicates(entities, threshold=threshold, **options)
-            
-            self.progress_tracker.update_tracking(tracking_id, message="Building duplicate groups...")
+            candidates = self.detect_duplicates(
+                entities, threshold=threshold, **options
+            )
+
+            self.progress_tracker.update_tracking(
+                tracking_id, message="Building duplicate groups..."
+            )
             # Build groups using union-find approach
             # This connects entities that are duplicates into groups
             groups = self._build_duplicate_groups(candidates)
-            
+
             self.logger.debug(f"Built {len(groups)} duplicate group(s)")
-            
-            self.progress_tracker.update_tracking(tracking_id, message="Calculating group metrics...")
+
+            self.progress_tracker.update_tracking(
+                tracking_id, message="Calculating group metrics..."
+            )
             # Calculate group metrics for each group
             for group in groups:
                 group.confidence = self._calculate_group_confidence(group)
                 group.representative = self._select_representative(group)
-            
+
             self.logger.info(
                 f"Detected {len(groups)} duplicate group(s) with "
                 f"{sum(len(g.entities) for g in groups)} total entities"
             )
-            
-            self.progress_tracker.stop_tracking(tracking_id, status="completed",
-                                               message=f"Detected {len(groups)} duplicate groups")
+
+            self.progress_tracker.stop_tracking(
+                tracking_id,
+                status="completed",
+                message=f"Detected {len(groups)} duplicate groups",
+            )
             return groups
-            
+
         except Exception as e:
-            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
+            )
             raise
-    
+
     def detect_relationship_duplicates(
-        self,
-        relationships: List[Dict[str, Any]],
-        **options
+        self, relationships: List[Dict[str, Any]], **options
     ) -> List[Tuple[Dict[str, Any], Dict[str, Any]]]:
         """
         Detect duplicate relationships.
-        
+
         Args:
             relationships: List of relationships
             **options: Detection options
-            
+
         Returns:
             List of duplicate relationship pairs
         """
         duplicates = []
         threshold = options.get("threshold", 0.9)
-        
+
         for i in range(len(relationships)):
             for j in range(i + 1, len(relationships)):
                 rel1 = relationships[i]
                 rel2 = relationships[j]
-                
+
                 if self._relationships_are_duplicates(rel1, rel2, threshold):
                     duplicates.append((rel1, rel2))
-        
+
         return duplicates
-    
+
     def incremental_detect(
         self,
         new_entities: List[Dict[str, Any]],
         existing_entities: List[Dict[str, Any]],
         threshold: Optional[float] = None,
-        **options
+        **options,
     ) -> List[DuplicateCandidate]:
         """
         Incremental duplicate detection for new entities.
-        
+
         This method efficiently detects duplicates between new entities and an
         existing set of entities, avoiding the O(n²) comparison of all pairs.
         Useful for streaming or incremental data processing scenarios.
-        
+
         Args:
             new_entities: List of new entity dictionaries to check for duplicates
             existing_entities: List of existing entity dictionaries to compare against
             threshold: Minimum similarity threshold (overrides instance default)
             **options: Additional detection options
-            
+
         Returns:
             List of DuplicateCandidate objects representing duplicates between
             new and existing entities, sorted by confidence (highest first).
-            
+
         Example:
             >>> new_entities = [{"id": "3", "name": "Apple Corp"}]
             >>> existing = [{"id": "1", "name": "Apple Inc."}]
             >>> candidates = detector.incremental_detect(new_entities, existing)
             >>> # Returns candidates if Apple Corp and Apple Inc. are duplicates
         """
-        detection_threshold = threshold if threshold is not None else self.similarity_threshold
-        
+        detection_threshold = (
+            threshold if threshold is not None else self.similarity_threshold
+        )
+
         self.logger.info(
             f"Incremental detection: {len(new_entities)} new entities vs "
             f"{len(existing_entities)} existing entities"
         )
-        
+
         candidates = []
-        
+
         # Compare each new entity with all existing entities
         for new_entity in new_entities:
             for existing_entity in existing_entities:
                 # Calculate similarity
                 similarity = self.similarity_calculator.calculate_similarity(
-                    new_entity,
-                    existing_entity
+                    new_entity, existing_entity
                 )
-                
+
                 # Check if above threshold
                 if similarity.score >= detection_threshold:
                     candidate = self._create_duplicate_candidate(
-                        new_entity,
-                        existing_entity,
-                        similarity.score
+                        new_entity, existing_entity, similarity.score
                     )
-                    
+
                     # Filter by confidence threshold
                     if candidate.confidence >= self.confidence_threshold:
                         candidates.append(candidate)
-        
+
         # Sort by confidence (highest first)
         candidates.sort(key=lambda c: c.confidence, reverse=True)
-        
+
         self.logger.info(
             f"Incremental detection found {len(candidates)} duplicate candidate(s)"
         )
-        
+
         return candidates
-    
+
     def _create_duplicate_candidate(
-        self,
-        entity1: Dict[str, Any],
-        entity2: Dict[str, Any],
-        similarity_score: float
+        self, entity1: Dict[str, Any], entity2: Dict[str, Any], similarity_score: float
     ) -> DuplicateCandidate:
         """
         Create duplicate candidate from similarity result.
-        
+
         This method builds a DuplicateCandidate object by analyzing the similarity
         score and additional factors (name match, property matches, type match)
         to calculate a confidence score.
-        
+
         Confidence Calculation:
             - Base: similarity_score
             - +0.1: Exact name match
             - +0.05 per matching property value
             - +0.05: Same entity type
             - Capped at 1.0
-        
+
         Args:
             entity1: First entity dictionary
             entity2: Second entity dictionary
             similarity_score: Base similarity score from similarity calculator
-            
+
         Returns:
             DuplicateCandidate object with calculated confidence and reasons
         """
         reasons = []
         confidence = similarity_score
-        
+
         # Check for exact name match (strong indicator)
         name1 = entity1.get("name", "").lower().strip()
         name2 = entity2.get("name", "").lower().strip()
         if name1 == name2 and name1:  # Non-empty exact match
             reasons.append("exact_name_match")
             confidence += 0.1
-        
+
         # Check property value matches
         props1 = entity1.get("properties", {})
         props2 = entity2.get("properties", {})
-        
+
         common_props = set(props1.keys()) & set(props2.keys())
         if common_props:
             # Count properties with matching values
             prop_matches = sum(
-                1 for prop in common_props
-                if props1.get(prop) == props2.get(prop)
+                1 for prop in common_props if props1.get(prop) == props2.get(prop)
             )
             if prop_matches > 0:
                 reasons.append(f"{prop_matches}_property_matches")
                 # Boost confidence for each matching property
                 confidence += 0.05 * prop_matches
-        
+
         # Check entity type match
         entity_type1 = entity1.get("type")
         entity_type2 = entity2.get("type")
         if entity_type1 and entity_type2 and entity_type1 == entity_type2:
             reasons.append("same_type")
             confidence += 0.05
-        
+
         # Cap confidence at 1.0
         confidence = min(1.0, confidence)
-        
+
         return DuplicateCandidate(
             entity1=entity1,
             entity2=entity2,
@@ -478,31 +496,32 @@ class DuplicateDetector:
             metadata={
                 "name_match": name1 == name2,
                 "common_properties": len(common_props),
-                "type_match": entity_type1 == entity_type2
-            }
+                "type_match": entity_type1 == entity_type2,
+            },
         )
-    
+
     def _build_duplicate_groups(
-        self,
-        candidates: List[DuplicateCandidate]
+        self, candidates: List[DuplicateCandidate]
     ) -> List[DuplicateGroup]:
         """Build duplicate groups from candidates."""
         # Union-find structure
         entity_to_group = {}
         groups = []
-        
+
         for candidate in candidates:
             entity1_id = candidate.entity1.get("id") or id(candidate.entity1)
             entity2_id = candidate.entity2.get("id") or id(candidate.entity2)
-            
+
             group1 = entity_to_group.get(entity1_id)
             group2 = entity_to_group.get(entity2_id)
-            
+
             if group1 is None and group2 is None:
                 # Create new group
                 group = DuplicateGroup(
                     entities=[candidate.entity1, candidate.entity2],
-                    similarity_scores={(entity1_id, entity2_id): candidate.similarity_score}
+                    similarity_scores={
+                        (entity1_id, entity2_id): candidate.similarity_score
+                    },
                 )
                 groups.append(group)
                 entity_to_group[entity1_id] = group
@@ -511,72 +530,79 @@ class DuplicateDetector:
                 # Add entity2 to group1
                 if candidate.entity2 not in group1.entities:
                     group1.entities.append(candidate.entity2)
-                group1.similarity_scores[(entity1_id, entity2_id)] = candidate.similarity_score
+                group1.similarity_scores[
+                    (entity1_id, entity2_id)
+                ] = candidate.similarity_score
                 entity_to_group[entity2_id] = group1
             elif group1 is None and group2 is not None:
                 # Add entity1 to group2
                 if candidate.entity1 not in group2.entities:
                     group2.entities.append(candidate.entity1)
-                group2.similarity_scores[(entity1_id, entity2_id)] = candidate.similarity_score
+                group2.similarity_scores[
+                    (entity1_id, entity2_id)
+                ] = candidate.similarity_score
                 entity_to_group[entity1_id] = group2
             elif group1 != group2:
                 # Merge groups
-                group1.entities.extend([e for e in group2.entities if e not in group1.entities])
+                group1.entities.extend(
+                    [e for e in group2.entities if e not in group1.entities]
+                )
                 group1.similarity_scores.update(group2.similarity_scores)
-                group1.similarity_scores[(entity1_id, entity2_id)] = candidate.similarity_score
-                
+                group1.similarity_scores[
+                    (entity1_id, entity2_id)
+                ] = candidate.similarity_score
+
                 # Update references
                 for entity in group2.entities:
                     entity_id = entity.get("id") or id(entity)
                     entity_to_group[entity_id] = group1
-                
+
                 groups.remove(group2)
-        
+
         return groups
-    
+
     def _calculate_group_confidence(self, group: DuplicateGroup) -> float:
         """Calculate confidence for duplicate group."""
         if not group.similarity_scores:
             return 0.0
-        
+
         scores = list(group.similarity_scores.values())
         avg_score = sum(scores) / len(scores) if scores else 0.0
-        
+
         # Boost confidence for larger groups
         size_factor = min(1.0, len(group.entities) / 5.0)
-        
+
         return avg_score * (0.8 + 0.2 * size_factor)
-    
+
     def _select_representative(self, group: DuplicateGroup) -> Dict[str, Any]:
         """Select representative entity from group."""
         if not group.entities:
             return None
-        
+
         # Select entity with most properties/relationships
         best_entity = max(
             group.entities,
-            key=lambda e: len(e.get("properties", {})) + len(e.get("relationships", []))
+            key=lambda e: len(e.get("properties", {}))
+            + len(e.get("relationships", [])),
         )
-        
+
         return best_entity
-    
+
     def _relationships_are_duplicates(
-        self,
-        rel1: Dict[str, Any],
-        rel2: Dict[str, Any],
-        threshold: float
+        self, rel1: Dict[str, Any], rel2: Dict[str, Any], threshold: float
     ) -> bool:
         """Check if two relationships are duplicates."""
         # Exact match
-        if (rel1.get("subject") == rel2.get("subject") and
-            rel1.get("predicate") == rel2.get("predicate") and
-            rel1.get("object") == rel2.get("object")):
+        if (
+            rel1.get("subject") == rel2.get("subject")
+            and rel1.get("predicate") == rel2.get("predicate")
+            and rel1.get("object") == rel2.get("object")
+        ):
             return True
-        
+
         # Similarity check
         similarity = self.similarity_calculator.calculate_string_similarity(
-            str(rel1.get("predicate", "")),
-            str(rel2.get("predicate", ""))
+            str(rel1.get("predicate", "")), str(rel2.get("predicate", ""))
         )
-        
+
         return similarity >= threshold

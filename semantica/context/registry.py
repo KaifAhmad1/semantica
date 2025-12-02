@@ -40,24 +40,24 @@ Author: Semantica Contributors
 License: MIT
 """
 
-from typing import Dict, Callable, Any, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 
 class MethodRegistry:
     """Registry for custom context methods."""
-    
+
     _methods: Dict[str, Dict[str, Callable]] = {
         "graph": {},
         "memory": {},
         "retrieval": {},
         "linking": {},
     }
-    
+
     @classmethod
     def register(cls, task: str, name: str, method_func: Callable):
         """
         Register a method for a specific task.
-        
+
         Args:
             task: Task type ("graph", "memory", "retrieval", "linking")
             name: Method name
@@ -66,41 +66,41 @@ class MethodRegistry:
         if task not in cls._methods:
             cls._methods[task] = {}
         cls._methods[task][name] = method_func
-    
+
     @classmethod
     def get(cls, task: str, name: str) -> Optional[Callable]:
         """
         Get a registered method.
-        
+
         Args:
             task: Task type
             name: Method name
-            
+
         Returns:
             Registered method or None if not found
         """
         return cls._methods.get(task, {}).get(name)
-    
+
     @classmethod
     def list_all(cls, task: Optional[str] = None) -> Dict[str, List[str]]:
         """
         List all registered methods.
-        
+
         Args:
             task: Optional task type filter
-            
+
         Returns:
             Dictionary mapping task types to method names
         """
         if task:
             return {task: list(cls._methods.get(task, {}).keys())}
         return {t: list(m.keys()) for t, m in cls._methods.items()}
-    
+
     @classmethod
     def unregister(cls, task: str, name: str):
         """
         Unregister a method.
-        
+
         Args:
             task: Task type
             name: Method name
@@ -110,4 +110,3 @@ class MethodRegistry:
 
 
 method_registry = MethodRegistry()
-

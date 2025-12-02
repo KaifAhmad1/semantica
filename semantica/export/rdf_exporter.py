@@ -29,28 +29,28 @@ Author: Semantica Contributors
 License: MIT
 """
 
-from typing import Any, Dict, List, Optional, Set, Union
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Set, Union
 
-from ..utils.exceptions import ValidationError, ProcessingError
-from ..utils.logging import get_logger
+from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.helpers import ensure_directory
+from ..utils.logging import get_logger
 from ..utils.progress_tracker import get_progress_tracker
 
 
 class NamespaceManager:
     """
     RDF namespace management engine.
-    
+
     This class manages RDF namespaces, handles namespace declarations, resolves
     conflicts, and generates namespace declarations for various RDF formats.
-    
+
     Features:
         - Namespace registration and management
         - Namespace declaration generation
         - Namespace conflict resolution
         - Format-specific namespace formatting
-    
+
     Example Usage:
         >>> manager = NamespaceManager()
         >>> declarations = manager.generate_namespace_declarations(
@@ -58,46 +58,46 @@ class NamespaceManager:
         ...     format="turtle"
         ... )
     """
-    
+
     def __init__(self, **config):
         """
         Initialize namespace manager.
-        
+
         Sets up the namespace manager with standard RDF namespaces and
         configuration options.
-        
+
         Args:
             **config: Configuration options (currently unused)
         """
         self.logger = get_logger("namespace_manager")
-        
+
         # Standard RDF namespaces
         self.namespaces: Dict[str, str] = {
             "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
             "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
             "owl": "http://www.w3.org/2002/07/owl#",
             "xsd": "http://www.w3.org/2001/XMLSchema#",
-            "semantica": "https://semantica.dev/ns#"
+            "semantica": "https://semantica.dev/ns#",
         }
         self.config = config or {}
-        
+
         self.logger.debug(
             f"Namespace manager initialized with {len(self.namespaces)} namespace(s)"
         )
-    
+
     def extract_namespaces(self, rdf_data: Dict[str, Any]) -> Dict[str, str]:
         """
         Extract namespaces from RDF data.
-        
+
         This method identifies and extracts namespace declarations from RDF data,
         particularly from JSON-LD @context or other namespace declarations.
-        
+
         Args:
             rdf_data: RDF data dictionary that may contain namespace information
-        
+
         Returns:
             Dictionary mapping namespace prefixes to URIs
-        
+
         Example:
             >>> rdf_data = {
             ...     "@context": {
@@ -108,7 +108,7 @@ class NamespaceManager:
             >>> namespaces = manager.extract_namespaces(rdf_data)
         """
         extracted = {}
-        
+
         # Check for @context in JSON-LD
         if "@context" in rdf_data:
             context = rdf_data["@context"]
@@ -118,39 +118,37 @@ class NamespaceManager:
                     if not prefix.startswith("@"):
                         extracted[prefix] = uri
                         self.logger.debug(f"Extracted namespace: {prefix} -> {uri}")
-        
+
         return extracted
-    
+
     def generate_namespace_declarations(
-        self,
-        namespaces: Dict[str, str],
-        format: str = "turtle"
+        self, namespaces: Dict[str, str], format: str = "turtle"
     ) -> str:
         """
         Generate namespace declarations for specified RDF format.
-        
+
         This method creates namespace declarations in the appropriate syntax
         for the specified RDF format.
-        
+
         Supported Formats:
             - "turtle": Turtle format (@prefix prefix: <uri> .)
             - "rdfxml": RDF/XML format (xmlns:prefix="uri")
             - "jsonld": JSON-LD format (returns empty, handled via @context)
-        
+
         Args:
             namespaces: Dictionary mapping namespace prefixes to URIs
             format: RDF format - 'turtle', 'rdfxml', or 'jsonld' (default: 'turtle')
-        
+
         Returns:
             String containing namespace declarations in format-specific syntax
-        
+
         Example:
             >>> namespaces = {"ex": "http://example.org/ns#"}
             >>> decls = manager.generate_namespace_declarations(namespaces, "turtle")
             >>> # Returns: "@prefix ex: <http://example.org/ns#> ."
         """
         declarations = []
-        
+
         if format == "turtle":
             # Turtle format: @prefix prefix: <uri> .
             for prefix, uri in namespaces.items():
@@ -162,26 +160,23 @@ class NamespaceManager:
         elif format == "jsonld":
             # JSON-LD uses @context, not separate declarations
             return ""  # Handled separately in JSON-LD serialization
-        
+
         return "\n".join(declarations)
-    
-    def resolve_namespace_conflicts(
-        self,
-        namespaces: Dict[str, str]
-    ) -> Dict[str, str]:
+
+    def resolve_namespace_conflicts(self, namespaces: Dict[str, str]) -> Dict[str, str]:
         """
         Resolve namespace conflicts.
-        
+
         This method identifies namespace conflicts where multiple prefixes map
         to the same URI, or the same prefix maps to multiple URIs. Logs warnings
         for conflicts but allows them (first prefix wins).
-        
+
         Args:
             namespaces: Dictionary mapping namespace prefixes to URIs
-        
+
         Returns:
             Dictionary with resolved namespaces (conflicts logged but preserved)
-        
+
         Example:
             >>> namespaces = {
             ...     "ex": "http://example.org/ns#",
@@ -192,7 +187,7 @@ class NamespaceManager:
         """
         resolved = {}
         seen_uris = {}  # Track which prefix was first for each URI
-        
+
         for prefix, uri in namespaces.items():
             if uri in seen_uris:
                 # Conflict: same URI, different prefix
@@ -207,66 +202,62 @@ class NamespaceManager:
             else:
                 resolved[prefix] = uri
                 seen_uris[uri] = prefix
-        
+
         return resolved
 
 
 class RDFSerializer:
     """
     RDF serialization engine.
-    
+
     This class provides RDF serialization to various formats including Turtle,
     RDF/XML, and JSON-LD. Handles format-specific syntax and encoding.
-    
+
     Features:
         - Multiple RDF format serialization
         - Format-specific syntax handling
         - Namespace management integration
         - Entity and relationship conversion
-    
+
     Example Usage:
         >>> serializer = RDFSerializer()
         >>> turtle = serializer.serialize_to_turtle(rdf_data)
         >>> jsonld = serializer.serialize_to_jsonld(rdf_data)
     """
-    
+
     def __init__(self, **config):
         """
         Initialize RDF serializer.
-        
+
         Sets up the serializer with namespace management and configuration.
-        
+
         Args:
             **config: Configuration options (currently unused)
         """
         self.logger = get_logger("rdf_serializer")
         self.config = config or {}
         self.namespace_manager = NamespaceManager()
-        
+
         self.logger.debug("RDF serializer initialized")
-    
-    def serialize_to_turtle(
-        self,
-        rdf_data: Dict[str, Any],
-        **options
-    ) -> str:
+
+    def serialize_to_turtle(self, rdf_data: Dict[str, Any], **options) -> str:
         """
         Serialize RDF to Turtle format.
-        
+
         Turtle is a compact, human-readable RDF serialization format. This method
         converts RDF data (entities and relationships) to Turtle syntax with
         namespace declarations and RDF triples.
-        
+
         Args:
             rdf_data: RDF data dictionary containing:
                 - entities: List of entity dictionaries
                 - relationships: List of relationship dictionaries
                 - @context: Optional JSON-LD context for namespaces
             **options: Additional serialization options (unused)
-        
+
         Returns:
             String containing Turtle-format RDF serialization
-        
+
         Example:
             >>> rdf_data = {
             ...     "entities": [{"id": "e1", "text": "Entity 1", "type": "Person"}],
@@ -275,17 +266,16 @@ class RDFSerializer:
             >>> turtle = serializer.serialize_to_turtle(rdf_data)
         """
         lines = []
-        
+
         # Generate namespace declarations
         namespaces = self.namespace_manager.extract_namespaces(rdf_data)
         if namespaces:
             ns_declarations = self.namespace_manager.generate_namespace_declarations(
-                namespaces,
-                "turtle"
+                namespaces, "turtle"
             )
             lines.append(ns_declarations)
             lines.append("")
-        
+
         # Convert entities to RDF triples
         entities = rdf_data.get("entities", [])
         for entity in entities:
@@ -294,49 +284,45 @@ class RDFSerializer:
             if not entity_id:
                 entity_text = entity.get("text", "")
                 entity_id = f"semantica:entity_{hash(entity_text)}"
-            
+
             entity_type = entity.get("type", "semantica:Entity")
             text = entity.get("text") or entity.get("label", "")
             confidence = entity.get("confidence", 1.0)
-            
+
             # Turtle triple syntax: subject predicate object .
             lines.append(f"<{entity_id}> a <{entity_type}> ;")
             lines.append(f'    semantica:text "{text}" ;')
-            lines.append(f'    semantica:confidence {confidence} .')
+            lines.append(f"    semantica:confidence {confidence} .")
             lines.append("")
-        
+
         # Convert relationships to RDF triples
         relationships = rdf_data.get("relationships", [])
         for rel in relationships:
             source_id = rel.get("source_id") or rel.get("source")
             target_id = rel.get("target_id") or rel.get("target")
             rel_type = rel.get("type", "semantica:related_to")
-            
+
             # Simple triple: subject predicate object .
             lines.append(f"<{source_id}> <{rel_type}> <{target_id}> .")
-        
+
         return "\n".join(lines)
-    
-    def serialize_to_rdfxml(
-        self,
-        rdf_data: Dict[str, Any],
-        **options
-    ) -> str:
+
+    def serialize_to_rdfxml(self, rdf_data: Dict[str, Any], **options) -> str:
         """
         Serialize RDF to RDF/XML format.
-        
+
         RDF/XML is the XML-based RDF serialization format, standardized by W3C.
         This method converts RDF data to RDF/XML syntax with proper XML structure.
-        
+
         Args:
             rdf_data: RDF data dictionary containing:
                 - entities: List of entity dictionaries
                 - relationships: List of relationship dictionaries
             **options: Additional serialization options (unused)
-        
+
         Returns:
             String containing RDF/XML-format RDF serialization
-        
+
         Example:
             >>> rdf_data = {
             ...     "entities": [{"id": "e1", "text": "Entity 1"}],
@@ -349,7 +335,7 @@ class RDFSerializer:
         lines.append('         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"')
         lines.append('         xmlns:semantica="https://semantica.dev/ns#">')
         lines.append("")
-        
+
         # Convert entities to RDF/XML
         entities = rdf_data.get("entities", [])
         for entity in entities:
@@ -358,57 +344,55 @@ class RDFSerializer:
             if not entity_id:
                 entity_text = entity.get("text", "")
                 entity_id = f"semantica:entity_{hash(entity_text)}"
-            
+
             entity_type = entity.get("type", "semantica:Entity")
             text = entity.get("text") or entity.get("label", "")
             confidence = entity.get("confidence", 1.0)
-            
+
             # RDF/XML syntax: rdf:Description with rdf:about
             lines.append(f'  <rdf:Description rdf:about="{entity_id}">')
             lines.append(f'    <rdf:type rdf:resource="{entity_type}"/>')
-            lines.append(f'    <semantica:text>{text}</semantica:text>')
-            lines.append(f'    <semantica:confidence>{confidence}</semantica:confidence>')
+            lines.append(f"    <semantica:text>{text}</semantica:text>")
+            lines.append(
+                f"    <semantica:confidence>{confidence}</semantica:confidence>"
+            )
             lines.append("  </rdf:Description>")
             lines.append("")
-        
+
         # Convert relationships to RDF/XML
         relationships = rdf_data.get("relationships", [])
         for rel in relationships:
             source_id = rel.get("source_id") or rel.get("source")
             target_id = rel.get("target_id") or rel.get("target")
             rel_type = rel.get("type", "semantica:related_to")
-            
+
             # Relationship as property on source entity
             lines.append(f'  <rdf:Description rdf:about="{source_id}">')
             lines.append(f'    <{rel_type} rdf:resource="{target_id}"/>')
             lines.append("  </rdf:Description>")
             lines.append("")
-        
+
         lines.append("</rdf:RDF>")
         return "\n".join(lines)
-    
-    def serialize_to_jsonld(
-        self,
-        rdf_data: Dict[str, Any],
-        **options
-    ) -> str:
+
+    def serialize_to_jsonld(self, rdf_data: Dict[str, Any], **options) -> str:
         """
         Serialize RDF to JSON-LD format.
-        
+
         JSON-LD is a JSON-based RDF serialization format that uses @context for
         namespace management and @graph for RDF data. This method converts RDF
         data to JSON-LD syntax.
-        
+
         Args:
             rdf_data: RDF data dictionary containing:
                 - entities: List of entity dictionaries
                 - relationships: List of relationship dictionaries
                 - @context: Optional existing context (merged)
             **options: Additional serialization options (unused)
-        
+
         Returns:
             String containing JSON-LD-format RDF serialization (pretty-printed JSON)
-        
+
         Example:
             >>> rdf_data = {
             ...     "entities": [{"id": "e1", "text": "Entity 1"}],
@@ -417,22 +401,22 @@ class RDFSerializer:
             >>> jsonld = serializer.serialize_to_jsonld(rdf_data)
         """
         import json
-        
+
         # Initialize JSON-LD structure with context
         jsonld = {
             "@context": {
                 "@vocab": "https://semantica.dev/vocab/",
                 "semantica": "https://semantica.dev/ns#",
                 "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-                "rdfs": "http://www.w3.org/2000/01/rdf-schema#"
+                "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
             },
-            "@graph": []
+            "@graph": [],
         }
-        
+
         # Merge existing context if present
         if "@context" in rdf_data:
             jsonld["@context"].update(rdf_data["@context"])
-        
+
         # Convert entities to JSON-LD
         entities = rdf_data.get("entities", [])
         for entity in entities:
@@ -441,14 +425,16 @@ class RDFSerializer:
             if not entity_id:
                 entity_text = entity.get("text", "")
                 entity_id = f"semantica:entity/{entity_text}"
-            
-            jsonld["@graph"].append({
-                "@id": entity_id,
-                "@type": entity.get("type", "semantica:Entity"),
-                "semantica:text": entity.get("text") or entity.get("label", ""),
-                "semantica:confidence": entity.get("confidence", 1.0)
-            })
-        
+
+            jsonld["@graph"].append(
+                {
+                    "@id": entity_id,
+                    "@type": entity.get("type", "semantica:Entity"),
+                    "semantica:text": entity.get("text") or entity.get("label", ""),
+                    "semantica:confidence": entity.get("confidence", 1.0),
+                }
+            )
+
         # Convert relationships to JSON-LD
         relationships = rdf_data.get("relationships", [])
         for rel in relationships:
@@ -458,74 +444,78 @@ class RDFSerializer:
                 source_id = rel.get("source_id", "")
                 target_id = rel.get("target_id", "")
                 rel_id = f"semantica:rel/{source_id}_{target_id}"
-            
-            jsonld["@graph"].append({
-                "@id": rel_id,
-                "@type": "semantica:Relationship",
-                "semantica:source": {"@id": rel.get("source_id") or rel.get("source")},
-                "semantica:target": {"@id": rel.get("target_id") or rel.get("target")},
-                "semantica:type": rel.get("type", "related_to")
-            })
-        
+
+            jsonld["@graph"].append(
+                {
+                    "@id": rel_id,
+                    "@type": "semantica:Relationship",
+                    "semantica:source": {
+                        "@id": rel.get("source_id") or rel.get("source")
+                    },
+                    "semantica:target": {
+                        "@id": rel.get("target_id") or rel.get("target")
+                    },
+                    "semantica:type": rel.get("type", "related_to"),
+                }
+            )
+
         return json.dumps(jsonld, indent=2, ensure_ascii=False)
 
 
 class RDFValidator:
     """
     RDF validation engine.
-    
+
     This class provides RDF data validation including syntax checking, structure
     validation, namespace usage validation, and consistency checking.
-    
+
     Features:
         - RDF syntax validation
         - Structure and format validation
         - Namespace usage validation
         - Consistency checking (entity references, etc.)
-    
+
     Example Usage:
         >>> validator = RDFValidator()
         >>> result = validator.validate_rdf_syntax(rdf_data, format="turtle")
         >>> consistency = validator.check_rdf_consistency(rdf_data)
     """
-    
+
     def __init__(self, **config):
         """
         Initialize RDF validator.
-        
+
         Sets up the validator with configuration options.
-        
+
         Args:
             **config: Configuration options (currently unused)
         """
         self.logger = get_logger("rdf_validator")
         self.config = config or {}
-        
+
         self.logger.debug("RDF validator initialized")
-    
+
     def validate_rdf_syntax(
-        self,
-        rdf_data: Dict[str, Any],
-        format: str = "turtle"
+        self, rdf_data: Dict[str, Any], format: str = "turtle"
     ) -> Dict[str, Any]:
         """
         Validate RDF syntax for specified format.
-        
+
         This method performs syntax and structure validation on RDF data,
         checking for required fields, correct data types, and format-specific
         requirements.
-        
+
         Args:
             rdf_data: RDF data dictionary to validate
             format: RDF format being validated (default: "turtle")
                    (currently unused, but reserved for format-specific checks)
-        
+
         Returns:
             Dictionary containing:
                 - valid: Boolean indicating if validation passed
                 - errors: List of error messages
                 - warnings: List of warning messages
-        
+
         Example:
             >>> result = validator.validate_rdf_syntax(rdf_data, format="turtle")
             >>> if result["valid"]:
@@ -535,33 +525,33 @@ class RDFValidator:
         """
         errors = []
         warnings = []
-        
+
         # Basic structure validation
         if not isinstance(rdf_data, dict):
             errors.append("RDF data must be a dictionary")
             return {"valid": False, "errors": errors, "warnings": warnings}
-        
+
         # Check for required fields
         if "entities" not in rdf_data and "relationships" not in rdf_data:
             warnings.append(
                 "No entities or relationships found in RDF data. "
                 "RDF data may be empty."
             )
-        
+
         # Validate entities
         entities = rdf_data.get("entities", [])
         for i, entity in enumerate(entities):
             if not isinstance(entity, dict):
                 errors.append(f"Entity {i} is not a dictionary (type: {type(entity)})")
                 continue
-            
+
             # Check for required fields (at least id or text)
             if "id" not in entity and "text" not in entity:
                 warnings.append(
                     f"Entity {i} missing both 'id' and 'text' fields. "
                     "Entity may not be properly identifiable."
                 )
-        
+
         # Validate relationships
         relationships = rdf_data.get("relationships", [])
         for i, rel in enumerate(relationships):
@@ -570,19 +560,15 @@ class RDFValidator:
                     f"Relationship {i} is not a dictionary (type: {type(rel)})"
                 )
                 continue
-            
+
             # Check for required fields
             if "source_id" not in rel and "source" not in rel:
-                errors.append(
-                    f"Relationship {i} missing 'source_id' or 'source' field"
-                )
+                errors.append(f"Relationship {i} missing 'source_id' or 'source' field")
             if "target_id" not in rel and "target" not in rel:
-                errors.append(
-                    f"Relationship {i} missing 'target_id' or 'target' field"
-                )
-        
+                errors.append(f"Relationship {i} missing 'target_id' or 'target' field")
+
         is_valid = len(errors) == 0
-        
+
         if is_valid:
             self.logger.debug(
                 f"RDF syntax validation passed: {len(entities)} entity(ies), "
@@ -593,45 +579,36 @@ class RDFValidator:
                 f"RDF syntax validation failed: {len(errors)} error(s), "
                 f"{len(warnings)} warning(s)"
             )
-        
-        return {
-            "valid": is_valid,
-            "errors": errors,
-            "warnings": warnings
-        }
-    
-    def validate_namespace_usage(
-        self,
-        rdf_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+
+        return {"valid": is_valid, "errors": errors, "warnings": warnings}
+
+    def validate_namespace_usage(self, rdf_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Validate RDF namespace usage.
-        
+
         This method validates namespace declarations and usage in RDF data,
         particularly for JSON-LD format which uses @context.
-        
+
         Args:
             rdf_data: RDF data dictionary to validate
-        
+
         Returns:
             Dictionary containing:
                 - valid: Boolean indicating if namespace usage is valid
                 - issues: List of namespace-related issues
-        
+
         Example:
             >>> result = validator.validate_namespace_usage(rdf_data)
             >>> if not result["valid"]:
             ...     print(f"Namespace issues: {result['issues']}")
         """
         issues = []
-        
+
         # Check for @context in JSON-LD
         if "@context" in rdf_data:
             context = rdf_data["@context"]
             if not isinstance(context, dict):
-                issues.append(
-                    "@context must be a dictionary, got: {type(context)}"
-                )
+                issues.append("@context must be a dictionary, got: {type(context)}")
             else:
                 # Validate context entries
                 for prefix, uri in context.items():
@@ -639,113 +616,102 @@ class RDFValidator:
                         issues.append(f"Context prefix must be string: {prefix}")
                     if not isinstance(uri, str):
                         issues.append(f"Context URI must be string: {uri}")
-        
+
         is_valid = len(issues) == 0
-        
+
         if is_valid:
             self.logger.debug("Namespace usage validation passed")
         else:
             self.logger.warning(
                 f"Namespace usage validation found {len(issues)} issue(s)"
             )
-        
-        return {
-            "valid": is_valid,
-            "issues": issues
-        }
-    
-    def check_rdf_consistency(
-        self,
-        rdf_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+
+        return {"valid": is_valid, "issues": issues}
+
+    def check_rdf_consistency(self, rdf_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Check RDF consistency and coherence.
-        
+
         This method performs consistency checks on RDF data, including validation
         of relationship references to ensure they point to existing entities.
-        
+
         Args:
             rdf_data: RDF data dictionary to check
-        
+
         Returns:
             Dictionary containing:
                 - consistent: Boolean indicating if data is consistent
                 - issues: List of consistency issues found
-        
+
         Example:
             >>> result = validator.check_rdf_consistency(rdf_data)
             >>> if not result["consistent"]:
             ...     print(f"Consistency issues: {result['issues']}")
         """
         issues = []
-        
+
         # Build set of entity IDs for reference checking
         entities = rdf_data.get("entities", [])
         entity_ids = {e.get("id") for e in entities if e.get("id")}
-        
+
         # Check relationship references
         relationships = rdf_data.get("relationships", [])
         for i, rel in enumerate(relationships):
             source_id = rel.get("source_id") or rel.get("source")
             target_id = rel.get("target_id") or rel.get("target")
-            
+
             # Check if source entity exists
             if source_id and source_id not in entity_ids:
                 issues.append(
                     f"Relationship {i} references non-existent source entity: {source_id}"
                 )
-            
+
             # Check if target entity exists
             if target_id and target_id not in entity_ids:
                 issues.append(
                     f"Relationship {i} references non-existent target entity: {target_id}"
                 )
-        
+
         is_consistent = len(issues) == 0
-        
+
         if is_consistent:
             self.logger.debug(
                 f"RDF consistency check passed: {len(entities)} entity(ies), "
                 f"{len(relationships)} relationship(s)"
             )
         else:
-            self.logger.warning(
-                f"RDF consistency check found {len(issues)} issue(s)"
-            )
-        
-        return {
-            "consistent": is_consistent,
-            "issues": issues
-        }
+            self.logger.warning(f"RDF consistency check found {len(issues)} issue(s)")
+
+        return {"consistent": is_consistent, "issues": issues}
 
 
 class RDFExporter:
     """
     RDF export and serialization handler.
-    
+
     This class provides comprehensive RDF export functionality, combining
     serialization, validation, and namespace management for multiple RDF formats.
-    
+
     Features:
         - Multiple RDF format export (Turtle, RDF/XML, JSON-LD, N-Triples, N3)
         - RDF serialization and validation
         - Namespace management
         - Knowledge graph to RDF conversion
         - Batch export processing
-    
+
     Example Usage:
         >>> exporter = RDFExporter()
         >>> exporter.export(data, "output.ttl", format="turtle")
         >>> validation = exporter.validate_rdf(data)
     """
-    
+
     def __init__(self, config: Optional[Dict[str, Any]] = None, **kwargs):
         """
         Initialize RDF exporter.
-        
+
         Sets up the exporter with serialization, validation, and namespace
         management components.
-        
+
         Args:
             config: Optional configuration dictionary (merged with kwargs)
             **kwargs: Additional configuration options
@@ -753,46 +719,43 @@ class RDFExporter:
         self.logger = get_logger("rdf_exporter")
         self.config = config or {}
         self.config.update(kwargs)
-        
+
         # Initialize components
         self.serializer = RDFSerializer()
         self.validator = RDFValidator()
         self.namespace_manager = NamespaceManager()
-        
+
         # Supported RDF formats
         self.supported_formats = ["turtle", "rdfxml", "jsonld", "ntriples", "n3"]
-        
+
         # Initialize progress tracker
         self.progress_tracker = get_progress_tracker()
-        
+
         self.logger.debug(
             f"RDF exporter initialized with {len(self.supported_formats)} format(s)"
         )
-    
+
     def export_to_rdf(
-        self,
-        data: Dict[str, Any],
-        format: str = "turtle",
-        **options
+        self, data: Dict[str, Any], format: str = "turtle", **options
     ) -> str:
         """
         Export data to RDF format string.
-        
+
         This method converts RDF data to a string in the specified RDF format.
         Performs validation before serialization and handles format-specific
         serialization.
-        
+
         Args:
             data: RDF data dictionary containing entities and relationships
             format: RDF format - 'turtle', 'rdfxml', or 'jsonld' (default: 'turtle')
             **options: Additional serialization options
-        
+
         Returns:
             String containing RDF serialization in specified format
-        
+
         Raises:
             ValidationError: If format is unsupported or not implemented
-        
+
         Example:
             >>> rdf_string = exporter.export_to_rdf(data, format="turtle")
             >>> print(rdf_string)
@@ -802,19 +765,21 @@ class RDFExporter:
             file=None,
             module="export",
             submodule="RDFExporter",
-            message=f"Exporting data to RDF format: {format}"
+            message=f"Exporting data to RDF format: {format}",
         )
-        
+
         try:
             if format not in self.supported_formats:
                 raise ValidationError(
                     f"Unsupported RDF format: {format}. "
                     f"Supported formats: {', '.join(self.supported_formats)}"
                 )
-            
+
             self.logger.debug(f"Exporting to RDF format: {format}")
-            
-            self.progress_tracker.update_tracking(tracking_id, message="Validating RDF data...")
+
+            self.progress_tracker.update_tracking(
+                tracking_id, message="Validating RDF data..."
+            )
             # Validate input data
             validation = self.validator.validate_rdf_syntax(data, format)
             if not validation["valid"]:
@@ -824,93 +789,99 @@ class RDFExporter:
                 )
             if validation["warnings"]:
                 self.logger.debug(f"RDF validation warnings: {validation['warnings']}")
-            
-            self.progress_tracker.update_tracking(tracking_id, message=f"Serializing to {format} format...")
+
+            self.progress_tracker.update_tracking(
+                tracking_id, message=f"Serializing to {format} format..."
+            )
             # Serialize based on format
             if format == "turtle":
                 result = self.serializer.serialize_to_turtle(data, **options)
-        elif format == "rdfxml":
-            return self.serializer.serialize_to_rdfxml(data, **options)
-        elif format == "jsonld":
-            return self.serializer.serialize_to_jsonld(data, **options)
-        else:
-            raise ValidationError(
-                f"Format '{format}' not yet implemented. "
-                f"Implemented formats: turtle, rdfxml, jsonld"
+            elif format == "rdfxml":
+                return self.serializer.serialize_to_rdfxml(data, **options)
+            elif format == "jsonld":
+                return self.serializer.serialize_to_jsonld(data, **options)
+            else:
+                raise ValidationError(
+                    f"Format '{format}' not yet implemented. "
+                    f"Implemented formats: turtle, rdfxml, jsonld"
+                )
+
+        except Exception as e:
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
             )
-    
+            raise
+
     def export(
         self,
         data: Dict[str, Any],
         file_path: Union[str, Path],
         format: str = "turtle",
         encoding: str = "utf-8",
-        **options
+        **options,
     ) -> None:
         """
         Export data to RDF file.
-        
+
         This method exports RDF data to a file in the specified format, handling
         directory creation and file writing.
-        
+
         Args:
             data: RDF data dictionary to export
             file_path: Output RDF file path
             format: RDF format - 'turtle', 'rdfxml', or 'jsonld' (default: 'turtle')
             encoding: File encoding (default: 'utf-8')
             **options: Additional options passed to export_to_rdf()
-        
+
         Example:
             >>> exporter.export(rdf_data, "output.ttl", format="turtle")
             >>> exporter.export(rdf_data, "output.rdf", format="rdfxml")
         """
         file_path = Path(file_path)
         ensure_directory(file_path.parent)
-        
+
         self.logger.debug(f"Exporting RDF to file: {file_path}, format={format}")
-        
+
         # Generate RDF content
         rdf_content = self.export_to_rdf(data, format=format, **options)
-        
+
         # Write to file
         with open(file_path, "w", encoding=encoding) as f:
             f.write(rdf_content)
-        
+
         self.logger.info(f"Exported RDF ({format}) to: {file_path}")
-    
-    def serialize_rdf(self, rdf_data: Dict[str, Any], format: str = "turtle", **options) -> str:
+
+    def serialize_rdf(
+        self, rdf_data: Dict[str, Any], format: str = "turtle", **options
+    ) -> str:
         """
         Serialize RDF data to specified format.
-        
+
         • Convert RDF to serialized format
         • Apply format-specific rules
         • Handle encoding and formatting
         • Return serialized RDF
         """
         return self.export_to_rdf(rdf_data, format=format, **options)
-    
-    def validate_rdf(
-        self,
-        rdf_data: Dict[str, Any],
-        **options
-    ) -> Dict[str, Any]:
+
+    def validate_rdf(self, rdf_data: Dict[str, Any], **options) -> Dict[str, Any]:
         """
         Validate RDF data quality and structure.
-        
+
         This method performs comprehensive validation of RDF data including
         syntax validation, namespace usage validation, and consistency checking.
-        
+
         Args:
             rdf_data: RDF data dictionary to validate
             **options: Additional validation options (unused)
-        
+
         Returns:
             Dictionary containing validation results:
                 - syntax: Syntax validation results
                 - namespaces: Namespace validation results
                 - consistency: Consistency check results
                 - overall_valid: Boolean indicating if all validations passed
-        
+
         Example:
             >>> result = exporter.validate_rdf(rdf_data)
             >>> if result["overall_valid"]:
@@ -922,14 +893,14 @@ class RDFExporter:
         syntax_validation = self.validator.validate_rdf_syntax(rdf_data)
         namespace_validation = self.validator.validate_namespace_usage(rdf_data)
         consistency_check = self.validator.check_rdf_consistency(rdf_data)
-        
+
         # Determine overall validity
         overall_valid = (
-            syntax_validation["valid"] and
-            namespace_validation["valid"] and
-            consistency_check["consistent"]
+            syntax_validation["valid"]
+            and namespace_validation["valid"]
+            and consistency_check["consistent"]
         )
-        
+
         if overall_valid:
             self.logger.info("RDF validation passed all checks")
         else:
@@ -939,34 +910,32 @@ class RDFExporter:
                 f"namespaces={namespace_validation['valid']}, "
                 f"consistency={consistency_check['consistent']}"
             )
-        
+
         return {
             "syntax": syntax_validation,
             "namespaces": namespace_validation,
             "consistency": consistency_check,
-            "overall_valid": overall_valid
+            "overall_valid": overall_valid,
         }
-    
+
     def manage_namespaces(
-        self,
-        rdf_data: Dict[str, Any],
-        **namespaces: str
+        self, rdf_data: Dict[str, Any], **namespaces: str
     ) -> Dict[str, Any]:
         """
         Manage RDF namespaces and declarations.
-        
+
         This method extracts namespaces from RDF data, merges with provided
         namespaces, resolves conflicts, and generates namespace declarations.
-        
+
         Args:
             rdf_data: RDF data dictionary that may contain namespace information
             **namespaces: Additional namespaces to add (prefix=uri format)
-        
+
         Returns:
             Dictionary containing:
                 - namespaces: Resolved namespace dictionary (prefix -> URI)
                 - declarations: Namespace declarations string (Turtle format)
-        
+
         Example:
             >>> result = exporter.manage_namespaces(
             ...     rdf_data,
@@ -976,24 +945,20 @@ class RDFExporter:
         """
         # Extract existing namespaces from data
         extracted = self.namespace_manager.extract_namespaces(rdf_data)
-        
+
         # Merge with provided namespaces
         all_namespaces = {**extracted, **namespaces}
-        
+
         # Resolve conflicts
         resolved = self.namespace_manager.resolve_namespace_conflicts(all_namespaces)
-        
+
         # Generate declarations
         declarations = self.namespace_manager.generate_namespace_declarations(
-            resolved,
-            "turtle"
+            resolved, "turtle"
         )
-        
+
         self.logger.debug(
             f"Managed {len(resolved)} namespace(s): {list(resolved.keys())}"
         )
-        
-        return {
-            "namespaces": resolved,
-            "declarations": declarations
-        }
+
+        return {"namespaces": resolved, "declarations": declarations}

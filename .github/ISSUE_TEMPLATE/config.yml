@@ -1,12 +1,8 @@
-blank_issues_enabled: false
+blank_issues_enabled: true
 contact_links:
-  - name: GitHub Discussions
+  - name: 📚 Documentation
+    url: https://github.com/Hawksight-AI/semantica/tree/main/docs
+    about: Browse the documentation
+  - name: 💬 Discussions
     url: https://github.com/Hawksight-AI/semantica/discussions
-    about: Ask questions and discuss ideas with the community
-  - name: Discord Community
-    url: https://discord.gg/semantica
-    about: Join our Discord server for real-time help and discussions
-  - name: Security Issues
-    url: https://github.com/Hawksight-AI/semantica/security/advisories/new
-    about: Report security vulnerabilities privately
-
+    about: Ask questions and discuss with the community

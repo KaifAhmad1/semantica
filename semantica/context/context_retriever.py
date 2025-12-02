@@ -58,10 +58,10 @@ Author: Semantica Contributors
 License: MIT
 """
 
-from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
 
-from ..utils.exceptions import ValidationError, ProcessingError
+from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
 from ..utils.progress_tracker import get_progress_tracker
 
@@ -69,6 +69,7 @@ from ..utils.progress_tracker import get_progress_tracker
 @dataclass
 class RetrievedContext:
     """Retrieved context item."""
+
     content: str
     score: float
     source: Optional[str] = None
@@ -80,7 +81,7 @@ class RetrievedContext:
 class ContextRetriever:
     """
     Context retriever for hybrid retrieval.
-    
+
     • Retrieve context from multiple sources
     • Hybrid retrieval (vector + graph)
     • Context relevance ranking
@@ -88,11 +89,11 @@ class ContextRetriever:
     • Ontology-aware context retrieval
     • Real-time context updates
     """
-    
+
     def __init__(self, config: Optional[Dict[str, Any]] = None, **kwargs):
         """
         Initialize context retriever.
-        
+
         Args:
             config: Configuration dictionary
             **kwargs: Additional configuration options:
@@ -106,29 +107,29 @@ class ContextRetriever:
         self.logger = get_logger("context_retriever")
         self.config = config or {}
         self.config.update(kwargs)
-        
+
         self.memory_store = self.config.get("memory_store")
         self.knowledge_graph = self.config.get("knowledge_graph")
         self.vector_store = self.config.get("vector_store")
-        
+
         self.use_graph_expansion = self.config.get("use_graph_expansion", True)
         self.max_expansion_hops = self.config.get("max_expansion_hops", 2)
         self.hybrid_alpha = self.config.get("hybrid_alpha", 0.5)
-        
+
         # Initialize progress tracker
         self.progress_tracker = get_progress_tracker()
-    
+
     def retrieve(
         self,
         query: str,
         max_results: int = 5,
         use_graph_expansion: Optional[bool] = None,
         min_relevance_score: float = 0.0,
-        **options
+        **options,
     ) -> List[RetrievedContext]:
         """
         Retrieve relevant context for query.
-        
+
         Args:
             query: Search query
             max_results: Maximum number of results
@@ -138,7 +139,7 @@ class ContextRetriever:
                 - entity_ids: Filter by entity IDs
                 - node_types: Filter by node types
                 - max_hops: Maximum expansion hops
-                
+
         Returns:
             List of retrieved context items
         """
@@ -147,245 +148,253 @@ class ContextRetriever:
             file=None,
             module="context",
             submodule="ContextRetriever",
-            message=f"Retrieving context for: {query[:50]}..."
+            message=f"Retrieving context for: {query[:50]}...",
         )
-        
+
         try:
-            use_expansion = use_graph_expansion if use_graph_expansion is not None else self.use_graph_expansion
-            
+            use_expansion = (
+                use_graph_expansion
+                if use_graph_expansion is not None
+                else self.use_graph_expansion
+            )
+
             all_results = []
-            
+
             # Vector-based retrieval
-            self.progress_tracker.update_tracking(tracking_id, message="Retrieving from vector store...")
+            self.progress_tracker.update_tracking(
+                tracking_id, message="Retrieving from vector store..."
+            )
             vector_results = self._retrieve_from_vector(query, max_results * 2)
             all_results.extend(vector_results)
-            
+
             # Graph-based retrieval
             if self.knowledge_graph and use_expansion:
-                self.progress_tracker.update_tracking(tracking_id, message="Retrieving from knowledge graph...")
+                self.progress_tracker.update_tracking(
+                    tracking_id, message="Retrieving from knowledge graph..."
+                )
                 graph_results = self._retrieve_from_graph(
                     query,
                     max_results * 2,
-                    max_hops=options.get("max_hops", self.max_expansion_hops)
+                    max_hops=options.get("max_hops", self.max_expansion_hops),
                 )
                 all_results.extend(graph_results)
-            
+
             # Memory-based retrieval
             if self.memory_store:
-                self.progress_tracker.update_tracking(tracking_id, message="Retrieving from memory...")
+                self.progress_tracker.update_tracking(
+                    tracking_id, message="Retrieving from memory..."
+                )
                 memory_results = self._retrieve_from_memory(query, max_results * 2)
                 all_results.extend(memory_results)
-            
+
             # Combine and rank results
-            self.progress_tracker.update_tracking(tracking_id, message="Ranking and merging results...")
+            self.progress_tracker.update_tracking(
+                tracking_id, message="Ranking and merging results..."
+            )
             ranked_results = self._rank_and_merge(all_results, query)
-            
+
             # Filter by minimum score
             filtered_results = [
-                r for r in ranked_results
-                if r.score >= min_relevance_score
+                r for r in ranked_results if r.score >= min_relevance_score
             ]
-            
-            self.progress_tracker.stop_tracking(tracking_id, status="completed",
-                                               message=f"Retrieved {len(filtered_results[:max_results])} results")
+
+            self.progress_tracker.stop_tracking(
+                tracking_id,
+                status="completed",
+                message=f"Retrieved {len(filtered_results[:max_results])} results",
+            )
             # Return top results
             return filtered_results[:max_results]
-            
+
         except Exception as e:
-            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
+            )
             raise
-    
+
     def _retrieve_from_vector(
-        self,
-        query: str,
-        max_results: int
+        self, query: str, max_results: int
     ) -> List[RetrievedContext]:
         """Retrieve from vector store."""
         if not self.vector_store:
             return []
-        
+
         try:
             # Simulate vector search (actual implementation would use vector_store)
             results = []
-            
+
             # If vector_store has a search method
             if hasattr(self.vector_store, "search"):
                 search_results = self.vector_store.search(
-                    query=query,
-                    top_k=max_results
+                    query=query, top_k=max_results
                 )
-                
+
                 for result in search_results:
-                    results.append(RetrievedContext(
-                        content=result.get("content", ""),
-                        score=result.get("score", 0.0),
-                        source=result.get("source"),
-                        metadata=result.get("metadata", {})
-                    ))
-            
+                    results.append(
+                        RetrievedContext(
+                            content=result.get("content", ""),
+                            score=result.get("score", 0.0),
+                            source=result.get("source"),
+                            metadata=result.get("metadata", {}),
+                        )
+                    )
+
             return results
-            
+
         except Exception as e:
             self.logger.warning(f"Vector retrieval failed: {e}")
             return []
-    
+
     def _retrieve_from_graph(
-        self,
-        query: str,
-        max_results: int,
-        max_hops: int = 2
+        self, query: str, max_results: int, max_hops: int = 2
     ) -> List[RetrievedContext]:
         """Retrieve from knowledge graph."""
         if not self.knowledge_graph:
             return []
-        
+
         results = []
-        
+
         try:
             # Extract entities from query (simplified)
             query_lower = query.lower()
-            
+
             # Search for nodes matching query
             nodes = self.knowledge_graph.get("nodes", [])
-            
+
             for node in nodes:
                 node_content = node.get("content", "").lower()
                 node_type = node.get("type", "")
-                
+
                 # Simple keyword matching
                 if any(word in node_content for word in query_lower.split()):
                     score = self._calculate_graph_relevance(node, query)
-                    
+
                     # Get related entities
                     related_entities = self._get_related_entities(
-                        node.get("id"),
-                        max_hops=max_hops
+                        node.get("id"), max_hops=max_hops
                     )
-                    
-                    results.append(RetrievedContext(
-                        content=node.get("content", ""),
-                        score=score,
-                        source=f"graph:{node.get('id')}",
-                        metadata={
-                            "node_type": node_type,
-                            "node_id": node.get("id"),
-                            **node.get("metadata", {})
-                        },
-                        related_entities=related_entities
-                    ))
-            
+
+                    results.append(
+                        RetrievedContext(
+                            content=node.get("content", ""),
+                            score=score,
+                            source=f"graph:{node.get('id')}",
+                            metadata={
+                                "node_type": node_type,
+                                "node_id": node.get("id"),
+                                **node.get("metadata", {}),
+                            },
+                            related_entities=related_entities,
+                        )
+                    )
+
             # Sort by score
             results.sort(key=lambda x: x.score, reverse=True)
-            
+
             return results[:max_results]
-            
+
         except Exception as e:
             self.logger.warning(f"Graph retrieval failed: {e}")
             return []
-    
+
     def _retrieve_from_memory(
-        self,
-        query: str,
-        max_results: int
+        self, query: str, max_results: int
     ) -> List[RetrievedContext]:
         """Retrieve from memory store."""
         if not self.memory_store:
             return []
-        
+
         try:
             # If memory_store has a retrieve method
             if hasattr(self.memory_store, "retrieve"):
                 memory_results = self.memory_store.retrieve(
-                    query=query,
-                    max_results=max_results
+                    query=query, max_results=max_results
                 )
-                
+
                 results = []
                 for result in memory_results:
-                    results.append(RetrievedContext(
-                        content=result.get("content", ""),
-                        score=result.get("score", 0.0),
-                        source=result.get("source"),
-                        metadata=result.get("metadata", {})
-                    ))
-                
+                    results.append(
+                        RetrievedContext(
+                            content=result.get("content", ""),
+                            score=result.get("score", 0.0),
+                            source=result.get("source"),
+                            metadata=result.get("metadata", {}),
+                        )
+                    )
+
                 return results
-            
+
             return []
-            
+
         except Exception as e:
             self.logger.warning(f"Memory retrieval failed: {e}")
             return []
-    
+
     def _rank_and_merge(
-        self,
-        results: List[RetrievedContext],
-        query: str
+        self, results: List[RetrievedContext], query: str
     ) -> List[RetrievedContext]:
         """Rank and merge results from multiple sources."""
         # Deduplicate by content
         seen_content = {}
-        
+
         for result in results:
             content_key = result.content[:100]  # First 100 chars as key
-            
+
             if content_key not in seen_content:
                 seen_content[content_key] = result
             else:
                 # Merge scores (take maximum or average)
                 existing = seen_content[content_key]
                 existing.score = max(existing.score, result.score)
-                
+
                 # Merge metadata
                 existing.metadata.update(result.metadata)
-                
+
                 # Merge related entities
                 existing_entity_ids = {e.get("id") for e in existing.related_entities}
                 for entity in result.related_entities:
                     if entity.get("id") not in existing_entity_ids:
                         existing.related_entities.append(entity)
-        
+
         # Sort by score
         ranked = sorted(seen_content.values(), key=lambda x: x.score, reverse=True)
-        
+
         return ranked
-    
+
     def _calculate_graph_relevance(self, node: Dict[str, Any], query: str) -> float:
         """Calculate relevance score for graph node."""
         content = node.get("content", "").lower()
         query_lower = query.lower()
-        
+
         # Simple word overlap
         query_words = set(query_lower.split())
         content_words = set(content.split())
-        
+
         if not query_words:
             return 0.0
-        
+
         overlap = len(query_words & content_words)
         return overlap / len(query_words)
-    
+
     def _get_related_entities(
-        self,
-        node_id: str,
-        max_hops: int = 2
+        self, node_id: str, max_hops: int = 2
     ) -> List[Dict[str, Any]]:
         """Get related entities from graph."""
         if not self.knowledge_graph:
             return []
-        
+
         related = []
         visited = set()
         current_level = {node_id}
-        
+
         for hop in range(max_hops):
             next_level = set()
-            
+
             for current_id in current_level:
                 if current_id in visited:
                     continue
                 visited.add(current_id)
-                
+
                 # Find edges
                 edges = self.knowledge_graph.get("edges", [])
                 for edge in edges:
@@ -393,35 +402,39 @@ class ContextRetriever:
                         target_id = edge.get("target")
                         if target_id not in visited:
                             next_level.add(target_id)
-                            
+
                             # Get node info
                             nodes = self.knowledge_graph.get("nodes", [])
                             for node in nodes:
                                 if node.get("id") == target_id:
-                                    related.append({
-                                        "id": target_id,
-                                        "type": node.get("type"),
-                                        "content": node.get("content"),
-                                        "relationship": edge.get("type"),
-                                        "hop": hop + 1
-                                    })
-                    
+                                    related.append(
+                                        {
+                                            "id": target_id,
+                                            "type": node.get("type"),
+                                            "content": node.get("content"),
+                                            "relationship": edge.get("type"),
+                                            "hop": hop + 1,
+                                        }
+                                    )
+
                     elif edge.get("target") == current_id:
                         source_id = edge.get("source")
                         if source_id not in visited:
                             next_level.add(source_id)
-                            
+
                             nodes = self.knowledge_graph.get("nodes", [])
                             for node in nodes:
                                 if node.get("id") == source_id:
-                                    related.append({
-                                        "id": source_id,
-                                        "type": node.get("type"),
-                                        "content": node.get("content"),
-                                        "relationship": edge.get("type"),
-                                        "hop": hop + 1
-                                    })
-            
+                                    related.append(
+                                        {
+                                            "id": source_id,
+                                            "type": node.get("type"),
+                                            "content": node.get("content"),
+                                            "relationship": edge.get("type"),
+                                            "hop": hop + 1,
+                                        }
+                                    )
+
             current_level = next_level
-        
+
         return related

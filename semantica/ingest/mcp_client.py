@@ -35,9 +35,9 @@ License: MIT
 import json
 import subprocess
 import sys
-from typing import Any, Dict, List, Optional, Union
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Union
 
 from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
@@ -46,7 +46,7 @@ from ..utils.logging import get_logger
 @dataclass
 class MCPResource:
     """MCP resource representation."""
-    
+
     uri: str
     name: str
     description: Optional[str] = None
@@ -57,7 +57,7 @@ class MCPResource:
 @dataclass
 class MCPTool:
     """MCP tool representation."""
-    
+
     name: str
     description: Optional[str] = None
     input_schema: Dict[str, Any] = field(default_factory=dict)
@@ -67,46 +67,46 @@ class MCPTool:
 class MCPClient:
     """
     Generic MCP client for communicating with Python MCP servers and FastMCP servers.
-    
+
     **IMPORTANT**: This client supports ONLY Python-based MCP servers and FastMCP servers.
     JavaScript, TypeScript, C#, Java, and other language implementations are NOT supported.
-    
+
     This class provides a domain-agnostic implementation that works with
     any Python or FastMCP server following the MCP protocol specification.
     It supports URL-based connections and dynamically discovers server
     capabilities without requiring domain-specific code.
-    
+
     Supported URL Schemes:
         - http://, https://: HTTP/HTTPS transport (auto-detected)
         - mcp://: MCP protocol URL (auto-detected as HTTP)
         - sse://: Server-Sent Events transport (auto-detected)
-    
+
     Example Usage:
         >>> # Connect via URL (primary method)
         >>> client = MCPClient(url="http://localhost:8000/mcp")
         >>> client.connect()
         >>> resources = client.list_resources()
         >>> data = client.read_resource("resource://example")
-        
+
         >>> # With authentication
         >>> client = MCPClient(
         ...     url="https://api.example.com/mcp",
         ...     headers={"Authorization": "Bearer token"}
         ... )
     """
-    
+
     def __init__(
         self,
         url: Optional[str] = None,
         headers: Optional[Dict[str, str]] = None,
         transport: Optional[str] = None,
-        **config
+        **config,
     ):
         """
         Initialize MCP client.
-        
+
         **IMPORTANT**: Supports only Python MCP servers and FastMCP servers.
-        
+
         Args:
             url: MCP server URL (primary parameter)
                 - http://localhost:8000/mcp
@@ -117,7 +117,7 @@ class MCPClient:
                 - "http": HTTP/HTTPS transport
                 - "sse": Server-Sent Events transport
             **config: Additional configuration options (timeout, etc.)
-        
+
         Raises:
             ValidationError: If URL is invalid or transport cannot be determined
         """
@@ -125,7 +125,7 @@ class MCPClient:
         self.url = url
         self.headers = headers or {}
         self.config = config
-        
+
         # Auto-detect transport from URL if not provided
         if url:
             parsed_url = url.lower()
@@ -144,7 +144,7 @@ class MCPClient:
                 "Either 'url' or 'transport' parameter is required. "
                 "URL-based connection is the primary method."
             )
-        
+
         # Validate transport
         if self.transport not in ("http", "sse"):
             raise ValidationError(
@@ -152,33 +152,37 @@ class MCPClient:
                 f"Supported: http, sse. "
                 f"Note: stdio transport is not supported in public API."
             )
-        
+
         # Validate URL for HTTP/SSE transports
         if self.transport in ("http", "sse") and not self.url:
-            raise ValidationError(f"{self.transport} transport requires 'url' parameter")
-        
+            raise ValidationError(
+                f"{self.transport} transport requires 'url' parameter"
+            )
+
         # Internal stdio support (not exposed in public API)
         self._command: Optional[str] = None
         self._args: Optional[List[str]] = None
-        
+
         # Connection state
         self._process: Optional[subprocess.Popen] = None
         self._connected: bool = False
         self._initialized: bool = False
         self._server_info: Optional[Dict[str, Any]] = None
         self._request_id: int = 0
-        
-        self.logger.debug(f"MCP client initialized: url={url}, transport={self.transport}")
-    
+
+        self.logger.debug(
+            f"MCP client initialized: url={url}, transport={self.transport}"
+        )
+
     def connect(self) -> bool:
         """
         Connect to MCP server via URL.
-        
+
         **IMPORTANT**: Supports only Python MCP servers and FastMCP servers.
-        
+
         Returns:
             bool: True if connection successful
-            
+
         Raises:
             ProcessingError: If connection fails
         """
@@ -192,7 +196,7 @@ class MCPClient:
         except Exception as e:
             self.logger.error(f"Failed to connect to MCP server: {e}")
             raise ProcessingError(f"Failed to connect to MCP server: {e}") from e
-    
+
     def _connect_stdio(self) -> bool:
         """Connect via stdio transport."""
         try:
@@ -203,17 +207,17 @@ class MCPClient:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                bufsize=0
+                bufsize=0,
             )
             self._connected = True
             self.logger.info("Connected to MCP server via stdio")
-            
+
             # Initialize protocol
             return self._initialize()
         except Exception as e:
             self.logger.error(f"Failed to connect via stdio: {e}")
             raise
-    
+
     def _connect_http(self) -> bool:
         """Connect via HTTP transport."""
         try:
@@ -225,7 +229,7 @@ class MCPClient:
         except Exception as e:
             self.logger.error(f"Failed to connect via HTTP: {e}")
             raise
-    
+
     def _connect_sse(self) -> bool:
         """Connect via SSE transport."""
         try:
@@ -237,7 +241,7 @@ class MCPClient:
         except Exception as e:
             self.logger.error(f"Failed to connect via SSE: {e}")
             raise
-    
+
     def _initialize(self) -> bool:
         """Initialize MCP protocol."""
         try:
@@ -247,20 +251,13 @@ class MCPClient:
                 "method": "initialize",
                 "params": {
                     "protocolVersion": "2024-11-05",
-                    "capabilities": {
-                        "roots": {
-                            "listChanged": True
-                        }
-                    },
-                    "clientInfo": {
-                        "name": "semantica",
-                        "version": "1.0.0"
-                    }
-                }
+                    "capabilities": {"roots": {"listChanged": True}},
+                    "clientInfo": {"name": "semantica", "version": "1.0.0"},
+                },
             }
-            
+
             response = self._send_request(request)
-            
+
             if response and "result" in response:
                 self._server_info = response["result"]
                 self._initialized = True
@@ -268,11 +265,13 @@ class MCPClient:
                 return True
             else:
                 error = response.get("error", {}) if response else {}
-                raise ProcessingError(f"Failed to initialize MCP: {error.get('message', 'Unknown error')}")
+                raise ProcessingError(
+                    f"Failed to initialize MCP: {error.get('message', 'Unknown error')}"
+                )
         except Exception as e:
             self.logger.error(f"Failed to initialize MCP protocol: {e}")
             raise
-    
+
     def disconnect(self):
         """Disconnect from MCP server."""
         if self._process:
@@ -285,29 +284,29 @@ class MCPClient:
                 self.logger.warning(f"Error disconnecting: {e}")
             finally:
                 self._process = None
-        
+
         self._connected = False
         self._initialized = False
         self.logger.info("Disconnected from MCP server")
-    
+
     def _get_request_id(self) -> int:
         """Get next request ID."""
         self._request_id += 1
         return self._request_id
-    
+
     def _send_request(self, request: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
         Send JSON-RPC request to MCP server.
-        
+
         Args:
             request: JSON-RPC request dictionary
-            
+
         Returns:
             Response dictionary or None
         """
         if not self._connected:
             raise ProcessingError("Not connected to MCP server")
-        
+
         try:
             if self.transport == "stdio":
                 return self._send_request_stdio(request)
@@ -320,18 +319,18 @@ class MCPClient:
         except Exception as e:
             self.logger.error(f"Failed to send request: {e}")
             raise ProcessingError(f"Failed to send request: {e}") from e
-    
+
     def _send_request_stdio(self, request: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Send request via stdio."""
         if not self._process:
             raise ProcessingError("Process not running")
-        
+
         try:
             # Send request
             request_json = json.dumps(request) + "\n"
             self._process.stdin.write(request_json)
             self._process.stdin.flush()
-            
+
             # Read response
             response_line = self._process.stdout.readline()
             if response_line:
@@ -340,17 +339,17 @@ class MCPClient:
         except Exception as e:
             self.logger.error(f"Failed to send stdio request: {e}")
             raise
-    
+
     def _send_request_http(self, request: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Send request via HTTP."""
         try:
             import httpx
-            
+
             response = httpx.post(
                 self.url,
                 json=request,
                 headers=self.headers,
-                timeout=self.config.get("timeout", 30.0)
+                timeout=self.config.get("timeout", 30.0),
             )
             response.raise_for_status()
             return response.json()
@@ -358,11 +357,12 @@ class MCPClient:
             # Fallback to requests if httpx not available
             try:
                 import requests
+
                 response = requests.post(
                     self.url,
                     json=request,
                     headers=self.headers,
-                    timeout=self.config.get("timeout", 30.0)
+                    timeout=self.config.get("timeout", 30.0),
                 )
                 response.raise_for_status()
                 return response.json()
@@ -374,32 +374,32 @@ class MCPClient:
         except Exception as e:
             self.logger.error(f"Failed to send HTTP request: {e}")
             raise
-    
+
     def _send_request_sse(self, request: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Send request via SSE."""
         # SSE implementation would go here
         # For now, raise not implemented
         raise ProcessingError("SSE transport not yet implemented")
-    
+
     def list_resources(self) -> List[MCPResource]:
         """
         List resources available from MCP server.
-        
+
         Returns:
             List of MCPResource objects
         """
         if not self._initialized:
             raise ProcessingError("MCP protocol not initialized")
-        
+
         try:
             request = {
                 "jsonrpc": "2.0",
                 "id": self._get_request_id(),
-                "method": "resources/list"
+                "method": "resources/list",
             }
-            
+
             response = self._send_request(request)
-            
+
             if response and "result" in response:
                 resources_data = response["result"].get("resources", [])
                 return [
@@ -408,36 +408,38 @@ class MCPClient:
                         name=r.get("name", ""),
                         description=r.get("description"),
                         mime_type=r.get("mimeType"),
-                        metadata=r.get("metadata", {})
+                        metadata=r.get("metadata", {}),
                     )
                     for r in resources_data
                 ]
             else:
                 error = response.get("error", {}) if response else {}
-                raise ProcessingError(f"Failed to list resources: {error.get('message', 'Unknown error')}")
+                raise ProcessingError(
+                    f"Failed to list resources: {error.get('message', 'Unknown error')}"
+                )
         except Exception as e:
             self.logger.error(f"Failed to list resources: {e}")
             raise
-    
+
     def list_tools(self) -> List[MCPTool]:
         """
         List tools available from MCP server.
-        
+
         Returns:
             List of MCPTool objects
         """
         if not self._initialized:
             raise ProcessingError("MCP protocol not initialized")
-        
+
         try:
             request = {
                 "jsonrpc": "2.0",
                 "id": self._get_request_id(),
-                "method": "tools/list"
+                "method": "tools/list",
             }
-            
+
             response = self._send_request(request)
-            
+
             if response and "result" in response:
                 tools_data = response["result"].get("tools", [])
                 return [
@@ -445,92 +447,94 @@ class MCPClient:
                         name=t.get("name", ""),
                         description=t.get("description"),
                         input_schema=t.get("inputSchema", {}),
-                        metadata=t.get("metadata", {})
+                        metadata=t.get("metadata", {}),
                     )
                     for t in tools_data
                 ]
             else:
                 error = response.get("error", {}) if response else {}
-                raise ProcessingError(f"Failed to list tools: {error.get('message', 'Unknown error')}")
+                raise ProcessingError(
+                    f"Failed to list tools: {error.get('message', 'Unknown error')}"
+                )
         except Exception as e:
             self.logger.error(f"Failed to list tools: {e}")
             raise
-    
+
     def read_resource(self, uri: str) -> Dict[str, Any]:
         """
         Read a resource from MCP server.
-        
+
         Args:
             uri: Resource URI
-            
+
         Returns:
             Resource data dictionary
         """
         if not self._initialized:
             raise ProcessingError("MCP protocol not initialized")
-        
+
         try:
             request = {
                 "jsonrpc": "2.0",
                 "id": self._get_request_id(),
                 "method": "resources/read",
-                "params": {
-                    "uri": uri
-                }
+                "params": {"uri": uri},
             }
-            
+
             response = self._send_request(request)
-            
+
             if response and "result" in response:
                 return response["result"]
             else:
                 error = response.get("error", {}) if response else {}
-                raise ProcessingError(f"Failed to read resource: {error.get('message', 'Unknown error')}")
+                raise ProcessingError(
+                    f"Failed to read resource: {error.get('message', 'Unknown error')}"
+                )
         except Exception as e:
             self.logger.error(f"Failed to read resource {uri}: {e}")
             raise
-    
-    def call_tool(self, name: str, arguments: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+
+    def call_tool(
+        self, name: str, arguments: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """
         Call a tool on MCP server.
-        
+
         Args:
             name: Tool name
             arguments: Tool arguments
-            
+
         Returns:
             Tool result dictionary
         """
         if not self._initialized:
             raise ProcessingError("MCP protocol not initialized")
-        
+
         try:
             request = {
                 "jsonrpc": "2.0",
                 "id": self._get_request_id(),
                 "method": "tools/call",
-                "params": {
-                    "name": name,
-                    "arguments": arguments or {}
-                }
+                "params": {"name": name, "arguments": arguments or {}},
             }
-            
+
             response = self._send_request(request)
-            
+
             if response and "result" in response:
                 return response["result"]
             else:
                 error = response.get("error", {}) if response else {}
-                raise ProcessingError(f"Failed to call tool {name}: {error.get('message', 'Unknown error')}")
+                raise ProcessingError(
+                    f"Failed to call tool {name}: {error.get('message', 'Unknown error')}"
+                )
         except Exception as e:
             self.logger.error(f"Failed to call tool {name}: {e}")
             raise
-    
+
     def is_connected(self) -> bool:
         """Check if connected to MCP server."""
         return self._connected and self._initialized
-    
+
     def get_server_info(self) -> Optional[Dict[str, Any]]:
         """Get server information from initialization."""
         return self._server_info
-

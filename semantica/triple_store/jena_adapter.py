@@ -28,15 +28,16 @@ License: MIT
 
 from typing import Any, Dict, List, Optional
 
-from ..utils.exceptions import ValidationError, ProcessingError
+from ..semantic_extract.triple_extractor import Triple
+from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
 from ..utils.progress_tracker import get_progress_tracker
-from ..semantic_extract.triple_extractor import Triple
 
 # Optional Jena imports
 try:
-    from rdflib import Graph, Namespace, URIRef, Literal, RDF
+    from rdflib import RDF, Graph, Literal, Namespace, URIRef
     from rdflib.plugins.stores.sparqlstore import SPARQLStore
+
     HAS_JENA_RDFLIB = True
 except ImportError:
     HAS_JENA_RDFLIB = False
@@ -47,7 +48,7 @@ except ImportError:
 class JenaAdapter:
     """
     Apache Jena adapter for triple store operations.
-    
+
     • Jena connection and configuration
     • SPARQL query execution
     • Model and dataset management
@@ -55,11 +56,11 @@ class JenaAdapter:
     • Performance optimization
     • Error handling and recovery
     """
-    
+
     def __init__(self, **config):
         """
         Initialize Jena adapter.
-        
+
         Args:
             **config: Configuration options:
                 - endpoint: Jena Fuseki endpoint (optional)
@@ -69,14 +70,14 @@ class JenaAdapter:
         self.logger = get_logger("jena_adapter")
         self.config = config
         self.progress_tracker = get_progress_tracker()
-        
+
         self.endpoint = config.get("endpoint")
         self.dataset = config.get("dataset", "default")
         self.enable_inference = config.get("enable_inference", False)
-        
+
         self.graph: Optional[Graph] = None
         self._initialize_graph()
-    
+
     def _initialize_graph(self) -> None:
         """Initialize RDF graph."""
         if HAS_JENA_RDFLIB:
@@ -92,94 +93,101 @@ class JenaAdapter:
                 # Use in-memory graph
                 self.graph = Graph()
         else:
-            self.logger.warning("rdflib not available. Jena adapter will use basic operations.")
+            self.logger.warning(
+                "rdflib not available. Jena adapter will use basic operations."
+            )
             self.graph = None
-    
+
     def create_model(self, **options) -> Dict[str, Any]:
         """
         Create and manage RDF models.
-        
+
         Args:
             **options: Model options
-        
+
         Returns:
             Model information
         """
         if self.graph is None:
             self._initialize_graph()
-        
+
         return {
             "model_id": self.dataset,
             "endpoint": self.endpoint,
-            "triple_count": len(self.graph) if self.graph else 0
+            "triple_count": len(self.graph) if self.graph else 0,
         }
-    
-    def add_triples(
-        self,
-        triples: List[Triple],
-        **options
-    ) -> Dict[str, Any]:
+
+    def add_triples(self, triples: List[Triple], **options) -> Dict[str, Any]:
         """
         Add triples to model.
-        
+
         Args:
             triples: List of triples
             **options: Additional options
-        
+
         Returns:
             Operation status
         """
         tracking_id = self.progress_tracker.start_tracking(
             module="triple_store",
             submodule="JenaAdapter",
-            message=f"Adding {len(triples)} triples to Jena model"
+            message=f"Adding {len(triples)} triples to Jena model",
         )
-        
+
         try:
             if not self.graph:
-                self.progress_tracker.stop_tracking(tracking_id, status="failed", message="Graph not initialized")
+                self.progress_tracker.stop_tracking(
+                    tracking_id, status="failed", message="Graph not initialized"
+                )
                 raise ProcessingError("Graph not initialized")
-            
+
             added_count = 0
-            self.progress_tracker.update_tracking(tracking_id, message="Adding triples to graph...")
+            self.progress_tracker.update_tracking(
+                tracking_id, message="Adding triples to graph..."
+            )
             for triple in triples:
                 try:
                     subject = URIRef(triple.subject)
                     predicate = URIRef(triple.predicate)
-                    obj = URIRef(triple.object) if triple.object.startswith("http") else Literal(triple.object)
-                    
+                    obj = (
+                        URIRef(triple.object)
+                        if triple.object.startswith("http")
+                        else Literal(triple.object)
+                    )
+
                     self.graph.add((subject, predicate, obj))
                     added_count += 1
                 except Exception as e:
                     self.logger.warning(f"Failed to add triple: {e}")
-            
-            self.progress_tracker.stop_tracking(tracking_id, status="completed",
-                                              message=f"Added {added_count}/{len(triples)} triples")
-            return {
-                "success": True,
-                "added": added_count,
-                "total": len(triples)
-            }
+
+            self.progress_tracker.stop_tracking(
+                tracking_id,
+                status="completed",
+                message=f"Added {added_count}/{len(triples)} triples",
+            )
+            return {"success": True, "added": added_count, "total": len(triples)}
         except Exception as e:
             self.logger.error(f"Failed to add triples: {e}")
-            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
+            )
             raise ProcessingError(f"Failed to add triples: {e}")
-    
+
     def add_triple(self, triple: Triple, **options) -> Dict[str, Any]:
         """Add single triple."""
         return self.add_triples([triple], **options)
-    
+
     def get_triples(
         self,
         subject: Optional[str] = None,
         predicate: Optional[str] = None,
         object: Optional[str] = None,
-        **options
+        **options,
     ) -> List[Triple]:
         """Get triples matching criteria."""
         if not self.graph:
             return []
-        
+
         try:
             # Build SPARQL query
             query_parts = []
@@ -189,131 +197,134 @@ class JenaAdapter:
                 query_parts.append(f"?p = <{predicate}>")
             if object:
                 query_parts.append(f"?o = <{object}>")
-            
+
             where_clause = " ".join(query_parts) if query_parts else ""
             query = f"SELECT ?s ?p ?o WHERE {{ ?s ?p ?o {where_clause} }}"
-            
+
             results = self.graph.query(query)
-            
+
             triples = []
             for row in results:
-                triples.append(Triple(
-                    subject=str(row.s),
-                    predicate=str(row.p),
-                    object=str(row.o),
-                    metadata={"source": "jena"}
-                ))
-            
+                triples.append(
+                    Triple(
+                        subject=str(row.s),
+                        predicate=str(row.p),
+                        object=str(row.o),
+                        metadata={"source": "jena"},
+                    )
+                )
+
             return triples
         except Exception as e:
             self.logger.error(f"Failed to get triples: {e}")
             return []
-    
+
     def delete_triple(self, triple: Triple, **options) -> Dict[str, Any]:
         """Delete triple."""
         if not self.graph:
             raise ProcessingError("Graph not initialized")
-        
+
         try:
             subject = URIRef(triple.subject)
             predicate = URIRef(triple.predicate)
-            obj = URIRef(triple.object) if triple.object.startswith("http") else Literal(triple.object)
-            
+            obj = (
+                URIRef(triple.object)
+                if triple.object.startswith("http")
+                else Literal(triple.object)
+            )
+
             self.graph.remove((subject, predicate, obj))
-            
+
             return {"success": True}
         except Exception as e:
             self.logger.error(f"Failed to delete triple: {e}")
             raise ProcessingError(f"Failed to delete triple: {e}")
-    
-    def run_inference(
-        self,
-        model: Optional[Any] = None,
-        **options
-    ) -> Dict[str, Any]:
+
+    def run_inference(self, model: Optional[Any] = None, **options) -> Dict[str, Any]:
         """
         Execute inference rules.
-        
+
         Args:
             model: Optional model (uses default if not provided)
             **options: Inference options
-        
+
         Returns:
             Inference results
         """
         if not self.enable_inference:
             self.logger.warning("Inference not enabled")
             return {"success": False, "message": "Inference not enabled"}
-        
+
         # Basic inference would require OWL reasoner
         # This is a placeholder implementation
         self.logger.info("Inference would be executed here with OWL reasoner")
-        
+
         return {
             "success": True,
             "inferred_triples": 0,
-            "message": "Inference placeholder"
+            "message": "Inference placeholder",
         }
-    
-    def execute_sparql(
-        self,
-        query: str,
-        **options
-    ) -> Dict[str, Any]:
+
+    def execute_sparql(self, query: str, **options) -> Dict[str, Any]:
         """
         Execute SPARQL query.
-        
+
         Args:
             query: SPARQL query string
             **options: Additional options
-        
+
         Returns:
             Query results
         """
         if not self.graph:
             raise ProcessingError("Graph not initialized")
-        
+
         try:
             results = self.graph.query(query)
-            
+
             bindings = []
             variables = []
-            
+
             if results.vars:
                 variables = [str(v) for v in results.vars]
-                
+
                 for row in results:
                     binding = {}
                     for var in results.vars:
                         value = getattr(row, str(var))
                         if value:
-                            binding[str(var)] = {"value": str(value), "type": "uri" if isinstance(value, URIRef) else "literal"}
+                            binding[str(var)] = {
+                                "value": str(value),
+                                "type": "uri"
+                                if isinstance(value, URIRef)
+                                else "literal",
+                            }
                     bindings.append(binding)
-            
+
             return {
                 "success": True,
                 "bindings": bindings,
                 "variables": variables,
-                "metadata": {"query": query}
+                "metadata": {"query": query},
             }
         except Exception as e:
             self.logger.error(f"SPARQL query failed: {e}")
             raise ProcessingError(f"SPARQL query failed: {e}")
-    
+
     def serialize(self, format: str = "turtle", **options) -> str:
         """
         Serialize graph to RDF format.
-        
+
         Args:
             format: RDF format (turtle, rdfxml, n3)
             **options: Serialization options
-        
+
         Returns:
             Serialized RDF string
         """
         if not self.graph:
             return ""
-        
+
         try:
             return self.graph.serialize(format=format)
         except Exception as e:

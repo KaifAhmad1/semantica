@@ -34,40 +34,40 @@ from typing import Any, Dict, List, Optional, Union
 from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
 from ..utils.progress_tracker import get_progress_tracker
-from .pdf_parser import PDFParser
 from .docx_parser import DOCXParser
 from .html_parser import HTMLParser
+from .pdf_parser import PDFParser
 
 
 class DocumentParser:
     """
     Document format parsing handler.
-    
+
     • Parses various document formats (PDF, DOCX, HTML, TXT)
     • Extracts text content and metadata
     • Handles document structure and formatting
     • Processes embedded images and tables
     • Supports batch document processing
     • Handles password-protected documents
-    
+
     Attributes:
         • pdf_parser: PDF parsing engine
         • docx_parser: DOCX parsing engine
         • html_parser: HTML parsing engine
         • text_parser: Plain text processor
         • supported_formats: List of supported formats
-        
+
     Methods:
         • parse_document(): Parse any document format
         • extract_text(): Extract text content
         • extract_metadata(): Extract document metadata
         • parse_batch(): Process multiple documents
     """
-    
+
     def __init__(self, config=None, **kwargs):
         """
         Initialize document parser.
-        
+
         • Setup format-specific parsers
         • Configure parsing options
         • Initialize metadata extractors
@@ -77,216 +77,230 @@ class DocumentParser:
         self.logger = get_logger("document_parser")
         self.config = config or {}
         self.config.update(kwargs)
-        
+
         # Initialize format-specific parsers
         self.pdf_parser = PDFParser(**self.config.get("pdf", {}))
         self.docx_parser = DOCXParser(**self.config.get("docx", {}))
         self.html_parser = HTMLParser(**self.config.get("html", {}))
-        
+
         # Supported formats
         self.supported_formats = {
-            '.pdf': 'pdf',
-            '.docx': 'docx',
-            '.doc': 'docx',
-            '.html': 'html',
-            '.htm': 'html',
-            '.txt': 'text',
-            '.text': 'text'
+            ".pdf": "pdf",
+            ".docx": "docx",
+            ".doc": "docx",
+            ".html": "html",
+            ".htm": "html",
+            ".txt": "text",
+            ".text": "text",
         }
-        
+
         # Initialize progress tracker
         self.progress_tracker = get_progress_tracker()
-    
-    def parse_document(self, file_path: Union[str, Path], file_type: Optional[str] = None, **options) -> Dict[str, Any]:
+
+    def parse_document(
+        self, file_path: Union[str, Path], file_type: Optional[str] = None, **options
+    ) -> Dict[str, Any]:
         """
         Parse document of any supported format.
-        
+
         • Detect document format if not specified
         • Route to appropriate format parser
         • Extract text content and structure
         • Extract metadata and properties
         • Handle parsing errors gracefully
         • Return parsed document object
-        
+
         Args:
             file_path: Path to document file
             file_type: Document type (auto-detected if None)
             **options: Parsing options
-            
+
         Returns:
             dict: Parsed document data
         """
         file_path = Path(file_path)
-        
+
         # Track document parsing
         tracking_id = self.progress_tracker.start_tracking(
             file=str(file_path),
             module="parse",
             submodule="DocumentParser",
-            message=f"Document: {file_path.name}"
+            message=f"Document: {file_path.name}",
         )
-        
+
         try:
             if not file_path.exists():
                 raise ValidationError(f"Document file not found: {file_path}")
-            
+
             # Detect file type if not specified
             if file_type is None:
                 file_type = self._detect_file_type(file_path)
-            
-            self.progress_tracker.update_tracking(tracking_id, message=f"Parsing {file_type} document")
-            
+
+            self.progress_tracker.update_tracking(
+                tracking_id, message=f"Parsing {file_type} document"
+            )
+
             # Route to appropriate parser
             try:
-                if file_type == 'pdf':
+                if file_type == "pdf":
                     result = self.pdf_parser.parse(file_path, **options)
-                elif file_type == 'docx':
+                elif file_type == "docx":
                     result = self.docx_parser.parse(file_path, **options)
-                elif file_type == 'html':
+                elif file_type == "html":
                     result = self.html_parser.parse(file_path, **options)
-                elif file_type == 'text':
+                elif file_type == "text":
                     result = self._parse_text(file_path, **options)
                 else:
                     raise ValidationError(f"Unsupported document format: {file_type}")
-                
-                self.progress_tracker.stop_tracking(tracking_id, status="completed",
-                                                   message=f"Parsed {file_path.name} ({file_type})")
+
+                self.progress_tracker.stop_tracking(
+                    tracking_id,
+                    status="completed",
+                    message=f"Parsed {file_path.name} ({file_type})",
+                )
                 return result
-                    
+
             except Exception as e:
-                self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+                self.progress_tracker.stop_tracking(
+                    tracking_id, status="failed", message=str(e)
+                )
                 self.logger.error(f"Failed to parse document {file_path}: {e}")
                 raise ProcessingError(f"Failed to parse document: {e}")
-                
+
         except Exception as e:
-            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
+            )
             raise
-    
+
     def extract_text(self, file_path: Union[str, Path], **options) -> str:
         """
         Extract text content from document.
-        
+
         • Parse document content
         • Extract all text elements
         • Preserve text structure and formatting
         • Handle special characters and encoding
         • Clean and normalize text
         • Return extracted text content
-        
+
         Args:
             file_path: Path to document file
             **options: Parsing options
-            
+
         Returns:
             str: Extracted text content
         """
         file_path = Path(file_path)
         file_type = self._detect_file_type(file_path)
-        
-        if file_type == 'pdf':
+
+        if file_type == "pdf":
             return self.pdf_parser.extract_text(file_path, **options)
-        elif file_type == 'docx':
+        elif file_type == "docx":
             return self.docx_parser.extract_text(file_path)
-        elif file_type == 'html':
-            return self.html_parser.extract_text(file_path, clean=options.get("clean", True))
-        elif file_type == 'text':
+        elif file_type == "html":
+            return self.html_parser.extract_text(
+                file_path, clean=options.get("clean", True)
+            )
+        elif file_type == "text":
             return self._parse_text(file_path, **options).get("text", "")
         else:
             raise ValidationError(f"Unsupported document format: {file_type}")
-    
+
     def extract_metadata(self, file_path: Union[str, Path]) -> Dict[str, Any]:
         """
         Extract document metadata and properties.
-        
+
         • Parse document properties
         • Extract creation and modification dates
         • Get author and title information
         • Extract document statistics
         • Return metadata dictionary
-        
+
         Args:
             file_path: Path to document file
-            
+
         Returns:
             dict: Document metadata
         """
         file_path = Path(file_path)
         file_type = self._detect_file_type(file_path)
-        
-        result = self.parse_document(file_path, file_type=file_type, extract_tables=False, extract_images=False)
+
+        result = self.parse_document(
+            file_path, file_type=file_type, extract_tables=False, extract_images=False
+        )
         return result.get("metadata", {})
-    
-    def parse_batch(self, file_paths: List[Union[str, Path]], **options) -> Dict[str, Any]:
+
+    def parse_batch(
+        self, file_paths: List[Union[str, Path]], **options
+    ) -> Dict[str, Any]:
         """
         Parse multiple documents in batch.
-        
+
         • Process multiple files concurrently
         • Track parsing progress
         • Handle individual file errors
         • Collect parsing results
         • Return batch processing results
-        
+
         Args:
             file_paths: List of document file paths
             **options: Parsing options:
                 - max_workers: Maximum parallel workers
                 - continue_on_error: Continue on errors (default: True)
-                
+
         Returns:
             dict: Batch processing results
         """
-        results = {
-            "successful": [],
-            "failed": [],
-            "total": len(file_paths)
-        }
-        
+        results = {"successful": [], "failed": [], "total": len(file_paths)}
+
         continue_on_error = options.get("continue_on_error", True)
-        
+
         for file_path in file_paths:
             try:
                 result = self.parse_document(file_path, **options)
-                results["successful"].append({
-                    "file_path": str(file_path),
-                    "result": result
-                })
+                results["successful"].append(
+                    {"file_path": str(file_path), "result": result}
+                )
             except Exception as e:
                 error_info = {
                     "file_path": str(file_path),
                     "error": str(e),
-                    "error_type": type(e).__name__
+                    "error_type": type(e).__name__,
                 }
                 results["failed"].append(error_info)
-                
+
                 if not continue_on_error:
-                    raise ProcessingError(f"Batch processing failed at {file_path}: {e}")
-        
+                    raise ProcessingError(
+                        f"Batch processing failed at {file_path}: {e}"
+                    )
+
         results["success_count"] = len(results["successful"])
         results["failure_count"] = len(results["failed"])
-        
+
         return results
-    
+
     def _detect_file_type(self, file_path: Path) -> str:
         """Detect document file type from extension."""
         suffix = file_path.suffix.lower()
-        return self.supported_formats.get(suffix, 'unknown')
-    
+        return self.supported_formats.get(suffix, "unknown")
+
     def _parse_text(self, file_path: Path, **options) -> Dict[str, Any]:
         """Parse plain text file."""
         encoding = options.get("encoding", "utf-8")
-        
+
         try:
-            with open(file_path, 'r', encoding=encoding, errors='ignore') as f:
+            with open(file_path, "r", encoding=encoding, errors="ignore") as f:
                 text = f.read()
-            
+
             return {
                 "text": text,
                 "metadata": {
                     "file_path": str(file_path),
                     "encoding": encoding,
-                    "size": len(text)
+                    "size": len(text),
                 },
-                "full_text": text
+                "full_text": text,
             }
         except Exception as e:
             self.logger.error(f"Failed to parse text file {file_path}: {e}")

@@ -119,62 +119,62 @@ Author: Semantica Contributors
 License: MIT
 """
 
-from typing import Any, Dict, List, Optional, Union, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from .text_normalizer import (
-    TextNormalizer,
-    UnicodeNormalizer,
-    WhitespaceNormalizer,
-    SpecialCharacterProcessor,
-)
-from .entity_normalizer import (
-    EntityNormalizer,
-    AliasResolver,
-    EntityDisambiguator,
-    NameVariantHandler,
+from .config import NormalizeConfig, normalize_config
+from .data_cleaner import (
+    DataCleaner,
+    DataValidator,
+    DuplicateDetector,
+    DuplicateGroup,
+    MissingValueHandler,
+    ValidationResult,
 )
 from .date_normalizer import (
     DateNormalizer,
-    TimeZoneNormalizer,
     RelativeDateProcessor,
     TemporalExpressionParser,
+    TimeZoneNormalizer,
 )
-from .number_normalizer import (
-    NumberNormalizer,
-    UnitConverter,
-    CurrencyNormalizer,
-    ScientificNotationHandler,
-)
-from .data_cleaner import (
-    DataCleaner,
-    DuplicateDetector,
-    DataValidator,
-    MissingValueHandler,
-    DuplicateGroup,
-    ValidationResult,
-)
-from .text_cleaner import TextCleaner
-from .language_detector import LanguageDetector
 from .encoding_handler import EncodingHandler
-from .registry import MethodRegistry, method_registry
+from .entity_normalizer import (
+    AliasResolver,
+    EntityDisambiguator,
+    EntityNormalizer,
+    NameVariantHandler,
+)
+from .language_detector import LanguageDetector
 from .methods import (
-    normalize_text,
-    clean_text,
-    normalize_entity,
-    resolve_aliases,
-    disambiguate_entity,
-    normalize_date,
-    normalize_time,
-    normalize_number,
-    normalize_quantity,
     clean_data,
+    clean_text,
     detect_duplicates,
     detect_language,
-    handle_encoding,
+    disambiguate_entity,
     get_normalize_method,
+    handle_encoding,
     list_available_methods,
+    normalize_date,
+    normalize_entity,
+    normalize_number,
+    normalize_quantity,
+    normalize_text,
+    normalize_time,
+    resolve_aliases,
 )
-from .config import NormalizeConfig, normalize_config
+from .number_normalizer import (
+    CurrencyNormalizer,
+    NumberNormalizer,
+    ScientificNotationHandler,
+    UnitConverter,
+)
+from .registry import MethodRegistry, method_registry
+from .text_cleaner import TextCleaner
+from .text_normalizer import (
+    SpecialCharacterProcessor,
+    TextNormalizer,
+    UnicodeNormalizer,
+    WhitespaceNormalizer,
+)
 
 __all__ = [
     # Text normalization

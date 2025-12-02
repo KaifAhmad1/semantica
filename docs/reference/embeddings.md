@@ -131,6 +131,7 @@ Optimizes vectors.
 ## Convenience Functions
 
 ```python
+<<<<<<< HEAD
 from semantica.embeddings import EmbeddingGenerator, embed_text, calculate_similarity
 
 # Generate embeddings
@@ -140,6 +141,15 @@ emb2 = generator.generate_embeddings("text2", data_type="text")
 
 # Similarity
 score = calculate_similarity(emb1, emb2)
+=======
+from semantica.embeddings import build, embed_text, calculate_similarity
+
+# One-line generation
+result = build(["text1", "text2"])
+
+# Similarity
+score = calculate_similarity(vec1, vec2)
+>>>>>>> origin/main
 ```
 
 ---

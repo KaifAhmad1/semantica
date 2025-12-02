@@ -66,6 +66,7 @@ class NamedEntityRecognizer:
     • Processes batch text collections
     """
 
+<<<<<<< HEAD
     def __init__(
         self,
         methods: Optional[List[str]] = None,
@@ -76,6 +77,9 @@ class NamedEntityRecognizer:
         config=None,
         **kwargs
     ):
+=======
+    def __init__(self, method=None, config=None, **kwargs):
+>>>>>>> origin/main
         """
         Initialize named entity recognizer.
 
@@ -93,12 +97,15 @@ class NamedEntityRecognizer:
         self.config.update(kwargs)
         self.progress_tracker = get_progress_tracker()
 
+<<<<<<< HEAD
         # Store parameters
         self.methods = methods or ["spacy"]
         self.confidence_threshold = confidence_threshold
         self.merge_overlapping = merge_overlapping
         self.include_standard_types = include_standard_types
 
+=======
+>>>>>>> origin/main
         # Use NERExtractor for actual extraction
         ner_config = self.config.get("ner", {})
         ner_config["confidence_threshold"] = confidence_threshold

@@ -56,6 +56,7 @@ graph LR
     style E fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
 ```
 
+<<<<<<< HEAD
 **Practical Examples**:
 
 === "Basic Usage"
@@ -200,6 +201,33 @@ graph LR
     print(f"Connected components: {conn['num_components']}")
     print(f"Largest component: {conn['largest_component_size']} nodes")
     ```
+=======
+**Practical Example**:
+
+```python
+from semantica import Semantica
+
+# Initialize Semantica
+semantica = Semantica()
+
+# Build knowledge graph from document
+result = semantica.build_knowledge_base(
+    sources=["company_report.pdf"],
+    embeddings=True,
+    graph=True
+)
+
+kg = result["knowledge_graph"]
+
+# Access entities and relationships
+print(f"Entities: {len(kg['entities'])}")
+print(f"Relationships: {len(kg['relationships'])}")
+
+# Query the graph
+for entity in kg['entities'][:5]:
+    print(f"- {entity.get('text', 'N/A')}: {entity.get('type', 'N/A')}")
+```
+>>>>>>> origin/main
 
 **Related Modules**:
 
@@ -232,12 +260,22 @@ graph LR
 
 **Extraction Methods**:
 
+<<<<<<< HEAD
 === "Quick Start"
     Extract entities from text using the convenience function:
+=======
+=== "Rule-based"
+    Uses pattern matching (regex) to identify entities.
+    
+    **Pros**: Fast, deterministic, no training data needed
+    
+    **Cons**: Limited to predefined patterns, less flexible
+>>>>>>> origin/main
     
     ```python
     from semantica.semantic_extract import NamedEntityRecognizer
     
+<<<<<<< HEAD
     text = """
     Apple Inc. was founded by Steve Jobs, Steve Wozniak, and Ronald Wayne 
     in Cupertino, California on April 1, 1976. The company is now worth 
@@ -411,6 +449,34 @@ graph LR
     print(f"Entity Distribution:")
     for etype, count in entity_types.most_common():
         print(f"  {etype}: {count}")
+=======
+    ner = NamedEntityRecognizer(method="rule-based")
+    entities = ner.extract_entities("Apple Inc. was founded in 1976.")
+    ```
+
+=== "Machine Learning"
+    Uses trained models (spaCy, transformers) for extraction.
+    
+    **Pros**: More accurate, handles variations
+    
+    **Cons**: Requires training data, slower than rules
+    
+    ```python
+    ner = NamedEntityRecognizer(method="spacy")
+    entities = ner.extract_entities(text)
+    ```
+
+=== "LLM-based"
+    Uses large language models (GPT-4, Claude) for extraction.
+    
+    **Pros**: Most accurate, understands context
+    
+    **Cons**: Slower, requires API access, costs money
+    
+    ```python
+    ner = NamedEntityRecognizer(method="llm", model="gpt-4")
+    entities = ner.extract_entities(text)
+>>>>>>> origin/main
     ```
 
 **Related Modules**:
@@ -484,6 +550,7 @@ graph LR
     style F fill:#e3f2fd
 ```
 
+<<<<<<< HEAD
 **Practical Examples**:
 
 === "Basic Relation Extraction"
@@ -661,6 +728,8 @@ graph LR
     print(resolved_text)
     ```
 
+=======
+>>>>>>> origin/main
 **Related Modules**:
 - [`semantic_extract` Module](reference/semantic_extract.md) - Relationship extraction
 - [`kg` Module](reference/kg.md) - Building graphs from relationships
@@ -700,6 +769,7 @@ Embedding: [0.123, -0.456, 0.789, ..., 0.234]  # (vector of 1536 dimensions)
 | **HuggingFace** | sentence-transformers | 384-768 | Medium | Free | Development, open source |
 | **Local** | Various | Variable | Slow | Free | Privacy, offline use |
 
+<<<<<<< HEAD
 **Practical Examples**:
 
 === "Quick Start"
@@ -922,6 +992,8 @@ Embedding: [0.123, -0.456, 0.789, ..., 0.234]  # (vector of 1536 dimensions)
     print(f"Document embedding shape: {doc_embedding.shape}")
     ```
 
+=======
+>>>>>>> origin/main
 **Related Modules**:
 - [`embeddings` Module](reference/embeddings.md) - Embedding generation
 - [`vector_store` Module](reference/vector_store.md) - Vector storage and search
@@ -955,6 +1027,7 @@ timeline
          : Relationship A->B expired
 ```
 
+<<<<<<< HEAD
 **Practical Examples**:
 
 === "Building Temporal Graphs"
@@ -1169,6 +1242,8 @@ timeline
     print(f"  Most volatile entities: {stability['most_volatile'][:3]}")
     ```
 
+=======
+>>>>>>> origin/main
 **Related Modules**:
 - [`kg` Module](reference/kg.md) - Temporal graph support
 - [`visualization` Module](reference/visualization.md) - Temporal visualization
@@ -1219,6 +1294,7 @@ flowchart TD
 | **Complex Queries** | Limited | Excellent |
 | **Relationship Awareness** | No | Yes |
 
+<<<<<<< HEAD
 **Practical Examples**:
 
 === "Basic GraphRAG"
@@ -1484,6 +1560,8 @@ Answer:"""
     print(f"Answer: {response}")
     ```
 
+=======
+>>>>>>> origin/main
 **Related Modules**:
 - [`kg` Module](reference/kg.md) - Knowledge graph construction
 - [`vector_store` Module](reference/vector_store.md) - Vector search
@@ -1526,6 +1604,7 @@ classDiagram
     Company --> Location : locatedIn
 ```
 
+<<<<<<< HEAD
 **Practical Examples**:
 
 === "Automatic Ontology Generation"
@@ -1847,6 +1926,8 @@ classDiagram
         print(f"  {align['source']} ~ {align['target']} ({align['similarity']:.2f})")
     ```
 
+=======
+>>>>>>> origin/main
 **Related Modules**:
 - [`ontology` Module](reference/ontology.md) - Ontology generation and management
 - [`kg` Module](reference/kg.md) - Knowledge graph construction
@@ -1868,6 +1949,7 @@ classDiagram
 | **Coverage** | Breadth of domain coverage | Entity diversity, relationship types |
 | **Freshness** | How up-to-date the data is | Last update timestamp, staleness |
 
+<<<<<<< HEAD
 **Practical Examples**:
 
 === "Quality Assessment"
@@ -2039,6 +2121,8 @@ classDiagram
         print(f"    Effort: {rec['effort_level']}")
     ```
 
+=======
+>>>>>>> origin/main
 **Related Modules**:
 - [`kg_qa` Module](reference/evals.md) - Quality assurance and evaluation
 - [`conflicts` Module](../semantica/conflicts/conflicts_usage.md) - Conflict detection
@@ -2060,6 +2144,7 @@ classDiagram
 
 Deduplication works by calculating similarity between entities. If similarity exceeds a threshold, entities are merged; otherwise, they remain separate.
 
+<<<<<<< HEAD
 **Practical Examples**:
 
 === "Entity Resolution"
@@ -2266,6 +2351,8 @@ Deduplication works by calculating similarity between entities. If similarity ex
     print(f"  Source IDs: {merged_entity['source_ids']}")
     ```
 
+=======
+>>>>>>> origin/main
 **Related Modules**:
 - [`deduplication` Module](../semantica/deduplication/deduplication_usage.md) - Deduplication and merging
 - [`embeddings` Module](reference/embeddings.md) - Similarity calculation
@@ -2291,6 +2378,7 @@ flowchart LR
     style Normalized fill:#c8e6c9
 ```
 
+<<<<<<< HEAD
 **Practical Examples**:
 
 === "Text Normalization"
@@ -2493,6 +2581,8 @@ flowchart LR
             print(f"    {key}: {value}")
     ```
 
+=======
+>>>>>>> origin/main
 **Related Modules**:
 - [`normalize` Module](reference/normalize.md) - Data normalization
 - [`parse` Module](reference/parse.md) - Document parsing
@@ -2513,6 +2603,7 @@ flowchart LR
 | **Type Conflict** | Different entity types | "Apple: Company" vs "Apple: Product" |
 | **Temporal Conflict** | Conflicting time information | "Active: 2020-2023" vs "Active: 2021-2024" |
 
+<<<<<<< HEAD
 **Practical Examples**:
 
 === "Detecting Conflicts"
@@ -2798,6 +2889,43 @@ flowchart LR
     print(f"  Entity: {context.get('entity_text', 'Unknown')}")
     print(f"  Property: {context.get('property', 'Unknown')}")
     print(f"  Value count: {len(conflict.values)}")
+=======
+**Conflict Resolution Strategies**:
+
+=== "Voting"
+    Use the most common value across sources.
+    
+    ```python
+    resolver = ConflictResolver(strategy="voting")
+    resolved = resolver.resolve(conflicts)
+    ```
+
+=== "Highest Confidence"
+    Use the value with the highest confidence score.
+    
+    ```python
+    resolver = ConflictResolver(strategy="highest_confidence")
+    resolved = resolver.resolve(conflicts)
+    ```
+
+=== "Most Recent"
+    Use the most recently updated value.
+    
+    ```python
+    resolver = ConflictResolver(strategy="most_recent")
+    resolved = resolver.resolve(conflicts)
+    ```
+
+=== "Source Priority"
+    Use values from trusted sources first.
+    
+    ```python
+    resolver = ConflictResolver(
+        strategy="source_priority",
+        source_priority=["trusted_source", "other_source"]
+    )
+    resolved = resolver.resolve(conflicts)
+>>>>>>> origin/main
     ```
 
 **Related Modules**:

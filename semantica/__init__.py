@@ -216,6 +216,67 @@ class _SemanticaModules:
 # Create singleton instance for module access
 _modules = _SemanticaModules()
 
+<<<<<<< HEAD
+=======
+# Singleton Semantica instance for module-level build()
+_semantica_instance: Optional[Semantica] = None
+
+
+def _get_semantica_instance(
+    config: Optional[Union[Config, Dict[str, Any]]] = None, **kwargs
+) -> Semantica:
+    """Get or create singleton Semantica instance."""
+    global _semantica_instance
+    if _semantica_instance is None:
+        _semantica_instance = Semantica(config=config, **kwargs)
+    return _semantica_instance
+
+
+def build(
+    sources: Union[List[Union[str, Path]], str, Path],
+    config: Optional[Union[Config, Dict[str, Any]]] = None,
+    **kwargs,
+) -> Dict[str, Any]:
+    """
+    Build knowledge base from data sources (module-level convenience function).
+
+    This is a user-friendly wrapper around Semantica.build_knowledge_base()
+    that handles initialization automatically.
+
+    Args:
+        sources: Data source(s) - can be a single path/URL or list of paths/URLs
+        config: Optional configuration object or dict
+        **kwargs: Additional processing options:
+            - embeddings: Whether to generate embeddings (default: True)
+            - graph: Whether to build knowledge graph (default: True)
+            - normalize: Whether to normalize data (default: True)
+            - pipeline: Custom pipeline configuration
+            - fail_fast: Whether to fail on first error (default: False)
+
+    Returns:
+        Dictionary containing:
+            - knowledge_graph: Knowledge graph data
+            - embeddings: Embedding vectors
+            - metadata: Processing metadata
+            - statistics: Processing statistics
+            - results: Processing results
+
+    Examples:
+        >>> from semantica import build
+        >>> result = build(["doc1.pdf", "doc2.docx"], embeddings=True, graph=True)
+        >>> print(result["statistics"])
+    """
+    # Normalize sources to list
+    if isinstance(sources, (str, Path)):
+        sources = [sources]
+
+    # Get or create Semantica instance
+    semantica = _get_semantica_instance(config=config, **kwargs)
+
+    # Build knowledge base (auto-initializes if needed)
+    return semantica.build_knowledge_base(sources, **kwargs)
+>>>>>>> origin/main
+
 
 __all__ = [
     # Core

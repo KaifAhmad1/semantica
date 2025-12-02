@@ -91,13 +91,15 @@ Example Usage:
 """
 
 from typing import Any, Dict, List, Optional, Union
+
 import numpy as np
-from .vector_store import VectorStore, VectorIndexer, VectorRetriever, VectorManager
-from .hybrid_search import HybridSearch, MetadataFilter, SearchRanker
-from .metadata_store import MetadataStore, MetadataIndex, MetadataSchema
-from .namespace_manager import NamespaceManager, Namespace
-from .registry import method_registry
+
 from .config import vector_store_config
+from .hybrid_search import HybridSearch, MetadataFilter, SearchRanker
+from .metadata_store import MetadataIndex, MetadataSchema, MetadataStore
+from .namespace_manager import Namespace, NamespaceManager
+from .registry import method_registry
+from .vector_store import VectorIndexer, VectorManager, VectorRetriever, VectorStore
 
 # Global manager instances
 _global_store: Optional[VectorStore] = None
@@ -111,8 +113,8 @@ def _get_store() -> VectorStore:
     global _global_store
     if _global_store is None:
         config = vector_store_config.get_all()
-        backend = config.get('default_backend', 'faiss')
-        dimension = config.get('dimension', 768)
+        backend = config.get("default_backend", "faiss")
+        dimension = config.get("dimension", 768)
         _global_store = VectorStore(backend=backend, config=config, dimension=dimension)
     return _global_store
 
@@ -148,17 +150,17 @@ def store_vectors(
     vectors: List[np.ndarray],
     metadata: Optional[List[Dict[str, Any]]] = None,
     method: str = "default",
-    **options
+    **options,
 ) -> List[str]:
     """
     Store vectors in vector store.
-    
+
     Args:
         vectors: List of vector arrays
         metadata: List of metadata dictionaries
         method: Storage method name (default: "default")
         **options: Additional options
-    
+
     Returns:
         List of vector IDs
     """
@@ -166,7 +168,7 @@ def store_vectors(
     custom_method = method_registry.get("store", method)
     if custom_method:
         return custom_method(vectors, metadata=metadata, **options)
-    
+
     # Default implementation
     store = _get_store()
     return store.store_vectors(vectors, metadata=metadata, **options)
@@ -178,11 +180,11 @@ def search_vectors(
     vector_ids: Optional[List[str]] = None,
     k: int = 10,
     method: str = "default",
-    **options
+    **options,
 ) -> List[Dict[str, Any]]:
     """
     Search for similar vectors.
-    
+
     Args:
         query_vector: Query vector
         vectors: Optional list of vectors to search (uses store vectors if not provided)
@@ -190,15 +192,17 @@ def search_vectors(
         k: Number of results to return
         method: Search method name (default: "default")
         **options: Additional options
-    
+
     Returns:
         List of search results with scores
     """
     # Check registry for custom method
     custom_method = method_registry.get("search", method)
     if custom_method:
-        return custom_method(query_vector, vectors=vectors, vector_ids=vector_ids, k=k, **options)
-    
+        return custom_method(
+            query_vector, vectors=vectors, vector_ids=vector_ids, k=k, **options
+        )
+
     # Default implementation
     store = _get_store()
     if vectors is None:
@@ -207,24 +211,30 @@ def search_vectors(
     else:
         # Use provided vectors
         retriever = VectorRetriever(backend=store.backend, **store.config)
-        return retriever.search_similar(query_vector, vectors, vector_ids or list(range(len(vectors))), k=k, **options)
+        return retriever.search_similar(
+            query_vector,
+            vectors,
+            vector_ids or list(range(len(vectors))),
+            k=k,
+            **options,
+        )
 
 
 def update_vectors(
     vector_ids: List[str],
     new_vectors: List[np.ndarray],
     method: str = "default",
-    **options
+    **options,
 ) -> bool:
     """
     Update existing vectors.
-    
+
     Args:
         vector_ids: List of vector IDs to update
         new_vectors: List of new vectors
         method: Update method name (default: "default")
         **options: Additional options
-    
+
     Returns:
         True if successful
     """
@@ -232,25 +242,21 @@ def update_vectors(
     custom_method = method_registry.get("store", method)
     if custom_method:
         return custom_method(vector_ids, new_vectors, **options)
-    
+
     # Default implementation
     store = _get_store()
     return store.update_vectors(vector_ids, new_vectors, **options)
 
 
-def delete_vectors(
-    vector_ids: List[str],
-    method: str = "default",
-    **options
-) -> bool:
+def delete_vectors(vector_ids: List[str], method: str = "default", **options) -> bool:
     """
     Delete vectors from store.
-    
+
     Args:
         vector_ids: List of vector IDs to delete
         method: Deletion method name (default: "default")
         **options: Additional options
-    
+
     Returns:
         True if successful
     """
@@ -258,7 +264,7 @@ def delete_vectors(
     custom_method = method_registry.get("store", method)
     if custom_method:
         return custom_method(vector_ids, **options)
-    
+
     # Default implementation
     store = _get_store()
     return store.delete_vectors(vector_ids, **options)
@@ -268,17 +274,17 @@ def create_index(
     vectors: List[np.ndarray],
     ids: Optional[List[str]] = None,
     method: str = "default",
-    **options
+    **options,
 ) -> Any:
     """
     Create vector index.
-    
+
     Args:
         vectors: List of vectors
         ids: Vector IDs
         method: Index creation method name (default: "default")
         **options: Additional options
-    
+
     Returns:
         Index object
     """
@@ -286,11 +292,11 @@ def create_index(
     custom_method = method_registry.get("index", method)
     if custom_method:
         return custom_method(vectors, ids=ids, **options)
-    
+
     # Default implementation
     config = vector_store_config.get_all()
-    backend = config.get('default_backend', 'faiss')
-    dimension = config.get('dimension', 768)
+    backend = config.get("default_backend", "faiss")
+    dimension = config.get("dimension", 768)
     indexer = VectorIndexer(backend=backend, dimension=dimension, **config)
     return indexer.create_index(vectors, ids, **options)
 
@@ -303,11 +309,11 @@ def hybrid_search(
     k: int = 10,
     metadata_filter: Optional[MetadataFilter] = None,
     method: str = "default",
-    **options
+    **options,
 ) -> List[Dict[str, Any]]:
     """
     Perform hybrid search combining vector similarity and metadata filtering.
-    
+
     Args:
         query_vector: Query vector
         vectors: List of vectors to search
@@ -317,18 +323,34 @@ def hybrid_search(
         metadata_filter: Optional metadata filter
         method: Hybrid search method name (default: "default")
         **options: Additional options
-    
+
     Returns:
         List of search results
     """
     # Check registry for custom method
     custom_method = method_registry.get("hybrid_search", method)
     if custom_method:
-        return custom_method(query_vector, vectors, metadata, vector_ids, k=k, metadata_filter=metadata_filter, **options)
-    
+        return custom_method(
+            query_vector,
+            vectors,
+            metadata,
+            vector_ids,
+            k=k,
+            metadata_filter=metadata_filter,
+            **options,
+        )
+
     # Default implementation
     search = _get_hybrid_search()
-    return search.search(query_vector, vectors, metadata, vector_ids, k=k, metadata_filter=metadata_filter, **options)
+    return search.search(
+        query_vector,
+        vectors,
+        metadata,
+        vector_ids,
+        k=k,
+        metadata_filter=metadata_filter,
+        **options,
+    )
 
 
 def filter_metadata(
@@ -336,18 +358,18 @@ def filter_metadata(
     filter_conditions: Dict[str, Any],
     operator: str = "AND",
     method: str = "default",
-    **options
+    **options,
 ) -> List[Dict[str, Any]]:
     """
     Filter metadata by conditions.
-    
+
     Args:
         metadata: List of metadata dictionaries
         filter_conditions: Filter conditions dictionary
         operator: "AND" or "OR" operator
         method: Filtering method name (default: "default")
         **options: Additional options
-    
+
     Returns:
         Filtered metadata list
     """
@@ -355,36 +377,32 @@ def filter_metadata(
     custom_method = method_registry.get("metadata", method)
     if custom_method:
         return custom_method(metadata, filter_conditions, operator=operator, **options)
-    
+
     # Default implementation
     metadata_store = _get_metadata_store()
     # Create filter from conditions
     metadata_filter = MetadataFilter()
     for field, value in filter_conditions.items():
         metadata_filter.eq(field, value)
-    
+
     # Filter metadata
     filtered = []
     for meta in metadata:
         if metadata_filter.matches(meta):
             filtered.append(meta)
-    
+
     return filtered
 
 
-def manage_namespace(
-    namespace_name: str,
-    operation: str,
-    **options
-) -> Any:
+def manage_namespace(namespace_name: str, operation: str, **options) -> Any:
     """
     Manage namespace operations.
-    
+
     Args:
         namespace_name: Namespace name
         operation: Operation type ("create", "delete", "add_vector", "remove_vector", "get_vectors")
         **options: Additional options
-    
+
     Returns:
         Operation result
     """
@@ -392,10 +410,10 @@ def manage_namespace(
     custom_method = method_registry.get("namespace", operation)
     if custom_method:
         return custom_method(namespace_name, **options)
-    
+
     # Default implementation
     manager = _get_namespace_manager()
-    
+
     if operation == "create":
         return manager.create_namespace(namespace_name, **options)
     elif operation == "delete":
@@ -405,7 +423,9 @@ def manage_namespace(
         return manager.add_vector_to_namespace(vector_id, namespace_name, **options)
     elif operation == "remove_vector":
         vector_id = options.get("vector_id")
-        return manager.remove_vector_from_namespace(vector_id, namespace_name, **options)
+        return manager.remove_vector_from_namespace(
+            vector_id, namespace_name, **options
+        )
     elif operation == "get_vectors":
         return manager.get_namespace_vectors(namespace_name, **options)
     else:
@@ -415,11 +435,11 @@ def manage_namespace(
 def get_vector_store_method(task: str, method_name: str) -> Optional[Any]:
     """
     Get vector store method by task and name.
-    
+
     Args:
         task: Task type (store, search, index, hybrid_search, metadata, namespace)
         method_name: Method name
-    
+
     Returns:
         Method function or None if not found
     """
@@ -429,12 +449,11 @@ def get_vector_store_method(task: str, method_name: str) -> Optional[Any]:
 def list_available_methods(task: Optional[str] = None) -> Dict[str, List[str]]:
     """
     List all available vector store methods.
-    
+
     Args:
         task: Optional task type to filter by
-    
+
     Returns:
         Dictionary mapping task types to lists of method names
     """
     return method_registry.list_all(task)
-

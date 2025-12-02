@@ -65,7 +65,7 @@ from ..utils.progress_tracker import get_progress_tracker
 @dataclass
 class SemanticRole:
     """Semantic role representation."""
-    
+
     word: str
     role: str  # agent, patient, theme, location, etc.
     start_char: int
@@ -76,7 +76,7 @@ class SemanticRole:
 @dataclass
 class SemanticCluster:
     """Semantic cluster representation."""
-    
+
     texts: List[str]
     cluster_id: int
     centroid: Optional[str] = None
@@ -85,11 +85,11 @@ class SemanticCluster:
 
 class SemanticAnalyzer:
     """Comprehensive semantic analysis handler."""
-    
+
     def __init__(self, method: Union[str, List[str]] = None, config=None, **kwargs):
         """
         Initialize semantic analyzer.
-        
+
         Args:
             method: Extraction method(s) for underlying NER/relation extractors.
                    Can be passed to ner_method and relation_method in config.
@@ -103,114 +103,126 @@ class SemanticAnalyzer:
         self.config = config or {}
         self.config.update(kwargs)
         self.progress_tracker = get_progress_tracker()
-        
+
         # Store method for passing to extractors if needed
         if method is not None:
             self.config["ner_method"] = method
             self.config["relation_method"] = method
-        
-        self.similarity_analyzer = SimilarityAnalyzer(**self.config.get("similarity", {}))
+
+        self.similarity_analyzer = SimilarityAnalyzer(
+            **self.config.get("similarity", {})
+        )
         self.role_labeler = RoleLabeler(**self.config.get("role", {}))
         self.semantic_clusterer = SemanticClusterer(**self.config.get("clustering", {}))
-    
+
     def analyze_semantics(self, text: str, **options) -> Dict[str, Any]:
         """
         Perform comprehensive semantic analysis.
-        
+
         Args:
             text: Input text
             **options: Analysis options
-            
+
         Returns:
             dict: Semantic analysis results
         """
         tracking_id = self.progress_tracker.start_tracking(
             module="semantic_extract",
             submodule="SemanticAnalyzer",
-            message="Performing comprehensive semantic analysis"
+            message="Performing comprehensive semantic analysis",
         )
-        
+
         try:
             results = {
                 "text": text,
                 "length": len(text),
                 "word_count": len(text.split()),
-                "sentence_count": len(text.split('.'))
+                "sentence_count": len(text.split(".")),
             }
-            
+
             # Semantic role labeling
             if options.get("label_roles", False):
-                self.progress_tracker.update_tracking(tracking_id, message="Labeling semantic roles...")
+                self.progress_tracker.update_tracking(
+                    tracking_id, message="Labeling semantic roles..."
+                )
                 roles = self.label_semantic_roles(text, **options)
                 results["semantic_roles"] = [r.__dict__ for r in roles]
-            
+
             # Semantic features
-            self.progress_tracker.update_tracking(tracking_id, message="Extracting semantic features...")
+            self.progress_tracker.update_tracking(
+                tracking_id, message="Extracting semantic features..."
+            )
             results["semantic_features"] = self._extract_features(text)
-            
-            self.progress_tracker.stop_tracking(tracking_id, status="completed", message="Semantic analysis complete")
+
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="completed", message="Semantic analysis complete"
+            )
             return results
-            
+
         except Exception as e:
-            self.progress_tracker.stop_tracking(tracking_id, status="failed", message=str(e))
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
+            )
             raise
-    
+
     def calculate_similarity(self, text1: str, text2: str, **options) -> float:
         """
         Calculate semantic similarity between texts.
-        
+
         Args:
             text1: First text
             text2: Second text
             **options: Similarity options
-            
+
         Returns:
             float: Similarity score (0-1)
         """
         return self.similarity_analyzer.calculate_similarity(text1, text2, **options)
-    
+
     def label_semantic_roles(self, text: str, **options) -> List[SemanticRole]:
         """
         Label semantic roles in text.
-        
+
         Args:
             text: Input text
             **options: Labeling options
-            
+
         Returns:
             list: List of semantic roles
         """
         return self.role_labeler.label_roles(text, **options)
-    
-    def cluster_semantically(self, texts: List[str], **options) -> List[SemanticCluster]:
+
+    def cluster_semantically(
+        self, texts: List[str], **options
+    ) -> List[SemanticCluster]:
         """
         Perform semantic clustering of texts.
-        
+
         Args:
             texts: List of texts to cluster
             **options: Clustering options
-            
+
         Returns:
             list: List of semantic clusters
         """
         return self.semantic_clusterer.cluster(texts, **options)
-    
+
     def _extract_features(self, text: str) -> Dict[str, Any]:
         """Extract semantic features from text."""
         words = text.lower().split()
-        
+
         return {
             "unique_words": len(set(words)),
             "avg_word_length": sum(len(w) for w in words) / len(words) if words else 0,
             "verb_count": sum(1 for w in words if self._is_verb(w)),
-            "noun_count": sum(1 for w in words if self._is_noun(w))
+            "noun_count": sum(1 for w in words if self._is_noun(w)),
         }
-    
+
     def _is_verb(self, word: str) -> bool:
         """Simple verb detection."""
         verb_endings = ["ed", "ing", "es", "s"]
         return any(word.endswith(ending) for ending in verb_endings)
-    
+
     def _is_noun(self, word: str) -> bool:
         """Simple noun detection."""
         noun_endings = ["tion", "sion", "ment", "ness", "ity"]
@@ -219,180 +231,184 @@ class SemanticAnalyzer:
 
 class SimilarityAnalyzer:
     """Semantic similarity analysis."""
-    
+
     def __init__(self, **config):
         """Initialize similarity analyzer."""
         self.logger = get_logger("similarity_analyzer")
         self.config = config
-    
+
     def calculate_similarity(self, text1: str, text2: str, **options) -> float:
         """
         Calculate semantic similarity between texts.
-        
+
         Args:
             text1: First text
             text2: Second text
             **options: Similarity options
-            
+
         Returns:
             float: Similarity score (0-1)
         """
         method = options.get("method", "jaccard")
-        
+
         if method == "jaccard":
             return self._jaccard_similarity(text1, text2)
         elif method == "cosine":
             return self._cosine_similarity(text1, text2)
         else:
             return self._jaccard_similarity(text1, text2)
-    
+
     def _jaccard_similarity(self, text1: str, text2: str) -> float:
         """Calculate Jaccard similarity."""
         words1 = set(text1.lower().split())
         words2 = set(text2.lower().split())
-        
+
         intersection = len(words1 & words2)
         union = len(words1 | words2)
-        
+
         return intersection / union if union > 0 else 0.0
-    
+
     def _cosine_similarity(self, text1: str, text2: str) -> float:
         """Calculate cosine similarity (simplified)."""
         words1 = text1.lower().split()
         words2 = text2.lower().split()
-        
+
         # Simple word frequency vectors
         all_words = set(words1 + words2)
         vec1 = [words1.count(w) for w in all_words]
         vec2 = [words2.count(w) for w in all_words]
-        
+
         # Dot product
         dot_product = sum(a * b for a, b in zip(vec1, vec2))
-        
+
         # Magnitudes
         mag1 = sum(a * a for a in vec1) ** 0.5
         mag2 = sum(b * b for b in vec2) ** 0.5
-        
+
         if mag1 == 0 or mag2 == 0:
             return 0.0
-        
+
         return dot_product / (mag1 * mag2)
 
 
 class RoleLabeler:
     """Semantic role labeling."""
-    
+
     def __init__(self, **config):
         """Initialize role labeler."""
         self.logger = get_logger("role_labeler")
         self.config = config
-    
+
     def label_roles(self, text: str, **options) -> List[SemanticRole]:
         """
         Label semantic roles in text.
-        
+
         Args:
             text: Input text
             **options: Labeling options
-            
+
         Returns:
             list: List of semantic roles
         """
         roles = []
         words = text.split()
-        
+
         # Simple role labeling based on position and patterns
         for i, word in enumerate(words):
             role = self._assign_role(word, i, words, text)
-            
+
             if role:
                 # Find position in original text
                 start = text.find(word)
-                roles.append(SemanticRole(
-                    word=word,
-                    role=role,
-                    start_char=start if start >= 0 else i * 10,
-                    end_char=start + len(word) if start >= 0 else (i + 1) * 10,
-                    confidence=0.7
-                ))
-        
+                roles.append(
+                    SemanticRole(
+                        word=word,
+                        role=role,
+                        start_char=start if start >= 0 else i * 10,
+                        end_char=start + len(word) if start >= 0 else (i + 1) * 10,
+                        confidence=0.7,
+                    )
+                )
+
         return roles
-    
-    def _assign_role(self, word: str, position: int, all_words: List[str], text: str) -> Optional[str]:
+
+    def _assign_role(
+        self, word: str, position: int, all_words: List[str], text: str
+    ) -> Optional[str]:
         """Assign semantic role to word."""
         word_lower = word.lower()
-        
+
         # Agent indicators
         if word_lower in ["i", "we", "he", "she", "they"]:
             return "agent"
-        
+
         # Patient/theme indicators (objects)
         if position > 2 and word[0].isupper():
             return "theme"
-        
+
         # Location indicators
         if word_lower in ["in", "at", "on", "near", "from"]:
             return "location"
-        
+
         return None
 
 
 class SemanticClusterer:
     """Semantic clustering engine."""
-    
+
     def __init__(self, **config):
         """Initialize semantic clusterer."""
         self.logger = get_logger("semantic_clusterer")
         self.config = config
-    
+
     def cluster(self, texts: List[str], **options) -> List[SemanticCluster]:
         """
         Perform semantic clustering of texts.
-        
+
         Args:
             texts: List of texts to cluster
             **options: Clustering options:
                 - num_clusters: Number of clusters (default: auto)
                 - similarity_threshold: Minimum similarity for clustering
-                
+
         Returns:
             list: List of semantic clusters
         """
         if not texts:
             return []
-        
+
         similarity_threshold = options.get("similarity_threshold", 0.5)
         similarity_analyzer = SimilarityAnalyzer()
-        
+
         clusters = []
         assigned = set()
-        
+
         cluster_id = 0
         for i, text1 in enumerate(texts):
             if i in assigned:
                 continue
-            
+
             cluster_texts = [text1]
             assigned.add(i)
-            
+
             # Find similar texts
-            for j, text2 in enumerate(texts[i+1:], start=i+1):
+            for j, text2 in enumerate(texts[i + 1 :], start=i + 1):
                 if j in assigned:
                     continue
-                
+
                 similarity = similarity_analyzer.calculate_similarity(text1, text2)
                 if similarity >= similarity_threshold:
                     cluster_texts.append(text2)
                     assigned.add(j)
-            
+
             # Create cluster
             cluster = SemanticCluster(
                 texts=cluster_texts,
                 cluster_id=cluster_id,
                 centroid=cluster_texts[0],  # Use first as centroid
-                similarity_score=similarity_threshold
+                similarity_score=similarity_threshold,
             )
             clusters.append(cluster)
             cluster_id += 1
-        
+
         return clusters

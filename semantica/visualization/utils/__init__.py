@@ -32,9 +32,14 @@ Author: Semantica Contributors
 License: MIT
 """
 
-from .layout_algorithms import LayoutAlgorithm, ForceDirectedLayout, HierarchicalLayout, CircularLayout
-from .color_schemes import ColorScheme, get_color_scheme, ColorPalette
-from .export_formats import export_plotly_figure, export_matplotlib_figure, save_html
+from .color_schemes import ColorPalette, ColorScheme, get_color_scheme
+from .export_formats import export_matplotlib_figure, export_plotly_figure, save_html
+from .layout_algorithms import (
+    CircularLayout,
+    ForceDirectedLayout,
+    HierarchicalLayout,
+    LayoutAlgorithm,
+)
 
 __all__ = [
     "LayoutAlgorithm",
@@ -48,4 +53,3 @@ __all__ = [
     "export_matplotlib_figure",
     "save_html",
 ]
-

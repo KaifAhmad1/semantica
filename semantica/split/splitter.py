@@ -39,12 +39,13 @@ Author: Semantica Contributors
 License: MIT
 """
 
-from typing import List, Optional, Union, Dict, Any
-from .semantic_chunker import Chunk
-from .methods import get_split_method, list_available_methods
-from .config import split_config
-from ..utils.logging import get_logger
+from typing import Any, Dict, List, Optional, Union
+
 from ..utils.exceptions import ProcessingError
+from ..utils.logging import get_logger
+from .config import split_config
+from .methods import get_split_method, list_available_methods
+from .semantic_chunker import Chunk
 
 logger = get_logger("text_splitter")
 
@@ -52,22 +53,22 @@ logger = get_logger("text_splitter")
 class TextSplitter:
     """
     Unified text splitter with support for multiple splitting methods.
-    
+
     This class provides a single interface for all splitting methods, allowing
     easy switching between different strategies while maintaining backward
     compatibility with existing chunkers.
     """
-    
+
     def __init__(
         self,
         method: Union[str, List[str]] = "recursive",
         chunk_size: int = 1000,
         chunk_overlap: int = 200,
-        **kwargs
+        **kwargs,
     ):
         """
         Initialize text splitter.
-        
+
         Args:
             method: Splitting method name or list of methods for fallback chain
             chunk_size: Target chunk size in characters
@@ -83,23 +84,23 @@ class TextSplitter:
                 - algorithm: Algorithm name for graph/community methods
         """
         self.logger = get_logger("text_splitter")
-        
+
         # Normalize method parameter
         if isinstance(method, str):
             self.methods = [method]
         else:
             self.methods = method if isinstance(method, list) else ["recursive"]
-        
+
         # Set default parameters
         self.chunk_size = chunk_size or split_config.get("chunk_size", 1000)
         self.chunk_overlap = chunk_overlap or split_config.get("chunk_overlap", 200)
-        
+
         # Store additional options
         self.options = kwargs
-        
+
         # Load method-specific config
         self._load_method_configs()
-    
+
     def _load_method_configs(self):
         """Load method-specific configurations from config."""
         for method in self.methods:
@@ -109,70 +110,78 @@ class TextSplitter:
                 for key, value in method_config.items():
                     if key not in self.options:
                         self.options[key] = value
-    
+
     def split(self, text: str, **override_options) -> List[Chunk]:
         """
         Split text into chunks using the specified method(s).
-        
+
         Args:
             text: Input text to split
             **override_options: Options to override for this split call
-            
+
         Returns:
             List of Chunk objects
-            
+
         Raises:
             ProcessingError: If all methods fail
         """
         if not text:
             return []
-        
+
         # Merge override options
         options = {**self.options, **override_options}
         options["chunk_size"] = options.get("chunk_size", self.chunk_size)
         options["chunk_overlap"] = options.get("chunk_overlap", self.chunk_overlap)
-        
+
         # Try each method in fallback chain
         last_error = None
         for method_name in self.methods:
             try:
                 self.logger.debug(f"Attempting to split using method: {method_name}")
-                
+
                 # Get method function
                 method_func = get_split_method(method_name)
                 if not method_func:
-                    self.logger.warning(f"Method '{method_name}' not found, trying next method")
+                    self.logger.warning(
+                        f"Method '{method_name}' not found, trying next method"
+                    )
                     continue
-                
+
                 # Call method with text and options
                 chunks = method_func(text, **options)
-                
+
                 if chunks:
-                    self.logger.info(f"Successfully split text into {len(chunks)} chunks using method: {method_name}")
+                    self.logger.info(
+                        f"Successfully split text into {len(chunks)} chunks using method: {method_name}"
+                    )
                     return chunks
                 else:
-                    self.logger.warning(f"Method '{method_name}' returned no chunks, trying next method")
-                    
+                    self.logger.warning(
+                        f"Method '{method_name}' returned no chunks, trying next method"
+                    )
+
             except Exception as e:
-                self.logger.warning(f"Method '{method_name}' failed: {e}, trying next method")
+                self.logger.warning(
+                    f"Method '{method_name}' failed: {e}, trying next method"
+                )
                 last_error = e
                 continue
-        
+
         # All methods failed
         error_msg = f"All splitting methods failed: {', '.join(self.methods)}"
         if last_error:
             error_msg += f". Last error: {last_error}"
-        
+
         raise ProcessingError(error_msg)
-    
+
     def split_batch(self, texts: List[str], **override_options) -> List[List[Chunk]]:
         """
         Split multiple texts into chunks.
-        
+
         Args:
             texts: List of input texts
             **override_options: Options to override for this split call
-            
+
         Returns:
             List of chunk lists (one per input text)
         """
@@ -181,20 +190,20 @@ class TextSplitter:
             chunks = self.split(text, **override_options)
             results.append(chunks)
         return results
-    
+
     def get_available_methods(self) -> List[str]:
         """
         Get list of available splitting methods.
-        
+
         Returns:
             List of method names
         """
         return list_available_methods()
-    
+
     def set_method(self, method: Union[str, List[str]]):
         """
         Change the splitting method(s).
-        
+
         Args:
             method: Method name or list of methods for fallback chain
         """
@@ -203,14 +212,13 @@ class TextSplitter:
         else:
             self.methods = method if isinstance(method, list) else ["recursive"]
         self._load_method_configs()
-    
+
     def update_options(self, **options):
         """
         Update splitting options.
-        
+
         Args:
             **options: Options to update
         """
         self.options.update(options)
         self._load_method_configs()
-

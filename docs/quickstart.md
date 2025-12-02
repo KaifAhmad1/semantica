@@ -71,9 +71,7 @@ Generated 45 embeddings
 Extract structured information from text:
 
 ```python
-from semantica import Semantica
-
-semantica = Semantica()
+from semantica.semantic_extract import NamedEntityRecognizer, RelationExtractor
 
 # Sample text
 text = """
@@ -83,20 +81,20 @@ Tim Cook is the current CEO of Apple.
 """
 
 # Extract entities
-entities_result = semantica.semantic_extract.extract_entities(text)
-entities = entities_result["entities"]
+ner = NamedEntityRecognizer()
+entities = ner.extract_entities(text)
 
 print("Extracted Entities:")
 for entity in entities:
-    print(f"  - {entity['text']} ({entity['type']})")
+    print(f"  - {entity.text} ({entity.label})")
 
 # Extract relationships
-relationships_result = semantica.semantic_extract.extract_relationships(text)
-relationships = relationships_result["relationships"]
+rel_extractor = RelationExtractor()
+relationships = rel_extractor.extract_relations(text, entities=entities)
 
 print("\nExtracted Relationships:")
 for rel in relationships:
-    print(f"  - {rel['subject']} --[{rel['predicate']}]--> {rel['object']}")
+    print(f"  - {rel.subject.text} --[{rel.predicate}]--> {rel.object.text}")
 ```
 
 **Expected Output:**
@@ -152,6 +150,7 @@ Visualize the knowledge graph you created:
 
 ```python
 from semantica import Semantica
+from semantica.visualization import KGVisualizer
 
 semantica = Semantica()
 
@@ -160,7 +159,8 @@ result = semantica.build_knowledge_base(["document.pdf"])
 kg = result["knowledge_graph"]
 
 # Visualize
-semantica.kg.visualize(kg, output_path="graph.html")
+visualizer = KGVisualizer()
+visualizer.visualize_network(kg, output="html", file_path="graph.html")
 print("Graph visualization saved to graph.html")
 ```
 
@@ -172,6 +172,7 @@ Export your knowledge graph in various formats:
 
 ```python
 from semantica import Semantica
+from semantica.export import export_rdf, export_json, export_csv, export_owl
 
 semantica = Semantica()
 
@@ -180,10 +181,10 @@ result = semantica.build_knowledge_base(["data.pdf"])
 kg = result["knowledge_graph"]
 
 # Export to different formats
-semantica.export.to_rdf(kg, "output.rdf")      # RDF/XML format
-semantica.export.to_json(kg, "output.json")    # JSON format
-semantica.export.to_csv(kg, "output.csv")      # CSV format
-semantica.export.to_owl(kg, "output.owl")       # OWL ontology format
+export_rdf(kg, "output.rdf")      # RDF/XML format
+export_json(kg, "output.json")    # JSON format
+export_csv(kg, "output.csv")      # CSV format
+export_owl(kg, "output.owl")       # OWL ontology format
 
 print("Exported knowledge graph to multiple formats")
 ```

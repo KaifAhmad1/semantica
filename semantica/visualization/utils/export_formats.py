@@ -30,17 +30,19 @@ Author: Semantica Contributors
 License: MIT
 """
 
-from typing import Optional, Union
 from pathlib import Path
+from typing import Optional, Union
 
-from ...utils.logging import get_logger
 from ...utils.exceptions import ProcessingError
+from ...utils.logging import get_logger
 
 
-def export_plotly_figure(fig, file_path: Union[str, Path], format: str = "html", **options) -> None:
+def export_plotly_figure(
+    fig, file_path: Union[str, Path], format: str = "html", **options
+) -> None:
     """
     Export Plotly figure to file.
-    
+
     Args:
         fig: Plotly figure object
         file_path: Output file path
@@ -49,7 +51,7 @@ def export_plotly_figure(fig, file_path: Union[str, Path], format: str = "html",
     """
     logger = get_logger("export_plotly")
     file_path = Path(file_path)
-    
+
     try:
         if format == "html":
             fig.write_html(str(file_path), **options)
@@ -63,17 +65,19 @@ def export_plotly_figure(fig, file_path: Union[str, Path], format: str = "html",
             fig.write_json(str(file_path), **options)
         else:
             raise ProcessingError(f"Unsupported export format: {format}")
-        
+
         logger.info(f"Exported Plotly figure to {file_path}")
     except Exception as e:
         logger.error(f"Failed to export Plotly figure: {e}")
         raise ProcessingError(f"Failed to export Plotly figure: {e}")
 
 
-def export_matplotlib_figure(fig, file_path: Union[str, Path], format: str = "png", **options) -> None:
+def export_matplotlib_figure(
+    fig, file_path: Union[str, Path], format: str = "png", **options
+) -> None:
     """
     Export Matplotlib figure to file.
-    
+
     Args:
         fig: Matplotlib figure object
         file_path: Output file path
@@ -82,19 +86,19 @@ def export_matplotlib_figure(fig, file_path: Union[str, Path], format: str = "pn
     """
     logger = get_logger("export_matplotlib")
     file_path = Path(file_path)
-    
+
     try:
         dpi = options.get("dpi", 300)
         bbox_inches = options.get("bbox_inches", "tight")
-        
+
         fig.savefig(
             str(file_path),
             format=format,
             dpi=dpi,
             bbox_inches=bbox_inches,
-            **{k: v for k, v in options.items() if k not in ["dpi", "bbox_inches"]}
+            **{k: v for k, v in options.items() if k not in ["dpi", "bbox_inches"]},
         )
-        
+
         logger.info(f"Exported Matplotlib figure to {file_path}")
     except Exception as e:
         logger.error(f"Failed to export Matplotlib figure: {e}")
@@ -104,22 +108,21 @@ def export_matplotlib_figure(fig, file_path: Union[str, Path], format: str = "pn
 def save_html(html_content: str, file_path: Union[str, Path]) -> None:
     """
     Save HTML content to file.
-    
+
     Args:
         html_content: HTML content string
         file_path: Output file path
     """
     logger = get_logger("save_html")
     file_path = Path(file_path)
-    
+
     try:
         file_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(html_content)
-        
+
         logger.info(f"Saved HTML to {file_path}")
     except Exception as e:
         logger.error(f"Failed to save HTML: {e}")
         raise ProcessingError(f"Failed to save HTML: {e}")
-

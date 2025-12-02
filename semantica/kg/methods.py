@@ -149,36 +149,34 @@ Example Usage:
     >>> centrality = calculate_centrality(kg, method="degree")
 """
 
-from typing import Any, Dict, List, Optional, Callable, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
+from ..utils.exceptions import ConfigurationError, ProcessingError
 from ..utils.logging import get_logger
-from ..utils.exceptions import ProcessingError, ConfigurationError
-from .graph_builder import GraphBuilder
-from .graph_analyzer import GraphAnalyzer
-from .entity_resolver import EntityResolver
-from .graph_validator import GraphValidator
-from .conflict_detector import ConflictDetector
 from .centrality_calculator import CentralityCalculator
 from .community_detector import CommunityDetector
+from .config import kg_config
+from .conflict_detector import ConflictDetector
 from .connectivity_analyzer import ConnectivityAnalyzer
 from .deduplicator import Deduplicator
-from .temporal_query import TemporalGraphQuery
+from .entity_resolver import EntityResolver
+from .graph_analyzer import GraphAnalyzer
+from .graph_builder import GraphBuilder
+from .graph_validator import GraphValidator
 from .registry import method_registry
-from .config import kg_config
+from .temporal_query import TemporalGraphQuery
 
 logger = get_logger("kg_methods")
 
 
 def build_kg(
-    sources: Union[List[Any], Any],
-    method: str = "default",
-    **kwargs
+    sources: Union[List[Any], Any], method: str = "default", **kwargs
 ) -> Dict[str, Any]:
     """
     Build knowledge graph from sources (convenience function).
-    
+
     This is a user-friendly wrapper that builds a knowledge graph using the specified method.
-    
+
     Args:
         sources: List of sources (documents, entities, relationships, or dicts with entities/relationships)
         method: Building method (default: "default")
@@ -186,13 +184,13 @@ def build_kg(
             - "incremental": Incremental building
             - "temporal": Temporal knowledge graph building
         **kwargs: Additional options passed to GraphBuilder
-        
+
     Returns:
         Dictionary containing:
             - entities: List of entities
             - relationships: List of relationships
             - metadata: Graph metadata including counts and timestamps
-            
+
     Examples:
         >>> from semantica.kg.methods import build_kg
         >>> kg = build_kg(sources, method="default")
@@ -204,31 +202,31 @@ def build_kg(
         try:
             return custom_method(sources, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         # Get config
         config = kg_config.get_method_config("build")
         config.update(kwargs)
-        
+
         builder = GraphBuilder(**config)
         return builder.build(sources, **kwargs)
-            
+
     except Exception as e:
         logger.error(f"Failed to build knowledge graph: {e}")
         raise
 
 
 def analyze_graph(
-    graph: Dict[str, Any],
-    method: str = "default",
-    **kwargs
+    graph: Dict[str, Any], method: str = "default", **kwargs
 ) -> Dict[str, Any]:
     """
     Analyze knowledge graph (convenience function).
-    
+
     This is a user-friendly wrapper that analyzes a knowledge graph using the specified method.
-    
+
     Args:
         graph: Knowledge graph (dict with "entities" and "relationships")
         method: Analysis method (default: "default")
@@ -237,10 +235,10 @@ def analyze_graph(
             - "community": Community-focused analysis
             - "connectivity": Connectivity-focused analysis
         **kwargs: Additional options passed to GraphAnalyzer
-        
+
     Returns:
         Dictionary containing analysis results
-        
+
     Examples:
         >>> from semantica.kg.methods import analyze_graph
         >>> analysis = analyze_graph(kg, method="default")
@@ -252,31 +250,31 @@ def analyze_graph(
         try:
             return custom_method(graph, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         # Get config
         config = kg_config.get_method_config("analyze")
         config.update(kwargs)
-        
+
         analyzer = GraphAnalyzer(**config)
         return analyzer.analyze_graph(graph, **kwargs)
-            
+
     except Exception as e:
         logger.error(f"Failed to analyze graph: {e}")
         raise
 
 
 def resolve_entities(
-    entities: List[Dict[str, Any]],
-    method: str = "fuzzy",
-    **kwargs
+    entities: List[Dict[str, Any]], method: str = "fuzzy", **kwargs
 ) -> List[Dict[str, Any]]:
     """
     Resolve and disambiguate entities (convenience function).
-    
+
     This is a user-friendly wrapper that resolves entities using the specified method.
-    
+
     Args:
         entities: List of entity dictionaries to resolve
         method: Resolution method (default: "fuzzy")
@@ -284,10 +282,10 @@ def resolve_entities(
             - "exact": Exact string matching resolution
             - "semantic": Semantic similarity matching resolution
         **kwargs: Additional options passed to EntityResolver
-        
+
     Returns:
         List of resolved entities with duplicates merged
-        
+
     Examples:
         >>> from semantica.kg.methods import resolve_entities
         >>> resolved = resolve_entities(entities, method="fuzzy")
@@ -301,30 +299,26 @@ def resolve_entities(
         except Exception as e:
             logger.warning(f"Custom method {method} failed: {e}, falling back to fuzzy")
             method = "fuzzy"
-    
+
     try:
         # Get config
         config = kg_config.get_method_config("resolve")
         config.update(kwargs)
-        
+
         resolver = EntityResolver(strategy=method, **config)
         return resolver.resolve_entities(entities)
-            
+
     except Exception as e:
         logger.error(f"Failed to resolve entities: {e}")
         raise
 
 
-def validate_graph(
-    graph: Dict[str, Any],
-    method: str = "default",
-    **kwargs
-) -> Any:
+def validate_graph(graph: Dict[str, Any], method: str = "default", **kwargs) -> Any:
     """
     Validate knowledge graph (convenience function).
-    
+
     This is a user-friendly wrapper that validates a knowledge graph using the specified method.
-    
+
     Args:
         graph: Knowledge graph to validate
         method: Validation method (default: "default")
@@ -332,13 +326,13 @@ def validate_graph(
             - "structure": Structure-only validation
             - "consistency": Consistency-only validation
         **kwargs: Additional options passed to GraphValidator
-        
+
     Returns:
         ValidationResult object containing:
             - valid: True if valid, False otherwise
             - errors: List of error messages
             - warnings: List of warning messages
-            
+
     Examples:
         >>> from semantica.kg.methods import validate_graph
         >>> result = validate_graph(kg, method="default")
@@ -351,34 +345,34 @@ def validate_graph(
         try:
             return custom_method(graph, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         # Get config
         config = kg_config.get_method_config("validate")
         config.update(kwargs)
-        
+
         validator = GraphValidator(**config)
         if method == "consistency":
             return validator.check_consistency(graph)
         else:
             return validator.validate(graph)
-            
+
     except Exception as e:
         logger.error(f"Failed to validate graph: {e}")
         raise
 
 
 def detect_conflicts(
-    graph: Dict[str, Any],
-    method: str = "default",
-    **kwargs
+    graph: Dict[str, Any], method: str = "default", **kwargs
 ) -> List[Dict[str, Any]]:
     """
     Detect conflicts in knowledge graph (convenience function).
-    
+
     This is a user-friendly wrapper that detects conflicts using the specified method.
-    
+
     Args:
         graph: Knowledge graph to analyze
         method: Detection method (default: "default")
@@ -386,10 +380,10 @@ def detect_conflicts(
             - "value": Value conflict detection only
             - "relationship": Relationship conflict detection only
         **kwargs: Additional options passed to ConflictDetector
-        
+
     Returns:
         List of conflict dictionaries
-        
+
     Examples:
         >>> from semantica.kg.methods import detect_conflicts
         >>> conflicts = detect_conflicts(kg, method="default")
@@ -401,31 +395,31 @@ def detect_conflicts(
         try:
             return custom_method(graph, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         # Get config
         config = kg_config.get_method_config("conflict")
         config.update(kwargs)
-        
+
         detector = ConflictDetector(**config)
         return detector.detect_conflicts(graph)
-            
+
     except Exception as e:
         logger.error(f"Failed to detect conflicts: {e}")
         raise
 
 
 def calculate_centrality(
-    graph: Dict[str, Any],
-    method: str = "degree",
-    **kwargs
+    graph: Dict[str, Any], method: str = "degree", **kwargs
 ) -> Dict[str, Any]:
     """
     Calculate centrality measures (convenience function).
-    
+
     This is a user-friendly wrapper that calculates centrality using the specified method.
-    
+
     Args:
         graph: Knowledge graph to analyze
         method: Centrality method (default: "degree")
@@ -435,10 +429,10 @@ def calculate_centrality(
             - "eigenvector": Eigenvector centrality
             - "all": All centrality measures
         **kwargs: Additional options passed to CentralityCalculator
-        
+
     Returns:
         Dictionary containing centrality results
-        
+
     Examples:
         >>> from semantica.kg.methods import calculate_centrality
         >>> degree = calculate_centrality(kg, method="degree")
@@ -450,16 +444,18 @@ def calculate_centrality(
         try:
             return custom_method(graph, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to degree")
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to degree"
+            )
             method = "degree"
-    
+
     try:
         # Get config
         config = kg_config.get_method_config("centrality")
         config.update(kwargs)
-        
+
         calculator = CentralityCalculator(**config)
-        
+
         if method == "degree":
             return calculator.calculate_degree_centrality(graph)
         elif method == "betweenness":
@@ -472,22 +468,20 @@ def calculate_centrality(
             return calculator.calculate_all_centrality(graph)
         else:
             raise ProcessingError(f"Unknown centrality method: {method}")
-            
+
     except Exception as e:
         logger.error(f"Failed to calculate centrality: {e}")
         raise
 
 
 def detect_communities(
-    graph: Dict[str, Any],
-    method: str = "louvain",
-    **kwargs
+    graph: Dict[str, Any], method: str = "louvain", **kwargs
 ) -> Dict[str, Any]:
     """
     Detect communities in knowledge graph (convenience function).
-    
+
     This is a user-friendly wrapper that detects communities using the specified method.
-    
+
     Args:
         graph: Knowledge graph to analyze
         method: Community detection method (default: "louvain")
@@ -495,10 +489,10 @@ def detect_communities(
             - "leiden": Leiden algorithm
             - "overlapping": Overlapping community detection
         **kwargs: Additional options passed to CommunityDetector
-        
+
     Returns:
         Dictionary containing community detection results
-        
+
     Examples:
         >>> from semantica.kg.methods import detect_communities
         >>> communities = detect_communities(kg, method="louvain")
@@ -510,32 +504,32 @@ def detect_communities(
         try:
             return custom_method(graph, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to louvain")
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to louvain"
+            )
             method = "louvain"
-    
+
     try:
         # Get config
         config = kg_config.get_method_config("community")
         config.update(kwargs)
-        
+
         detector = CommunityDetector(**config)
         return detector.detect_communities(graph, algorithm=method, **kwargs)
-            
+
     except Exception as e:
         logger.error(f"Failed to detect communities: {e}")
         raise
 
 
 def analyze_connectivity(
-    graph: Dict[str, Any],
-    method: str = "default",
-    **kwargs
+    graph: Dict[str, Any], method: str = "default", **kwargs
 ) -> Dict[str, Any]:
     """
     Analyze graph connectivity (convenience function).
-    
+
     This is a user-friendly wrapper that analyzes connectivity using the specified method.
-    
+
     Args:
         graph: Knowledge graph to analyze
         method: Connectivity analysis method (default: "default")
@@ -544,10 +538,10 @@ def analyze_connectivity(
             - "paths": Path finding only
             - "bridges": Bridge detection only
         **kwargs: Additional options passed to ConnectivityAnalyzer
-        
+
     Returns:
         Dictionary containing connectivity analysis results
-        
+
     Examples:
         >>> from semantica.kg.methods import analyze_connectivity
         >>> connectivity = analyze_connectivity(kg, method="default")
@@ -559,41 +553,43 @@ def analyze_connectivity(
         try:
             return custom_method(graph, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         # Get config
         config = kg_config.get_method_config("connectivity")
         config.update(kwargs)
-        
+
         analyzer = ConnectivityAnalyzer(**config)
-        
+
         if method == "components":
             return analyzer.find_connected_components(graph)
         elif method == "paths":
             source = kwargs.get("source")
             target = kwargs.get("target")
-            return analyzer.calculate_shortest_paths(graph, source=source, target=target)
+            return analyzer.calculate_shortest_paths(
+                graph, source=source, target=target
+            )
         elif method == "bridges":
             return analyzer.identify_bridges(graph)
         else:
             return analyzer.analyze_connectivity(graph)
-            
+
     except Exception as e:
         logger.error(f"Failed to analyze connectivity: {e}")
         raise
 
 
 def deduplicate_graph(
-    graph: Dict[str, Any],
-    method: str = "default",
-    **kwargs
+    graph: Dict[str, Any], method: str = "default", **kwargs
 ) -> Dict[str, Any]:
     """
     Deduplicate knowledge graph (convenience function).
-    
+
     This is a user-friendly wrapper that deduplicates a knowledge graph using the specified method.
-    
+
     Args:
         graph: Knowledge graph to deduplicate
         method: Deduplication method (default: "default")
@@ -601,10 +597,10 @@ def deduplicate_graph(
             - "entities": Entity deduplication only
             - "relationships": Relationship deduplication only
         **kwargs: Additional options passed to Deduplicator
-        
+
     Returns:
         Dictionary containing deduplicated graph
-        
+
     Examples:
         >>> from semantica.kg.methods import deduplicate_graph
         >>> deduplicated = deduplicate_graph(kg, method="default")
@@ -616,18 +612,20 @@ def deduplicate_graph(
         try:
             return custom_method(graph, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         # Get config
         config = kg_config.get_method_config("deduplicate")
         config.update(kwargs)
-        
+
         deduplicator = Deduplicator(**config)
-        
+
         entities = graph.get("entities", [])
         relationships = graph.get("relationships", [])
-        
+
         if method == "entities" or method == "default":
             duplicate_groups = deduplicator.find_duplicates(entities)
             merged_entities = deduplicator.merge_duplicates(duplicate_groups)
@@ -644,29 +642,26 @@ def deduplicate_graph(
                 if entity_id and entity_id not in processed_ids:
                     merged_entities.append(entity)
             entities = merged_entities
-        
+
         return {
             "entities": entities,
             "relationships": relationships,
-            "metadata": graph.get("metadata", {})
+            "metadata": graph.get("metadata", {}),
         }
-            
+
     except Exception as e:
         logger.error(f"Failed to deduplicate graph: {e}")
         raise
 
 
 def query_temporal(
-    graph: Dict[str, Any],
-    query: str = "",
-    method: str = "time_point",
-    **kwargs
+    graph: Dict[str, Any], query: str = "", method: str = "time_point", **kwargs
 ) -> Dict[str, Any]:
     """
     Query temporal knowledge graph (convenience function).
-    
+
     This is a user-friendly wrapper that queries a temporal knowledge graph using the specified method.
-    
+
     Args:
         graph: Knowledge graph to query
         query: Query string (optional, depends on method)
@@ -676,10 +671,10 @@ def query_temporal(
             - "pattern": Temporal pattern detection
             - "evolution": Graph evolution analysis
         **kwargs: Additional options passed to TemporalGraphQuery
-        
+
     Returns:
         Dictionary containing query results
-        
+
     Examples:
         >>> from semantica.kg.methods import query_temporal
         >>> result = query_temporal(kg, at_time="2024-01-01", method="time_point")
@@ -691,23 +686,27 @@ def query_temporal(
         try:
             return custom_method(graph, query=query, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to time_point")
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to time_point"
+            )
             method = "time_point"
-    
+
     try:
         # Get config
         config = kg_config.get_method_config("temporal")
         config.update(kwargs)
-        
+
         query_engine = TemporalGraphQuery(**config)
-        
+
         if method == "time_point":
             at_time = kwargs.get("at_time")
             return query_engine.query_at_time(graph, query, at_time=at_time, **kwargs)
         elif method == "time_range":
             start_time = kwargs.get("start_time")
             end_time = kwargs.get("end_time")
-            return query_engine.query_time_range(graph, query, start_time, end_time, **kwargs)
+            return query_engine.query_time_range(
+                graph, query, start_time, end_time, **kwargs
+            )
         elif method == "pattern":
             pattern = kwargs.get("pattern", "sequence")
             return query_engine.query_temporal_pattern(graph, pattern, **kwargs)
@@ -715,7 +714,7 @@ def query_temporal(
             return query_engine.analyze_evolution(graph, **kwargs)
         else:
             raise ProcessingError(f"Unknown temporal query method: {method}")
-            
+
     except Exception as e:
         logger.error(f"Failed to query temporal graph: {e}")
         raise
@@ -724,14 +723,14 @@ def query_temporal(
 def get_kg_method(task: str, method: str) -> Optional[Callable]:
     """
     Get KG method by task and name.
-    
+
     Args:
         task: Task type ("build", "analyze", "resolve", "validate", "conflict", "centrality", "community", "connectivity", "deduplicate", "temporal")
         method: Method name
-        
+
     Returns:
         Method function or None
-        
+
     Examples:
         >>> from semantica.kg.methods import get_kg_method
         >>> build_fn = get_kg_method("build", "default")
@@ -742,17 +741,16 @@ def get_kg_method(task: str, method: str) -> Optional[Callable]:
 def list_available_methods(task: Optional[str] = None) -> Dict[str, List[str]]:
     """
     List all available KG methods.
-    
+
     Args:
         task: Optional task type to filter by
-        
+
     Returns:
         Dictionary mapping task types to method names
-        
+
     Examples:
         >>> from semantica.kg.methods import list_available_methods
         >>> all_methods = list_available_methods()
         >>> build_methods = list_available_methods("build")
     """
     return method_registry.list_all(task)
-

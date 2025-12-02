@@ -2,172 +2,231 @@
 
 Additional resources, tutorials, and advanced learning materials for Semantica.
 
-## Additional Tutorials
-
-### Video Tutorials
-
-Coming soon! We're working on video tutorials covering:
-
-- Getting started with Semantica
-- Building your first knowledge graph
-- Advanced techniques and patterns
-- Real-world use cases
-
-### Blog Posts & Articles
-
-Stay tuned for blog posts covering:
-
-- Best practices for knowledge graph construction
-- Performance optimization tips
-- Integration guides
-- Case studies and success stories
-
-## Best Practices
-
-### Knowledge Graph Design
-
-1. **Start with Clear Objectives**
-   - Define what you want to extract
-   - Identify key entities and relationships
-   - Plan your schema before processing
-
-2. **Iterate and Refine**
-   - Start with a small dataset
-   - Validate extracted entities
-   - Refine extraction patterns
-   - Scale up gradually
-
-3. **Quality Over Quantity**
-   - Focus on accuracy
-   - Validate relationships
-   - Resolve conflicts early
-   - Maintain data quality
-
-### Performance Tips
-
-```python
-# Process in batches for large datasets
-sources = ["doc1.pdf", "doc2.pdf", "doc3.pdf"]
-batch_size = 10
-
-for i in range(0, len(sources), batch_size):
-    batch = sources[i:i+batch_size]
-    result = semantica.build_knowledge_base(batch)
-    # Process and save results
-```
-
-### Integration Patterns
-
-#### Pattern 1: Incremental Building
-
-```python
-# Build knowledge graph incrementally
-kg = None
-for source in sources:
-    result = semantica.build_knowledge_base([source])
-    if kg is None:
-        kg = result["knowledge_graph"]
-    else:
-        kg = semantica.kg.merge([kg, result["knowledge_graph"]])
-```
-
-#### Pattern 2: Pipeline Processing
-
-```python
-# Create a processing pipeline
-pipeline = [
-    ("ingest", semantica.ingest.from_file),
-    ("parse", semantica.parse.document),
-    ("extract", semantica.semantic_extract.entities),
-    ("build", semantica.kg.build_graph)
-]
-
-for step_name, step_func in pipeline:
-    data = step_func(data)
-```
-
-## Advanced Topics
-
-### Custom Extractors
-
-Create custom entity extractors:
-
-```python
-from semantica.semantic_extract import BaseExtractor
-
-class CustomExtractor(BaseExtractor):
-    def extract(self, text):
-        # Your custom extraction logic
-        return entities
-```
-
-### Custom Export Formats
-
-Add custom export formats:
-
-```python
-from semantica.export import BaseExporter
-
-class CustomExporter(BaseExporter):
-    def export(self, kg, path):
-        # Your custom export logic
-        pass
-```
-
-### Performance Optimization
-
-- Use GPU acceleration when available
-- Process documents in parallel
-- Cache embeddings
-- Optimize graph queries
-
-## Community Resources
-
-### GitHub Discussions
-
-Join discussions on:
-- [General Discussion](https://github.com/Hawksight-AI/semantica/discussions)
-- [Q&A](https://github.com/Hawksight-AI/semantica/discussions/categories/q-a)
-- [Show and Tell](https://github.com/Hawksight-AI/semantica/discussions/categories/show-and-tell)
-
-### Contributing
-
-Want to contribute? See our [Contributing Guide](https://github.com/Hawksight-AI/semantica/blob/main/CONTRIBUTING.md).
-
-### Examples Repository
-
-Check out the [examples repository](https://github.com/Hawksight-AI/semantica/tree/main/examples) for more code samples.
-
-## Related Projects
-
-### GraphRAG
-
-Semantica works great with GraphRAG implementations. See our [GraphRAG examples](cookbook.md#advanced-rag).
-
-### Vector Databases
-
-Integrate with vector databases:
-- Pinecone
-- Weaviate
-- Qdrant
-- Milvus
-
-### Knowledge Graph Databases
-
-Export to and work with:
-- Neo4j
-- Amazon Neptune
-- ArangoDB
-- Blazegraph
-
-## Next Steps
-
-- **[Deep Dive](deep-dive.md)** - Advanced architecture and internals
-- **[API Reference](api.md)** - Complete API documentation
-- **[Cookbook](cookbook.md)** - Interactive tutorials
-- **[Examples](examples.md)** - More code examples
+!!! info "About This Guide"
+    This guide provides structured learning paths, quick references, troubleshooting guides, and advanced topics to help you master Semantica.
 
 ---
 
-Have questions or suggestions? [Open an issue](https://github.com/Hawksight-AI/semantica/issues) or [start a discussion](https://github.com/Hawksight-AI/semantica/discussions)!
+## Structured Learning Paths
 
+<div class="grid cards" markdown>
+
+-   :material-school: **Beginner Path**
+    ---
+    Perfect for those new to Semantica and knowledge graphs.
+    
+
+    
+    [Start Path](#beginner-path-1-2-hours)
+
+-   :material-compass: **Intermediate Path**
+    ---
+    For users comfortable with basics who want to build production applications.
+    
+
+    
+    [Start Path](#intermediate-path-4-6-hours)
+
+-   :material-rocket: **Advanced Path**
+    ---
+    For experienced users building enterprise applications.
+    
+
+    
+    [Start Path](#advanced-path-8-hours)
+
+</div>
+
+---
+
+### Beginner Path (1-2 hours)
+
+1.  **Installation & Setup** (15 min)
+    - [Installation Guide](installation.md)
+    - [Configuration Basics](cookbook/introduction/Configuration_Basics.ipynb)
+
+2.  **Core Concepts** (30 min)
+    - [Core Concepts](concepts.md)
+    - [Getting Started Guide](getting-started.md)
+
+3.  **First Knowledge Graph** (30 min)
+    - [Quickstart Tutorial](quickstart.md)
+    - [Your First Knowledge Graph](cookbook/introduction/Your_First_Knowledge_Graph.ipynb)
+
+4.  **Basic Operations** (30 min)
+    - [Examples](examples.md)
+    - Extract entities and relationships
+
+---
+
+### Intermediate Path (4-6 hours)
+
+1.  **Advanced Concepts** (1 hour)
+    - [Modules Guide](modules.md)
+    - Understand: Embeddings, GraphRAG, Ontologies
+
+2.  **Use Cases** (1 hour)
+    - [Use Cases Guide](use-cases.md)
+    - Implement a complete use case
+
+3.  **Advanced Examples** (1 hour)
+    - [Examples](examples.md) - Conflict resolution, custom config
+
+4.  **Quality & Optimization** (1 hour)
+    - [Quality Assurance](concepts.md#8-quality-assurance)
+    - [Performance Optimization](#performance-optimization)
+
+---
+
+### Advanced Path (8+ hours)
+
+1.  **Advanced Architecture** (2 hours)
+    - [Architecture Guide](architecture.md)
+    - Plugin development
+
+2.  **Production Deployment** (2 hours)
+    - [Security Best Practices](#security-best-practices)
+    - Scalability patterns
+
+3.  **Customization** (2 hours)
+    - Custom extractors and exporters
+    - API extensions
+
+---
+
+## Quick Reference
+
+### Common Operations
+
+```python
+from semantica import Semantica
+semantica = Semantica()
+
+# Build Knowledge Graph
+result = semantica.build_knowledge_base(
+    sources=["doc.pdf"],
+    embeddings=True,
+    graph=True
+)
+
+# Extract Entities
+entities = semantica.semantic_extract.extract_entities(text)
+
+# Query Graph
+results = semantica.kg.query("MATCH (n) RETURN n LIMIT 10")
+```
+
+### Configuration Reference
+
+| Setting | Environment Variable | Config File | Default |
+| :--- | :--- | :--- | :--- |
+| OpenAI API Key | `OPENAI_API_KEY` | `api_keys.openai` | `None` |
+| Embedding Provider | `SEMANTICA_EMBEDDING_PROVIDER` | `embedding.provider` | `"openai"` |
+| Graph Backend | `SEMANTICA_GRAPH_BACKEND` | `knowledge_graph.backend` | `"networkx"` |
+
+---
+
+## Troubleshooting Guide
+
+<div class="grid cards" markdown>
+
+-   :material-alert: **Import Errors**
+    ---
+    `ModuleNotFoundError`
+    
+    **Solution**: Verify installation (`pip list`) and Python version (3.8+).
+
+-   :material-key: **API Key Errors**
+    ---
+    `AuthenticationError`
+    
+    **Solution**: Set `OPENAI_API_KEY` environment variable.
+
+-   :material-memory: **Memory Errors**
+    ---
+    `MemoryError`
+    
+    **Solution**: Use batch processing and graph stores (Neo4j).
+
+-   :material-speedometer: **Slow Processing**
+    ---
+    Long processing times
+    
+    **Solution**: Enable parallel processing and GPU acceleration.
+
+</div>
+
+---
+
+## Performance Optimization
+
+### 1. Batch Processing
+
+Process multiple documents together for better throughput.
+
+```python
+sources = ["doc1.pdf", "doc2.pdf", ..., "doc100.pdf"]
+result = semantica.build_knowledge_base(sources, batch_size=10)
+```
+
+### 2. Parallel Execution
+
+Use parallel processing for independent operations.
+
+```python
+result = semantica.build_knowledge_base(
+    sources=sources,
+    parallel=True,
+    max_workers=8
+)
+```
+
+### 3. Backend Selection
+
+| Operation | NetworkX | Neo4j | KuzuDB |
+| :--- | :--- | :--- | :--- |
+| **Graph Construction** | ⚡⚡⚡ | ⚡⚡ | ⚡⚡⚡ |
+| **Query Performance** | ⚡⚡ | ⚡⚡⚡ | ⚡⚡⚡ |
+| **Scalability** | Low | High | Medium |
+
+---
+
+## Security Best Practices
+
+### API Key Management
+
+- **DO**: Use environment variables, rotate keys regularly.
+- **DON'T**: Hardcode keys, commit to version control.
+
+### Data Privacy
+
+- **DO**: Encrypt sensitive data, use local models.
+- **DON'T**: Send PII to external APIs without protection.
+
+---
+
+## FAQ
+
+**Q: What is Semantica?**
+A: A framework for building knowledge graphs and semantic applications.
+
+**Q: Is Semantica free?**
+A: Yes, it is open source. Some features (e.g., OpenAI) require paid APIs.
+
+**Q: Can I use Semantica in production?**
+A: Yes, it is designed for production with proper configuration.
+
+---
+
+## Next Steps
+
+- **[Deep Dive](deep-dive.md)** - Advanced architecture
+- **[API Reference](reference/core.md)** - Complete API documentation
+- **[Cookbook](cookbook.md)** - Interactive tutorials
+
+---
+
+!!! info "Contribute"
+    Have questions? [Open an issue](https://github.com/Hawksight-AI/semantica/issues) or [start a discussion](https://github.com/Hawksight-AI/semantica/discussions)!
+
+**Last Updated**: 2024

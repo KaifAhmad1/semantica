@@ -82,26 +82,26 @@ Author: Semantica Contributors
 License: MIT
 """
 
-from .conflict_detector import ConflictDetector, Conflict, ConflictType
-from .source_tracker import SourceTracker, SourceReference, PropertySource
+from .config import ConflictsConfig, conflicts_config
+from .conflict_analyzer import ConflictAnalyzer, ConflictPattern
+from .conflict_detector import Conflict, ConflictDetector, ConflictType
 from .conflict_resolver import ConflictResolver, ResolutionResult, ResolutionStrategy
 from .investigation_guide import (
-    InvestigationGuideGenerator,
     InvestigationGuide,
+    InvestigationGuideGenerator,
     InvestigationStep,
 )
-from .conflict_analyzer import ConflictAnalyzer, ConflictPattern
-from .registry import MethodRegistry, method_registry
 from .methods import (
-    detect_conflicts,
-    resolve_conflicts,
     analyze_conflicts,
-    track_sources,
+    detect_conflicts,
     generate_investigation_guide,
     get_conflict_method,
     list_available_methods,
+    resolve_conflicts,
+    track_sources,
 )
-from .config import ConflictsConfig, conflicts_config
+from .registry import MethodRegistry, method_registry
+from .source_tracker import PropertySource, SourceReference, SourceTracker
 
 
 def detect_and_resolve(
@@ -110,13 +110,13 @@ def detect_and_resolve(
     entity_type: str = None,
     detection_method: str = "value",
     resolution_strategy: str = "voting",
-    **kwargs
+    **kwargs,
 ):
     """
     Detect and resolve conflicts in entities (convenience function).
-    
+
     This is a user-friendly wrapper that detects and resolves conflicts in one call.
-    
+
     Args:
         entities: List of entity dictionaries to check for conflicts
         property_name: Property name to check (required for value conflicts)
@@ -124,10 +124,10 @@ def detect_and_resolve(
         detection_method: Detection method (default: "value")
         resolution_strategy: Resolution strategy (default: "voting")
         **kwargs: Additional options passed to detector and resolver
-        
+
     Returns:
         Tuple of (conflicts, resolution_results)
-        
+
     Examples:
         >>> from semantica.conflicts import detect_and_resolve
         >>> entities = [
@@ -145,18 +145,14 @@ def detect_and_resolve(
         method=detection_method,
         property_name=property_name,
         entity_type=entity_type,
-        **kwargs
+        **kwargs,
     )
-    
+
     if not conflicts:
         return conflicts, []
-    
-    results = resolve_conflicts(
-        conflicts,
-        method=resolution_strategy,
-        **kwargs
-    )
-    
+
+    results = resolve_conflicts(conflicts, method=resolution_strategy, **kwargs)
+
     return conflicts, results
 
 

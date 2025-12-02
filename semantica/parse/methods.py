@@ -119,25 +119,25 @@ Example Usage:
     >>> data = parse_json("data.json", method="default")
 """
 
-from typing import Any, Dict, List, Optional, Callable, Union
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Union
 
+from ..utils.exceptions import ConfigurationError, ProcessingError
 from ..utils.logging import get_logger
-from ..utils.exceptions import ProcessingError, ConfigurationError
-from .document_parser import DocumentParser
-from .web_parser import WebParser
-from .structured_data_parser import StructuredDataParser
-from .email_parser import EmailParser
 from .code_parser import CodeParser
+from .config import parse_config
+from .csv_parser import CSVParser
+from .document_parser import DocumentParser
+from .docx_parser import DOCXParser
+from .email_parser import EmailParser
+from .image_parser import ImageParser
+from .json_parser import JSONParser
 from .media_parser import MediaParser
 from .pdf_parser import PDFParser
-from .docx_parser import DOCXParser
-from .json_parser import JSONParser
-from .csv_parser import CSVParser
-from .xml_parser import XMLParser
-from .image_parser import ImageParser
 from .registry import method_registry
-from .config import parse_config
+from .structured_data_parser import StructuredDataParser
+from .web_parser import WebParser
+from .xml_parser import XMLParser
 
 logger = get_logger("parse_methods")
 
@@ -146,13 +146,13 @@ def parse_document(
     file_path: Union[str, Path],
     file_type: Optional[str] = None,
     method: str = "default",
-    **kwargs
+    **kwargs,
 ) -> Dict[str, Any]:
     """
     Parse document of any supported format (convenience function).
-    
+
     This is a user-friendly wrapper that parses documents using the specified method.
-    
+
     Args:
         file_path: Path to document file
         file_type: Document type (auto-detected if None)
@@ -165,10 +165,10 @@ def parse_document(
             - extract_text: Whether to extract text (default: True)
             - extract_tables: Whether to extract tables (default: True)
             - extract_images: Whether to extract images (default: False)
-        
+
     Returns:
         dict: Parsed document data
-        
+
     Examples:
         >>> from semantica.parse.methods import parse_document
         >>> doc = parse_document("document.pdf", method="default")
@@ -179,15 +179,17 @@ def parse_document(
         try:
             return custom_method(file_path, file_type, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = parse_config.get_method_config("document")
         config.update(kwargs)
-        
+
         parser = DocumentParser(**config)
         return parser.parse_document(file_path, file_type=file_type, **kwargs)
-        
+
     except Exception as e:
         logger.error(f"Failed to parse document: {e}")
         raise
@@ -198,13 +200,13 @@ def parse_web_content(
     content_type: str = "html",
     base_url: Optional[str] = None,
     method: str = "default",
-    **kwargs
+    **kwargs,
 ) -> Dict[str, Any]:
     """
     Parse web content (convenience function).
-    
+
     This is a user-friendly wrapper that parses web content using the specified method.
-    
+
     Args:
         content: Web content or file path
         content_type: Content type ("html", "xml")
@@ -217,10 +219,10 @@ def parse_web_content(
         **kwargs: Additional options passed to WebParser
             - render_javascript: Whether to render JavaScript (default: False)
             - clean: Whether to clean HTML (default: True)
-        
+
     Returns:
         dict: Parsed web content data
-        
+
     Examples:
         >>> from semantica.parse.methods import parse_web_content
         >>> web = parse_web_content("https://example.com", method="default")
@@ -231,15 +233,19 @@ def parse_web_content(
         try:
             return custom_method(content, content_type, base_url, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = parse_config.get_method_config("web")
         config.update(kwargs)
-        
+
         parser = WebParser(**config)
-        return parser.parse_web_content(content, content_type=content_type, base_url=base_url, **kwargs)
-        
+        return parser.parse_web_content(
+            content, content_type=content_type, base_url=base_url, **kwargs
+        )
+
     except Exception as e:
         logger.error(f"Failed to parse web content: {e}")
         raise
@@ -249,13 +255,13 @@ def parse_structured_data(
     data: Union[str, Path],
     data_format: Optional[str] = None,
     method: str = "default",
-    **kwargs
+    **kwargs,
 ) -> Dict[str, Any]:
     """
     Parse structured data (convenience function).
-    
+
     This is a user-friendly wrapper that parses structured data using the specified method.
-    
+
     Args:
         data: Data content or file path
         data_format: Data format (auto-detected if None)
@@ -269,10 +275,10 @@ def parse_structured_data(
             - encoding: File encoding (default: 'utf-8')
             - delimiter: CSV delimiter (for CSV parsing)
             - flatten: Whether to flatten nested structures (for JSON)
-        
+
     Returns:
         dict: Parsed data
-        
+
     Examples:
         >>> from semantica.parse.methods import parse_structured_data
         >>> json_data = parse_structured_data("data.json", method="default")
@@ -283,30 +289,30 @@ def parse_structured_data(
         try:
             return custom_method(data, data_format, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = parse_config.get_method_config("structured")
         config.update(kwargs)
-        
+
         parser = StructuredDataParser(**config)
         return parser.parse_data(data, data_format=data_format, **kwargs)
-        
+
     except Exception as e:
         logger.error(f"Failed to parse structured data: {e}")
         raise
 
 
 def parse_email(
-    email_content: Union[str, bytes, Path],
-    method: str = "default",
-    **kwargs
+    email_content: Union[str, bytes, Path], method: str = "default", **kwargs
 ) -> Any:
     """
     Parse email message (convenience function).
-    
+
     This is a user-friendly wrapper that parses emails using the specified method.
-    
+
     Args:
         email_content: Email content (string, bytes, or file path)
         method: Parsing method (default: "default")
@@ -316,10 +322,10 @@ def parse_email(
             - "thread": Thread analysis parsing
         **kwargs: Additional options passed to EmailParser
             - extract_attachments: Whether to extract attachments (default: True)
-        
+
     Returns:
         EmailData: Parsed email data
-        
+
     Examples:
         >>> from semantica.parse.methods import parse_email
         >>> email = parse_email("email.eml", method="default")
@@ -330,15 +336,17 @@ def parse_email(
         try:
             return custom_method(email_content, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = parse_config.get_method_config("email")
         config.update(kwargs)
-        
+
         parser = EmailParser(**config)
         return parser.parse_email(email_content, **kwargs)
-        
+
     except Exception as e:
         logger.error(f"Failed to parse email: {e}")
         raise
@@ -348,13 +356,13 @@ def parse_code(
     file_path: Union[str, Path],
     language: Optional[str] = None,
     method: str = "default",
-    **kwargs
+    **kwargs,
 ) -> Dict[str, Any]:
     """
     Parse source code file (convenience function).
-    
+
     This is a user-friendly wrapper that parses code using the specified method.
-    
+
     Args:
         file_path: Path to code file
         language: Programming language (auto-detected if None)
@@ -364,10 +372,10 @@ def parse_code(
             - "comments": Comment-focused parsing
             - "dependencies": Dependency-focused parsing
         **kwargs: Additional options passed to CodeParser
-        
+
     Returns:
         dict: Parsed code data
-        
+
     Examples:
         >>> from semantica.parse.methods import parse_code
         >>> code = parse_code("script.py", method="default")
@@ -378,15 +386,17 @@ def parse_code(
         try:
             return custom_method(file_path, language, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = parse_config.get_method_config("code")
         config.update(kwargs)
-        
+
         parser = CodeParser(**config)
         return parser.parse_code(file_path, language=language, **kwargs)
-        
+
     except Exception as e:
         logger.error(f"Failed to parse code: {e}")
         raise
@@ -396,13 +406,13 @@ def parse_media(
     file_path: Union[str, Path],
     media_type: Optional[str] = None,
     method: str = "default",
-    **kwargs
+    **kwargs,
 ) -> Dict[str, Any]:
     """
     Parse media file (convenience function).
-    
+
     This is a user-friendly wrapper that parses media using the specified method.
-    
+
     Args:
         file_path: Path to media file
         media_type: Media type (auto-detected if None)
@@ -415,10 +425,10 @@ def parse_media(
             - extract_text: Whether to extract text using OCR (for images, default: False)
             - extract_metadata: Whether to extract metadata (default: True)
             - ocr_language: OCR language code (for images, default: "eng")
-        
+
     Returns:
         dict: Parsed media data
-        
+
     Examples:
         >>> from semantica.parse.methods import parse_media
         >>> image = parse_media("image.jpg", method="default", extract_text=True)
@@ -429,30 +439,30 @@ def parse_media(
         try:
             return custom_method(file_path, media_type, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = parse_config.get_method_config("media")
         config.update(kwargs)
-        
+
         parser = MediaParser(**config)
         return parser.parse_media(file_path, media_type=media_type, **kwargs)
-        
+
     except Exception as e:
         logger.error(f"Failed to parse media: {e}")
         raise
 
 
 def parse_pdf(
-    file_path: Union[str, Path],
-    method: str = "default",
-    **kwargs
+    file_path: Union[str, Path], method: str = "default", **kwargs
 ) -> Dict[str, Any]:
     """
     Parse PDF document (convenience function).
-    
+
     This is a user-friendly wrapper that parses PDFs using the specified method.
-    
+
     Args:
         file_path: Path to PDF file
         method: Parsing method (default: "default")
@@ -461,10 +471,10 @@ def parse_pdf(
             - extract_tables: Whether to extract tables (default: True)
             - extract_images: Whether to extract images (default: False)
             - pages: Specific page numbers to parse (None = all pages)
-        
+
     Returns:
         dict: Parsed PDF data
-        
+
     Examples:
         >>> from semantica.parse.methods import parse_pdf
         >>> pdf = parse_pdf("document.pdf", method="default")
@@ -475,30 +485,30 @@ def parse_pdf(
         try:
             return custom_method(file_path, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = parse_config.get_method_config("document")
         config.update(kwargs)
-        
+
         parser = PDFParser(**config)
         return parser.parse(file_path, **kwargs)
-        
+
     except Exception as e:
         logger.error(f"Failed to parse PDF: {e}")
         raise
 
 
 def parse_docx(
-    file_path: Union[str, Path],
-    method: str = "default",
-    **kwargs
+    file_path: Union[str, Path], method: str = "default", **kwargs
 ) -> Dict[str, Any]:
     """
     Parse DOCX document (convenience function).
-    
+
     This is a user-friendly wrapper that parses DOCX files using the specified method.
-    
+
     Args:
         file_path: Path to DOCX file
         method: Parsing method (default: "default")
@@ -506,10 +516,10 @@ def parse_docx(
             - extract_formatting: Whether to extract formatting (default: False)
             - extract_tables: Whether to extract tables (default: True)
             - extract_comments: Whether to extract comments (default: False)
-        
+
     Returns:
         dict: Parsed DOCX data
-        
+
     Examples:
         >>> from semantica.parse.methods import parse_docx
         >>> docx = parse_docx("document.docx", method="default")
@@ -519,30 +529,28 @@ def parse_docx(
         try:
             return custom_method(file_path, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = parse_config.get_method_config("document")
         config.update(kwargs)
-        
+
         parser = DOCXParser(**config)
         return parser.parse(file_path, **kwargs)
-        
+
     except Exception as e:
         logger.error(f"Failed to parse DOCX: {e}")
         raise
 
 
-def parse_json(
-    file_path: Union[str, Path],
-    method: str = "default",
-    **kwargs
-) -> Any:
+def parse_json(file_path: Union[str, Path], method: str = "default", **kwargs) -> Any:
     """
     Parse JSON file (convenience function).
-    
+
     This is a user-friendly wrapper that parses JSON using the specified method.
-    
+
     Args:
         file_path: Path to JSON file or JSON string
         method: Parsing method (default: "default")
@@ -550,10 +558,10 @@ def parse_json(
             - encoding: File encoding (default: 'utf-8')
             - flatten: Whether to flatten nested structures (default: False)
             - extract_paths: Whether to extract JSON paths (default: False)
-        
+
     Returns:
         JSONData: Parsed JSON data
-        
+
     Examples:
         >>> from semantica.parse.methods import parse_json
         >>> json_data = parse_json("data.json", method="default")
@@ -564,31 +572,30 @@ def parse_json(
         try:
             return custom_method(file_path, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = parse_config.get_method_config("structured")
         config.update(kwargs)
-        
+
         parser = JSONParser(**config)
         return parser.parse(file_path, **kwargs)
-        
+
     except Exception as e:
         logger.error(f"Failed to parse JSON: {e}")
         raise
 
 
 def parse_csv(
-    file_path: Union[str, Path],
-    delimiter: str = ',',
-    method: str = "default",
-    **kwargs
+    file_path: Union[str, Path], delimiter: str = ",", method: str = "default", **kwargs
 ) -> Any:
     """
     Parse CSV file (convenience function).
-    
+
     This is a user-friendly wrapper that parses CSV using the specified method.
-    
+
     Args:
         file_path: Path to CSV file
         delimiter: CSV delimiter (default: ',')
@@ -598,10 +605,10 @@ def parse_csv(
             - encoding: File encoding (default: 'utf-8')
             - skip_rows: Number of rows to skip
             - max_rows: Maximum number of rows to read
-        
+
     Returns:
         CSVData: Parsed CSV data
-        
+
     Examples:
         >>> from semantica.parse.methods import parse_csv
         >>> csv_data = parse_csv("data.csv", method="default")
@@ -612,38 +619,36 @@ def parse_csv(
         try:
             return custom_method(file_path, delimiter, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = parse_config.get_method_config("structured")
         config.update(kwargs)
-        
+
         parser = CSVParser(**config)
         return parser.parse(file_path, delimiter=delimiter, **kwargs)
-        
+
     except Exception as e:
         logger.error(f"Failed to parse CSV: {e}")
         raise
 
 
-def parse_xml(
-    file_path: Union[str, Path],
-    method: str = "default",
-    **kwargs
-) -> Any:
+def parse_xml(file_path: Union[str, Path], method: str = "default", **kwargs) -> Any:
     """
     Parse XML file (convenience function).
-    
+
     This is a user-friendly wrapper that parses XML using the specified method.
-    
+
     Args:
         file_path: Path to XML file or XML string
         method: Parsing method (default: "default")
         **kwargs: Additional options passed to XMLParser
-        
+
     Returns:
         XMLData: Parsed XML data
-        
+
     Examples:
         >>> from semantica.parse.methods import parse_xml
         >>> xml_data = parse_xml("data.xml", method="default")
@@ -653,30 +658,30 @@ def parse_xml(
         try:
             return custom_method(file_path, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = parse_config.get_method_config("structured")
         config.update(kwargs)
-        
+
         parser = XMLParser(**config)
         return parser.parse(file_path, **kwargs)
-        
+
     except Exception as e:
         logger.error(f"Failed to parse XML: {e}")
         raise
 
 
 def parse_image(
-    file_path: Union[str, Path],
-    method: str = "default",
-    **kwargs
+    file_path: Union[str, Path], method: str = "default", **kwargs
 ) -> Dict[str, Any]:
     """
     Parse image file with OCR support (convenience function).
-    
+
     This is a user-friendly wrapper that parses images using the specified method.
-    
+
     Args:
         file_path: Path to image file
         method: Parsing method (default: "default")
@@ -684,13 +689,13 @@ def parse_image(
             - extract_text: Whether to extract text using OCR (default: False)
             - ocr_language: OCR language code (default: "eng")
             - extract_metadata: Whether to extract metadata (default: True)
-        
+
     Returns:
         dict: Parsed image data containing:
             - metadata: ImageMetadata object
             - ocr_result: OCRResult object (if extract_text=True)
             - text: Extracted text (if extract_text=True)
-        
+
     Examples:
         >>> from semantica.parse.methods import parse_image
         >>> image = parse_image("image.jpg", method="default", extract_text=True)
@@ -701,15 +706,17 @@ def parse_image(
         try:
             return custom_method(file_path, **kwargs)
         except Exception as e:
-            logger.warning(f"Custom method {method} failed: {e}, falling back to default")
-    
+            logger.warning(
+                f"Custom method {method} failed: {e}, falling back to default"
+            )
+
     try:
         config = parse_config.get_method_config("media")
         config.update(kwargs)
-        
+
         parser = ImageParser(**config)
         return parser.parse(file_path, **kwargs)
-        
+
     except Exception as e:
         logger.error(f"Failed to parse image: {e}")
         raise
@@ -732,4 +739,3 @@ method_registry.register("structured", "default", parse_structured_data)
 method_registry.register("email", "default", parse_email)
 method_registry.register("code", "default", parse_code)
 method_registry.register("media", "default", parse_media)
-

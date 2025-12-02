@@ -69,9 +69,10 @@ Author: Semantica Contributors
 License: MIT
 """
 
-import os
 import json
+import os
 from typing import Any, Dict, List, Optional
+
 import torch
 
 from ..utils.exceptions import ProcessingError
@@ -82,20 +83,20 @@ from .registry import provider_registry
 
 class BaseProvider:
     """Base class for providers - makes it easy to add custom providers."""
-    
+
     def __init__(self, **kwargs):
         """Initialize provider."""
         self.config = kwargs
         self.logger = get_logger(f"provider_{self.__class__.__name__}")
-    
+
     def is_available(self) -> bool:
         """Check if provider is available."""
         return True
-    
+
     def generate(self, prompt: str, **kwargs) -> str:
         """Generate text - must be implemented."""
         raise NotImplementedError
-    
+
     def generate_structured(self, prompt: str, **kwargs) -> dict:
         """Generate structured output - must be implemented."""
         raise NotImplementedError
@@ -103,99 +104,110 @@ class BaseProvider:
 
 class OpenAIProvider(BaseProvider):
     """OpenAI provider implementation."""
-    
-    def __init__(self, api_key: Optional[str] = None, model: str = "gpt-3.5-turbo", **kwargs):
+
+    def __init__(
+        self, api_key: Optional[str] = None, model: str = "gpt-3.5-turbo", **kwargs
+    ):
         """Initialize OpenAI provider."""
         super().__init__(**kwargs)
         self.api_key = api_key or config.get_api_key("openai")
         self.model = model
         self.client = None
         self._init_client()
-    
+
     def _init_client(self):
         """Initialize OpenAI client."""
         try:
             from openai import OpenAI
+
             if self.api_key:
                 self.client = OpenAI(api_key=self.api_key)
         except ImportError:
             self.client = None
-            self.logger.warning("openai library not installed. Install with: pip install semantica[llm-openai]")
-    
+            self.logger.warning(
+                "openai library not installed. Install with: pip install semantica[llm-openai]"
+            )
+
     def is_available(self) -> bool:
         """Check if provider is available."""
         return self.client is not None
-    
+
     def generate(self, prompt: str, **kwargs) -> str:
         """Generate text from prompt."""
         if not self.client:
-            raise ProcessingError("OpenAI client not initialized. Set OPENAI_API_KEY or pass api_key.")
-        
+            raise ProcessingError(
+                "OpenAI client not initialized. Set OPENAI_API_KEY or pass api_key."
+            )
+
         response = self.client.chat.completions.create(
             model=kwargs.get("model", self.model),
             messages=[{"role": "user", "content": prompt}],
-            temperature=kwargs.get("temperature", 0.3)
+            temperature=kwargs.get("temperature", 0.3),
         )
         return response.choices[0].message.content
-    
+
     def generate_structured(self, prompt: str, **kwargs) -> dict:
         """Generate structured JSON output."""
         if not self.client:
             raise ProcessingError("OpenAI client not initialized.")
-        
+
         response = self.client.chat.completions.create(
             model=kwargs.get("model", self.model),
             messages=[{"role": "user", "content": prompt}],
             response_format={"type": "json_object"},
-            temperature=kwargs.get("temperature", 0.3)
+            temperature=kwargs.get("temperature", 0.3),
         )
         return json.loads(response.choices[0].message.content)
 
 
 class GeminiProvider(BaseProvider):
     """Google Gemini provider implementation."""
-    
-    def __init__(self, api_key: Optional[str] = None, model: str = "gemini-pro", **kwargs):
+
+    def __init__(
+        self, api_key: Optional[str] = None, model: str = "gemini-pro", **kwargs
+    ):
         """Initialize Gemini provider."""
         super().__init__(**kwargs)
         self.api_key = api_key or config.get_api_key("gemini")
         self.model = model
         self.client = None
         self._init_client()
-    
+
     def _init_client(self):
         """Initialize Gemini client."""
         try:
             import google.generativeai as genai
+
             if self.api_key:
                 genai.configure(api_key=self.api_key)
                 self.client = genai.GenerativeModel(self.model)
         except ImportError:
             self.client = None
-            self.logger.warning("google-generativeai library not installed. Install with: pip install semantica[llm-gemini]")
-    
+            self.logger.warning(
+                "google-generativeai library not installed. Install with: pip install semantica[llm-gemini]"
+            )
+
     def is_available(self) -> bool:
         """Check if provider is available."""
         return self.client is not None
-    
+
     def generate(self, prompt: str, **kwargs) -> str:
         """Generate text from prompt."""
         if not self.client:
-            raise ProcessingError("Gemini client not initialized. Set GEMINI_API_KEY or pass api_key.")
-        
+            raise ProcessingError(
+                "Gemini client not initialized. Set GEMINI_API_KEY or pass api_key."
+            )
+
         response = self.client.generate_content(
-            prompt,
-            generation_config={
-                "temperature": kwargs.get("temperature", 0.3)
-            }
+            prompt, generation_config={"temperature": kwargs.get("temperature", 0.3)}
         )
         return response.text
-    
+
     def generate_structured(self, prompt: str, **kwargs) -> dict:
         """Generate structured output."""
         if not self.client:
             raise ProcessingError("Gemini client not initialized.")
-        
+
         # Add JSON format instruction to prompt
         json_prompt = f"{prompt}\n\nReturn the response as valid JSON only."
         response = self.client.generate_content(json_prompt)
@@ -204,8 +216,8 @@ class GeminiProvider(BaseProvider):
         except json.JSONDecodeError:
             # Try to extract JSON from response
             text = response.text
-            start = text.find('{')
-            end = text.rfind('}') + 1
+            start = text.find("{")
+            end = text.rfind("}") + 1
             if start >= 0 and end > start:
                 return json.loads(text[start:end])
             raise ProcessingError("Failed to parse JSON from Gemini response")
@@ -213,58 +225,65 @@ class GeminiProvider(BaseProvider):
 
 class GroqProvider(BaseProvider):
     """Groq provider implementation."""
-    
-    def __init__(self, api_key: Optional[str] = None, model: str = "llama2-70b-4096", **kwargs):
+
+    def __init__(
+        self, api_key: Optional[str] = None, model: str = "llama2-70b-4096", **kwargs
+    ):
         """Initialize Groq provider."""
         super().__init__(**kwargs)
         self.api_key = api_key or config.get_api_key("groq")
         self.model = model
         self.client = None
         self._init_client()
-    
+
     def _init_client(self):
         """Initialize Groq client."""
         try:
             from groq import Groq
+
             if self.api_key:
                 self.client = Groq(api_key=self.api_key)
         except ImportError:
             self.client = None
-            self.logger.warning("groq library not installed. Install with: pip install semantica[llm-groq]")
-    
+            self.logger.warning(
+                "groq library not installed. Install with: pip install semantica[llm-groq]"
+            )
+
     def is_available(self) -> bool:
         """Check if provider is available."""
         return self.client is not None
-    
+
     def generate(self, prompt: str, **kwargs) -> str:
         """Generate text from prompt."""
         if not self.client:
-            raise ProcessingError("Groq client not initialized. Set GROQ_API_KEY or pass api_key.")
-        
+            raise ProcessingError(
+                "Groq client not initialized. Set GROQ_API_KEY or pass api_key."
+            )
+
         response = self.client.chat.completions.create(
             model=kwargs.get("model", self.model),
             messages=[{"role": "user", "content": prompt}],
-            temperature=kwargs.get("temperature", 0.3)
+            temperature=kwargs.get("temperature", 0.3),
         )
         return response.choices[0].message.content
-    
+
     def generate_structured(self, prompt: str, **kwargs) -> dict:
         """Generate structured output."""
         if not self.client:
             raise ProcessingError("Groq client not initialized.")
-        
+
         json_prompt = f"{prompt}\n\nReturn the response as valid JSON only."
         response = self.client.chat.completions.create(
             model=kwargs.get("model", self.model),
             messages=[{"role": "user", "content": json_prompt}],
-            temperature=kwargs.get("temperature", 0.3)
+            temperature=kwargs.get("temperature", 0.3),
         )
         try:
             return json.loads(response.choices[0].message.content)
         except json.JSONDecodeError:
             text = response.choices[0].message.content
-            start = text.find('{')
-            end = text.rfind('}') + 1
+            start = text.find("{")
+            end = text.rfind("}") + 1
             if start >= 0 and end > start:
                 return json.loads(text[start:end])
             raise ProcessingError("Failed to parse JSON from Groq response")
@@ -272,58 +291,68 @@ class GroqProvider(BaseProvider):
 
 class AnthropicProvider(BaseProvider):
     """Anthropic Claude provider implementation."""
-    
-    def __init__(self, api_key: Optional[str] = None, model: str = "claude-3-sonnet-20240229", **kwargs):
+
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: str = "claude-3-sonnet-20240229",
+        **kwargs,
+    ):
         """Initialize Anthropic provider."""
         super().__init__(**kwargs)
         self.api_key = api_key or config.get_api_key("anthropic")
         self.model = model
         self.client = None
         self._init_client()
-    
+
     def _init_client(self):
         """Initialize Anthropic client."""
         try:
             from anthropic import Anthropic
+
             if self.api_key:
                 self.client = Anthropic(api_key=self.api_key)
         except ImportError:
             self.client = None
-            self.logger.warning("anthropic library not installed. Install with: pip install semantica[llm-anthropic]")
-    
+            self.logger.warning(
+                "anthropic library not installed. Install with: pip install semantica[llm-anthropic]"
+            )
+
     def is_available(self) -> bool:
         """Check if provider is available."""
         return self.client is not None
-    
+
     def generate(self, prompt: str, **kwargs) -> str:
         """Generate text from prompt."""
         if not self.client:
-            raise ProcessingError("Anthropic client not initialized. Set ANTHROPIC_API_KEY or pass api_key.")
-        
+            raise ProcessingError(
+                "Anthropic client not initialized. Set ANTHROPIC_API_KEY or pass api_key."
+            )
+
         response = self.client.messages.create(
             model=kwargs.get("model", self.model),
             max_tokens=kwargs.get("max_tokens", 4096),
-            messages=[{"role": "user", "content": prompt}]
+            messages=[{"role": "user", "content": prompt}],
         )
         return response.content[0].text
-    
+
     def generate_structured(self, prompt: str, **kwargs) -> dict:
         """Generate structured output."""
         if not self.client:
             raise ProcessingError("Anthropic client not initialized.")
-        
+
         json_prompt = f"{prompt}\n\nReturn the response as valid JSON only."
         response = self.client.messages.create(
             model=kwargs.get("model", self.model),
             max_tokens=kwargs.get("max_tokens", 4096),
-            messages=[{"role": "user", "content": json_prompt}]
+            messages=[{"role": "user", "content": json_prompt}],
         )
         try:
             return json.loads(response.content[0].text)
         except json.JSONDecodeError:
             text = response.content[0].text
-            start = text.find('{')
-            end = text.rfind('}') + 1
+            start = text.find("{")
+            end = text.rfind("}") + 1
             if start >= 0 and end > start:
                 return json.loads(text[start:end])
             raise ProcessingError("Failed to parse JSON from Anthropic response")
@@ -331,67 +360,72 @@ class AnthropicProvider(BaseProvider):
 
 class OllamaProvider(BaseProvider):
     """Ollama local provider implementation."""
-    
-    def __init__(self, base_url: str = "http://localhost:11434", model: str = "llama2", **kwargs):
+
+    def __init__(
+        self, base_url: str = "http://localhost:11434", model: str = "llama2", **kwargs
+    ):
         """Initialize Ollama provider."""
         super().__init__(**kwargs)
         self.base_url = base_url
         self.model = model
         self.client = None
         self._init_client()
-    
+
     def _init_client(self):
         """Initialize Ollama client."""
         try:
             import ollama
+
             self.client = ollama
             # Test connection
             try:
                 self.client.list()  # Test if Ollama is running
             except Exception:
                 self.client = None
-                self.logger.warning("Ollama server not accessible. Make sure Ollama is running.")
+                self.logger.warning(
+                    "Ollama server not accessible. Make sure Ollama is running."
+                )
         except ImportError:
             self.client = None
-            self.logger.warning("ollama library not installed. Install with: pip install semantica[llm-ollama]")
-    
+            self.logger.warning(
+                "ollama library not installed. Install with: pip install semantica[llm-ollama]"
+            )
+
     def is_available(self) -> bool:
         """Check if provider is available."""
         return self.client is not None
-    
+
     def generate(self, prompt: str, **kwargs) -> str:
         """Generate text from prompt."""
         if not self.client:
-            raise ProcessingError("Ollama client not initialized. Make sure Ollama is running.")
-        
+            raise ProcessingError(
+                "Ollama client not initialized. Make sure Ollama is running."
+            )
+
         response = self.client.generate(
             model=kwargs.get("model", self.model),
             prompt=prompt,
-            options={
-                "temperature": kwargs.get("temperature", 0.3)
-            }
+            options={"temperature": kwargs.get("temperature", 0.3)},
         )
         return response.get("response", "")
-    
+
     def generate_structured(self, prompt: str, **kwargs) -> dict:
         """Generate structured output."""
         if not self.client:
             raise ProcessingError("Ollama client not initialized.")
-        
+
         json_prompt = f"{prompt}\n\nReturn the response as valid JSON only."
         response = self.client.generate(
             model=kwargs.get("model", self.model),
             prompt=json_prompt,
-            options={
-                "temperature": kwargs.get("temperature", 0.3)
-            }
+            options={"temperature": kwargs.get("temperature", 0.3)},
         )
         try:
             return json.loads(response.get("response", "{}"))
         except json.JSONDecodeError:
             text = response.get("response", "")
-            start = text.find('{')
-            end = text.rfind('}') + 1
+            start = text.find("{")
+            end = text.rfind("}") + 1
             if start >= 0 and end > start:
                 return json.loads(text[start:end])
             raise ProcessingError("Failed to parse JSON from Ollama response")
@@ -399,8 +433,10 @@ class OllamaProvider(BaseProvider):
 
 class HuggingFaceLLMProvider(BaseProvider):
     """HuggingFace transformers for LLM tasks."""
-    
-    def __init__(self, model_name: str = "gpt2", device: Optional[str] = None, **kwargs):
+
+    def __init__(
+        self, model_name: str = "gpt2", device: Optional[str] = None, **kwargs
+    ):
         """Initialize HuggingFace LLM provider."""
         super().__init__(**kwargs)
         self.model_name = model_name
@@ -408,50 +444,54 @@ class HuggingFaceLLMProvider(BaseProvider):
         self.model = None
         self.tokenizer = None
         self._init_model()
-    
+
     def _init_model(self):
         """Initialize HuggingFace model."""
         try:
-            from transformers import AutoTokenizer, AutoModelForCausalLM
-            
+            from transformers import AutoModelForCausalLM, AutoTokenizer
+
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
             self.model = AutoModelForCausalLM.from_pretrained(self.model_name)
             self.model.to(self.device)
             self.model.eval()
         except ImportError:
-            self.logger.warning("transformers library not installed. Install with: pip install semantica[models-huggingface]")
+            self.logger.warning(
+                "transformers library not installed. Install with: pip install semantica[models-huggingface]"
+            )
         except Exception as e:
-            self.logger.warning(f"Failed to load HuggingFace model {self.model_name}: {e}")
+            self.logger.warning(
+                f"Failed to load HuggingFace model {self.model_name}: {e}"
+            )
             self.model = None
-    
+
     def is_available(self) -> bool:
         """Check if provider is available."""
         return self.model is not None and self.tokenizer is not None
-    
+
     def generate(self, prompt: str, **kwargs) -> str:
         """Generate text from prompt."""
         if not self.model or not self.tokenizer:
             raise ProcessingError("HuggingFace model not initialized.")
-        
+
         inputs = self.tokenizer.encode(prompt, return_tensors="pt").to(self.device)
         outputs = self.model.generate(
             inputs,
             max_length=kwargs.get("max_length", 100),
             temperature=kwargs.get("temperature", 0.7),
-            do_sample=True
+            do_sample=True,
         )
         generated_text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
         # Remove the original prompt from the response
-        return generated_text[len(prompt):].strip()
-    
+        return generated_text[len(prompt) :].strip()
+
     def generate_structured(self, prompt: str, **kwargs) -> dict:
         """Generate structured output."""
         response = self.generate(prompt, **kwargs)
         try:
             return json.loads(response)
         except json.JSONDecodeError:
-            start = response.find('{')
-            end = response.rfind('}') + 1
+            start = response.find("{")
+            end = response.rfind("}") + 1
             if start >= 0 and end > start:
                 return json.loads(response[start:end])
             raise ProcessingError("Failed to parse JSON from HuggingFace response")
@@ -459,103 +499,107 @@ class HuggingFaceLLMProvider(BaseProvider):
 
 class HuggingFaceModelLoader:
     """HuggingFace model loader for NER, RE, Triplets."""
-    
+
     def __init__(self, device: Optional[str] = None):
         """Initialize HuggingFace model loader."""
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self._cache: Dict[str, Any] = {}
         self.logger = get_logger("huggingface_loader")
-    
+
     def load_ner_model(self, model_name: str, **kwargs):
         """Load NER model."""
         cache_key = f"{model_name}_ner"
         if cache_key in self._cache:
             return self._cache[cache_key]
-        
+
         try:
             from transformers import pipeline
-            
+
             nlp = pipeline(
                 "ner",
                 model=model_name,
                 device=self.device if torch.cuda.is_available() else -1,
-                aggregation_strategy="simple"
+                aggregation_strategy="simple",
             )
             self._cache[cache_key] = nlp
             return nlp
         except ImportError:
-            raise ImportError("transformers library not installed. Install with: pip install semantica[models-huggingface]")
+            raise ImportError(
+                "transformers library not installed. Install with: pip install semantica[models-huggingface]"
+            )
         except Exception as e:
             self.logger.error(f"Failed to load NER model {model_name}: {e}")
             raise
-    
+
     def load_relation_model(self, model_name: str, **kwargs):
         """Load relation extraction model."""
         cache_key = f"{model_name}_relation"
         if cache_key in self._cache:
             return self._cache[cache_key]
-        
+
         try:
             from transformers import pipeline
-            
+
             nlp = pipeline(
                 "text-classification",
                 model=model_name,
-                device=self.device if torch.cuda.is_available() else -1
+                device=self.device if torch.cuda.is_available() else -1,
             )
             self._cache[cache_key] = nlp
             return nlp
         except ImportError:
-            raise ImportError("transformers library not installed. Install with: pip install semantica[models-huggingface]")
+            raise ImportError(
+                "transformers library not installed. Install with: pip install semantica[models-huggingface]"
+            )
         except Exception as e:
             self.logger.error(f"Failed to load relation model {model_name}: {e}")
             raise
-    
+
     def load_triplet_model(self, model_name: str, **kwargs):
         """Load triplet extraction model."""
         cache_key = f"{model_name}_triplet"
         if cache_key in self._cache:
             return self._cache[cache_key]
-        
+
         try:
-            from transformers import pipeline, AutoTokenizer, AutoModelForSeq2SeqLM
-            
+            from transformers import AutoModelForSeq2SeqLM, AutoTokenizer, pipeline
+
             tokenizer = AutoTokenizer.from_pretrained(model_name)
             model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
             model.to(self.device)
-            
-            nlp = {
-                "tokenizer": tokenizer,
-                "model": model,
-                "device": self.device
-            }
+
+            nlp = {"tokenizer": tokenizer, "model": model, "device": self.device}
             self._cache[cache_key] = nlp
             return nlp
         except ImportError:
-            raise ImportError("transformers library not installed. Install with: pip install semantica[models-huggingface]")
+            raise ImportError(
+                "transformers library not installed. Install with: pip install semantica[models-huggingface]"
+            )
         except Exception as e:
             self.logger.error(f"Failed to load triplet model {model_name}: {e}")
             raise
-    
+
     def extract_entities(self, model, text: str) -> List[Dict]:
         """Extract entities using loaded model."""
         return model(text)
-    
+
     def extract_relations(self, model, text: str, entities: List) -> List[Dict]:
         """Extract relations using loaded model."""
         # This would need to be customized based on the model architecture
         return model(text)
-    
+
     def extract_triplets(self, model, text: str) -> List[Dict]:
         """Extract triplets using loaded model."""
         tokenizer = model["tokenizer"]
         model_obj = model["model"]
         device = model["device"]
-        
-        inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=512).to(device)
+
+        inputs = tokenizer(
+            text, return_tensors="pt", truncation=True, max_length=512
+        ).to(device)
         outputs = model_obj.generate(**inputs, max_length=128)
         decoded = tokenizer.decode(outputs[0], skip_special_tokens=True)
-        
+
         # Parse decoded output (format depends on model)
         # This is a placeholder - actual parsing would depend on model output format
         return [{"triplet": decoded}]
@@ -567,7 +611,7 @@ def create_provider(name: str, **kwargs) -> BaseProvider:
     custom_provider = provider_registry.get(name)
     if custom_provider:
         return custom_provider(**kwargs)
-    
+
     # Built-in providers
     builtin = {
         "openai": OpenAIProvider,
@@ -577,9 +621,11 @@ def create_provider(name: str, **kwargs) -> BaseProvider:
         "ollama": OllamaProvider,
         "huggingface_llm": HuggingFaceLLMProvider,
     }
-    
+
     provider_class = builtin.get(name.lower())
     if not provider_class:
-        raise ValueError(f"Unknown provider: {name}. Register custom provider or use built-in: {list(builtin.keys())}")
-    
+        raise ValueError(
+            f"Unknown provider: {name}. Register custom provider or use built-in: {list(builtin.keys())}"
+        )
+
     return provider_class(**kwargs)
