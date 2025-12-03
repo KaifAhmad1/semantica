@@ -72,7 +72,7 @@ Project governance model for Semantica.
 
 - **GitHub Issues**: Bug reports, features, questions
 - **GitHub PRs**: Code contributions
-- **Email**: semantica-dev@users.noreply.github.com (security only)
+- **GitHub Security Advisories**: [Report security issues](https://github.com/Hawksight-AI/semantica/security/advisories/new)
 
 ---
 
@@ -92,4 +92,4 @@ MIT License - See [LICENSE](https://github.com/Hawksight-AI/semantica/blob/main/
 
 ---
 
-**Contact**: [GitHub Issues](https://github.com/Hawksight-AI/semantica/issues) or semantica-dev@users.noreply.github.com
+**Contact**: [GitHub Issues](https://github.com/Hawksight-AI/semantica/issues)

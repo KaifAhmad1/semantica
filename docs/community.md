@@ -17,8 +17,8 @@ Welcome to the Semantica community!
 
 ### Contact
 
-- **Email**: semantica-dev@users.noreply.github.com (for security issues)
-- **GitHub**: Preferred for all other communication
+- **GitHub Issues**: [Create an issue](https://github.com/Hawksight-AI/semantica/issues) for all communication
+- **GitHub Security Advisories**: [Report security issues](https://github.com/Hawksight-AI/semantica/security/advisories/new)
 
 ---
 
@@ -40,7 +40,7 @@ We have a [Code of Conduct](https://github.com/Hawksight-AI/semantica/blob/main/
 
 If you experience unacceptable behavior:
 1. Document what happened
-2. Contact maintainers at semantica-dev@users.noreply.github.com
+2. Contact maintainers through [GitHub Issues](https://github.com/Hawksight-AI/semantica/issues) with "[CoC]" prefix
 3. We'll investigate and respond appropriately
 
 ---

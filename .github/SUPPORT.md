@@ -9,6 +9,13 @@ Check the [docs folder](https://github.com/Hawksight-AI/semantica/tree/main/docs
 - **GitHub Discussions**: [Ask questions](https://github.com/Hawksight-AI/semantica/discussions)
 - **Discord**: Join our [Discord server](https://discord.gg/semantica) for real-time chat
 
+### 💭 Discussions
+Join the conversation on [GitHub Discussions](https://github.com/Hawksight-AI/semantica/discussions):
+- **Q&A**: Ask questions and get help from the community
+- **Ideas**: Share feature requests and suggestions
+- **Show and Tell**: Showcase your projects and use cases
+- **General**: General discussions about Semantica
+
 ### 🐛 Bug Reports
 Found a bug? [Create an issue](https://github.com/Hawksight-AI/semantica/issues/new/choose)
 
@@ -20,8 +27,8 @@ Found a bug? [Create an issue](https://github.com/Hawksight-AI/semantica/issues/
 ## Commercial Support
 
 For enterprise support, custom development, or consulting services:
-- Email: semantica-dev@users.noreply.github.com
-- Include "Commercial Support" in the subject line
+- Contact us through [GitHub Issues](https://github.com/Hawksight-AI/semantica/issues)
+- Include "Commercial Support" in the title
 
 ## Sponsorship
 

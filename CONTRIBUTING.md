@@ -364,7 +364,6 @@ def extract_entities(
 - **GitHub Discussions**: General questions and discussions
 - **GitHub Issues**: Bug reports and feature requests
 - **Discord**: Real-time chat and community support
-- **Email**: semantica-dev@users.noreply.github.com
 
 ### Before Asking for Help
 

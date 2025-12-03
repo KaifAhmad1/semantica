@@ -499,7 +499,7 @@ print(f"Answer: {result.answer} | Nodes: {kg.node_count}, Edges: {kg.edge_count}
 | **Enterprise** | 24/7 support | 4h | Contact |
 | **Premium** | Phone, custom dev | 1h | Contact |
 
-**Contact:** enterprise@semantica.io
+**Contact:** [GitHub Issues](https://github.com/Hawksight-AI/semantica/issues) with "[Enterprise]" prefix
 
 ## 🤝 Contributing
 

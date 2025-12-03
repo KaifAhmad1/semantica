@@ -17,9 +17,9 @@ We take security vulnerabilities seriously. If you discover a security vulnerabi
 
 Security vulnerabilities should be reported privately to prevent potential exploitation.
 
-### 2. Email Security Team
+### 2. Report Security Issue
 
-Send an email to: **semantica-dev@users.noreply.github.com**
+Create a [GitHub Security Advisory](https://github.com/Hawksight-AI/semantica/security/advisories/new) or contact us through [GitHub Issues](https://github.com/Hawksight-AI/semantica/issues) with "[SECURITY]" prefix.
 
 Include the following information:
 
@@ -151,8 +151,8 @@ We appreciate responsible disclosure. Security researchers who help us improve t
 
 For security-related questions or concerns:
 
-- **Email**: semantica-dev@users.noreply.github.com
-- **Subject**: [SECURITY] Brief description
+- **GitHub Issues**: [Create an issue](https://github.com/Hawksight-AI/semantica/issues) with "[SECURITY]" prefix
+- **GitHub Security Advisories**: [Report vulnerability](https://github.com/Hawksight-AI/semantica/security/advisories/new)
 
 ## Additional Resources
 
