@@ -42,7 +42,7 @@ Hand-picked tutorials to show you the power of Semantica.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/use_cases/advanced_rag/GraphRAG_Complete.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/advanced_rag/01_GraphRAG_Complete.ipynb)
 
 -   :material-graph: **Your First Knowledge Graph**
     ---
@@ -52,7 +52,7 @@ Hand-picked tutorials to show you the power of Semantica.
     
     **Difficulty**: Beginner
     
-    [Open Notebook](cookbook/introduction/Your_First_Knowledge_Graph.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/introduction/08_Your_First_Knowledge_Graph.ipynb)
 
 -   :material-shield-alert: **Real-Time Anomaly Detection**
     ---
@@ -62,7 +62,7 @@ Hand-picked tutorials to show you the power of Semantica.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/use_cases/cybersecurity/Anomaly_Detection_Real_Time.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/cybersecurity/01_Anomaly_Detection_Real_Time.ipynb)
 
 </div>
 
@@ -82,17 +82,7 @@ Essential guides to master the Semantica framework.
     
     **Difficulty**: Beginner
     
-    [Open Notebook](cookbook/introduction/Welcome_to_Semantica.ipynb)
-
--   :material-cog: **Configuration Basics**
-    ---
-    Learn how to configure API keys, environment variables, and settings.
-    
-    **Topics**: Configuration, API Keys, Env Vars
-    
-    **Difficulty**: Beginner
-    
-    [Open Notebook](cookbook/introduction/Configuration_Basics.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/introduction/01_Welcome_to_Semantica.ipynb)
 
 -   :material-database-import: **Data Ingestion**
     ---
@@ -102,7 +92,7 @@ Essential guides to master the Semantica framework.
     
     **Difficulty**: Beginner
     
-    [Open Notebook](cookbook/introduction/Data_Ingestion.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/introduction/02_Data_Ingestion.ipynb)
 
 -   :material-file-document-outline: **Document Parsing**
     ---
@@ -112,7 +102,7 @@ Essential guides to master the Semantica framework.
     
     **Difficulty**: Beginner
     
-    [Open Notebook](cookbook/introduction/Document_Parsing.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/introduction/03_Document_Parsing.ipynb)
 
 -   :material-broom: **Data Normalization**
     ---
@@ -122,7 +112,7 @@ Essential guides to master the Semantica framework.
     
     **Difficulty**: Beginner
     
-    [Open Notebook](cookbook/introduction/Data_Normalization.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/introduction/04_Data_Normalization.ipynb)
 
 -   :material-account-search: **Entity Extraction**
     ---
@@ -132,7 +122,7 @@ Essential guides to master the Semantica framework.
     
     **Difficulty**: Beginner
     
-    [Open Notebook](cookbook/introduction/Entity_Extraction.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/introduction/05_Entity_Extraction.ipynb)
 
 -   :material-relation-many-to-many: **Relation Extraction**
     ---
@@ -142,7 +132,7 @@ Essential guides to master the Semantica framework.
     
     **Difficulty**: Beginner
     
-    [Open Notebook](cookbook/introduction/Relation_Extraction.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/introduction/06_Relation_Extraction.ipynb)
 
 -   :material-vector-square: **Embedding Generation**
     ---
@@ -152,7 +142,7 @@ Essential guides to master the Semantica framework.
     
     **Difficulty**: Intermediate
     
-    [Open Notebook](cookbook/introduction/Embedding_Generation.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/introduction/12_Embedding_Generation.ipynb)
 
 -   :material-database-search: **Vector Store**
     ---
@@ -160,7 +150,7 @@ Essential guides to master the Semantica framework.
     
     **Difficulty**: Intermediate
     
-    [Open Notebook](cookbook/introduction/Vector_Store.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/introduction/13_Vector_Store.ipynb)
 
 -   :material-database-settings: **Graph Store**
     ---
@@ -170,7 +160,7 @@ Essential guides to master the Semantica framework.
     
     **Difficulty**: Intermediate
     
-    [Open Notebook](cookbook/introduction/Graph_Store.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/introduction/09_Graph_Store.ipynb)
 
 -   :material-sitemap: **Ontology**
     ---
@@ -180,7 +170,7 @@ Essential guides to master the Semantica framework.
     
     **Difficulty**: Intermediate
     
-    [Open Notebook](cookbook/introduction/Ontology.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/introduction/14_Ontology.ipynb)
 
 </div>
 
@@ -200,7 +190,7 @@ Deep dive into advanced features, customization, and complex workflows.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/advanced/Advanced_Extraction.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/advanced/01_Advanced_Extraction.ipynb)
 
 -   :material-chart-network: **Advanced Graph Analytics**
     ---
@@ -210,7 +200,7 @@ Deep dive into advanced features, customization, and complex workflows.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/advanced/Advanced_Graph_Analytics.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/advanced/02_Advanced_Graph_Analytics.ipynb)
 
 -   :material-monitor-dashboard: **Complete Visualization Suite**
     ---
@@ -220,7 +210,7 @@ Deep dive into advanced features, customization, and complex workflows.
     
     **Difficulty**: Intermediate
     
-    [Open Notebook](cookbook/advanced/Complete_Visualization_Suite.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/advanced/03_Complete_Visualization_Suite.ipynb)
 
 -   :material-scale-balance: **Conflict Resolution**
     ---
@@ -230,7 +220,7 @@ Deep dive into advanced features, customization, and complex workflows.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/advanced/Conflict_Resolution_Strategies.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/advanced/04_Conflict_Resolution_Strategies.ipynb)
 
 -   :material-export: **Multi-Format Export**
     ---
@@ -240,7 +230,7 @@ Deep dive into advanced features, customization, and complex workflows.
     
     **Difficulty**: Intermediate
     
-    [Open Notebook](cookbook/advanced/Multi_Format_Export.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/advanced/05_Multi_Format_Export.ipynb)
 
 -   :material-source-merge: **Multi-Source Integration**
     ---
@@ -250,7 +240,7 @@ Deep dive into advanced features, customization, and complex workflows.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/advanced/Multi_Source_Data_Integration.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/advanced/06_Multi_Source_Data_Integration.ipynb)
 
 -   :material-pipe: **Pipeline Orchestration**
     ---
@@ -260,7 +250,7 @@ Deep dive into advanced features, customization, and complex workflows.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/advanced/Pipeline_Orchestration.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/advanced/07_Pipeline_Orchestration.ipynb)
 
 -   :material-brain: **Reasoning and Inference**
     ---
@@ -270,7 +260,7 @@ Deep dive into advanced features, customization, and complex workflows.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/advanced/Reasoning_and_Inference.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/advanced/08_Reasoning_and_Inference.ipynb)
 
 -   :material-layers: **Semantic Layer Construction**
     ---
@@ -280,7 +270,7 @@ Deep dive into advanced features, customization, and complex workflows.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/advanced/Semantic_Layer_Construction.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/advanced/09_Semantic_Layer_Construction.ipynb)
 
 -   :material-clock-outline: **Temporal Knowledge Graphs**
     ---
@@ -290,7 +280,7 @@ Deep dive into advanced features, customization, and complex workflows.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/advanced/Temporal_Knowledge_Graphs.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/advanced/10_Temporal_Knowledge_Graphs.ipynb)
 
 </div>
 
@@ -312,7 +302,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/use_cases/biomedical/Drug_Discovery_Pipeline.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/biomedical/01_Drug_Discovery_Pipeline.ipynb)
 
 -   :material-dna: **Genomic Variant Analysis**
     ---
@@ -322,7 +312,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/use_cases/biomedical/Genomic_Variant_Analysis.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/biomedical/02_Genomic_Variant_Analysis.ipynb)
 
 </div>
 
@@ -338,7 +328,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Intermediate
     
-    [Open Notebook](cookbook/use_cases/healthcare/Clinical_Reports_Processing.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/healthcare/01_Clinical_Reports_Processing.ipynb)
 
 -   :material-virus: **Disease Network Analysis**
     ---
@@ -348,7 +338,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/use_cases/healthcare/Disease_Network_Analysis.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/healthcare/02_Disease_Network_Analysis.ipynb)
 
 -   :material-pill-multiple: **Drug Interactions Analysis**
     ---
@@ -358,7 +348,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/use_cases/healthcare/Drug_Interactions_Analysis.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/healthcare/03_Drug_Interactions_Analysis.ipynb)
 
 -   :material-robot-love: **Healthcare GraphRAG Hybrid**
     ---
@@ -368,7 +358,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/use_cases/healthcare/Healthcare_GraphRAG_Hybrid.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/healthcare/04_Healthcare_GraphRAG_Hybrid.ipynb)
 
 -   :material-database-plus: **Medical Database Integration**
     ---
@@ -378,17 +368,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Intermediate
     
-    [Open Notebook](cookbook/use_cases/healthcare/Medical_Database_Integration.ipynb)
-
--   :material-book-medical: **Medical Literature GraphRAG**
-    ---
-    Querying medical literature using GraphRAG for evidence-based insights.
-    
-    **Topics**: Literature Mining, Evidence-Based Medicine
-    
-    **Difficulty**: Advanced
-    
-    [Open Notebook](cookbook/use_cases/healthcare/Medical_Literature_GraphRAG.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/healthcare/05_Medical_Database_Integration.ipynb)
 
 -   :material-account-heart: **Patient Records Temporal**
     ---
@@ -398,7 +378,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/use_cases/healthcare/Patient_Records_Temporal.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/healthcare/06_Patient_Records_Temporal.ipynb)
 
 </div>
 
@@ -414,7 +394,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Intermediate
     
-    [Open Notebook](cookbook/use_cases/finance/Financial_Data_Integration.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/finance/01_Financial_Data_Integration.ipynb)
 
 -   :material-file-chart: **Financial Reports Analysis**
     ---
@@ -424,7 +404,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Intermediate
     
-    [Open Notebook](cookbook/use_cases/finance/Financial_Reports_Analysis.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/finance/02_Financial_Reports_Analysis.ipynb)
 
 -   :material-incognito: **Fraud Detection**
     ---
@@ -434,7 +414,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/use_cases/finance/Fraud_Detection.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/finance/03_Fraud_Detection.ipynb)
 
 -   :material-chart-box: **Investment Analysis Hybrid RAG**
     ---
@@ -444,17 +424,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/use_cases/finance/Investment_Analysis_Hybrid_RAG.ipynb)
-
--   :material-chart-line: **Market Intelligence**
-    ---
-    Gathering and analyzing market intelligence for trading signals.
-    
-    **Topics**: Market Analysis, Sentiment Analysis
-    
-    **Difficulty**: Intermediate
-    
-    [Open Notebook](cookbook/use_cases/finance/Market_Intelligence.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/finance/04_Investment_Analysis_Hybrid_RAG.ipynb)
 
 -   :material-gavel: **Regulatory Compliance**
     ---
@@ -464,7 +434,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/use_cases/finance/Regulatory_Compliance.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/finance/05_Regulatory_Compliance.ipynb)
 
 </div>
 
@@ -480,7 +450,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/use_cases/blockchain/DeFi_Protocol_Intelligence.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/blockchain/01_DeFi_Protocol_Intelligence.ipynb)
 
 -   :material-network: **Transaction Network Analysis**
     ---
@@ -490,7 +460,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/use_cases/blockchain/Transaction_Network_Analysis.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/blockchain/02_Transaction_Network_Analysis.ipynb)
 
 </div>
 
@@ -506,7 +476,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/use_cases/cybersecurity/Anomaly_Detection_Real_Time.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/cybersecurity/01_Anomaly_Detection_Real_Time.ipynb)
 
 -   :material-shield-search: **Incident Analysis**
     ---
@@ -516,7 +486,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Intermediate
     
-    [Open Notebook](cookbook/use_cases/cybersecurity/Incident_Analysis.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/cybersecurity/02_Incident_Analysis.ipynb)
 
 -   :material-shield-link-variant: **Threat Correlation**
     ---
@@ -526,7 +496,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/use_cases/cybersecurity/Threat_Correlation.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/cybersecurity/03_Threat_Correlation.ipynb)
 
 -   :material-robot-angry: **Threat Intelligence Hybrid RAG**
     ---
@@ -536,7 +506,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/use_cases/cybersecurity/Threat_Intelligence_Hybrid_RAG.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/cybersecurity/04_Threat_Intelligence_Hybrid_RAG.ipynb)
 
 -   :material-shield-plus: **Threat Intelligence Integration**
     ---
@@ -546,7 +516,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/use_cases/cybersecurity/Threat_Intelligence_Integration.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/cybersecurity/05_Threat_Intelligence_Integration.ipynb)
 
 -   :material-bug: **Vulnerability Tracking**
     ---
@@ -556,7 +526,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Intermediate
     
-    [Open Notebook](cookbook/use_cases/cybersecurity/Vulnerability_Tracking.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/cybersecurity/06_Vulnerability_Tracking.ipynb)
 
 </div>
 
@@ -572,17 +542,27 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/use_cases/intelligence/Criminal_Network_Analysis.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/intelligence/01_Criminal_Network_Analysis.ipynb)
 
--   :material-file-chart-outline: **Network Analysis Intelligence Reports**
+-   :material-file-search: **Intelligence Analysis**
     ---
-    Analyzing intelligence reports for network insights and patterns.
+    Comprehensive intelligence analysis using orchestrator-worker pattern with graph analytics and hybrid RAG.
     
-    **Topics**: Intelligence Analysis, Network Mapping
+    **Topics**: Intelligence Analysis, Orchestrator-Worker, Graph Analytics
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/use_cases/intelligence/Network_Analysis_Intelligence_Reports.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/intelligence/02_Intelligence_Analysis.ipynb)
+
+-   :material-gavel: **Law Enforcement Forensics**
+    ---
+    Forensic analysis pipeline for processing case files and evidence.
+    
+    **Topics**: Forensics, Evidence Analysis, Case Correlation
+    
+    **Difficulty**: Advanced
+    
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/intelligence/03_Law_Enforcement_Forensics.ipynb)
 
 </div>
 
@@ -598,7 +578,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Intermediate
     
-    [Open Notebook](cookbook/use_cases/trading/Market_Data_Analysis.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/trading/01_Market_Data_Analysis.ipynb)
 
 -   :material-newspaper-variant: **News Sentiment Analysis**
     ---
@@ -608,17 +588,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Intermediate
     
-    [Open Notebook](cookbook/use_cases/trading/News_Sentiment_Analysis.ipynb)
-
--   :material-clock-fast: **Real-Time Market Data**
-    ---
-    Processing real-time market data for algorithmic trading.
-    
-    **Topics**: Real-Time Processing, Market Data
-    
-    **Difficulty**: Advanced
-    
-    [Open Notebook](cookbook/use_cases/trading/Real_Time_Market_Data.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/trading/02_News_Sentiment_Analysis.ipynb)
 
 -   :material-monitor-dashboard: **Real-Time Monitoring**
     ---
@@ -628,7 +598,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/use_cases/trading/Real_Time_Monitoring.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/trading/03_Real_Time_Monitoring.ipynb)
 
 -   :material-shield-check: **Risk Assessment**
     ---
@@ -638,7 +608,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/use_cases/trading/Risk_Assessment.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/trading/04_Risk_Assessment.ipynb)
 
 -   :material-history: **Strategy Backtesting**
     ---
@@ -648,7 +618,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/use_cases/trading/Strategy_Backtesting.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/trading/05_Strategy_Backtesting.ipynb)
 
 </div>
 
@@ -664,7 +634,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Intermediate
     
-    [Open Notebook](cookbook/use_cases/renewable_energy/Energy_Market_Analysis.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/renewable_energy/01_Energy_Market_Analysis.ipynb)
 
 -   :material-leaf: **Environmental Impact**
     ---
@@ -674,7 +644,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Intermediate
     
-    [Open Notebook](cookbook/use_cases/renewable_energy/Environmental_Impact.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/renewable_energy/02_Environmental_Impact.ipynb)
 
 -   :material-transmission-tower: **Grid Management**
     ---
@@ -684,7 +654,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/use_cases/renewable_energy/Grid_Management.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/renewable_energy/03_Grid_Management.ipynb)
 
 -   :material-solar-power: **Resource Optimization**
     ---
@@ -694,17 +664,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/use_cases/renewable_energy/Resource_Optimization.ipynb)
-
--   :material-truck-cargo-container: **Supply Chain Analysis**
-    ---
-    Analyzing the renewable energy supply chain for optimization.
-    
-    **Topics**: Supply Chain, Energy Sector
-    
-    **Difficulty**: Intermediate
-    
-    [Open Notebook](cookbook/use_cases/renewable_energy/Supply_Chain_Analysis.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/renewable_energy/04_Resource_Optimization.ipynb)
 
 </div>
 
@@ -720,7 +680,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/use_cases/supply_chain/Supply_Chain_Data_Integration.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/supply_chain/01_Supply_Chain_Data_Integration.ipynb)
 
 -   :material-alert-octagon: **Supply Chain Risk Management**
     ---
@@ -730,7 +690,7 @@ Real-world examples and end-to-end applications across various industries.
     
     **Difficulty**: Advanced
     
-    [Open Notebook](cookbook/use_cases/supply_chain/Supply_Chain_Risk_Management.ipynb)
+    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/supply_chain/02_Supply_Chain_Risk_Management.ipynb)
 
 </div>
 
