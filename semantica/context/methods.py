@@ -190,8 +190,8 @@ def build_context_graph(
             raise ProcessingError(f"Unknown graph construction method: {method}")
 
     except Exception as e:
-        logger.error(f"Failed to build context graph: {e}")
-        raise
+        logger.error(f"Failed to build context graph: {e}", exc_info=True)
+        raise ProcessingError(f"Context graph construction failed: {e}") from e
 
 
 def store_memory(
@@ -255,8 +255,8 @@ def store_memory(
         )
 
     except Exception as e:
-        logger.error(f"Failed to store memory: {e}")
-        raise
+        logger.error(f"Failed to store memory: {e}", exc_info=True)
+        raise ProcessingError(f"Memory storage failed: {e}") from e
 
 
 def retrieve_context(
@@ -333,8 +333,8 @@ def retrieve_context(
         return retriever.retrieve(query, max_results=max_results, **kwargs)
 
     except Exception as e:
-        logger.error(f"Failed to retrieve context: {e}")
-        raise
+        logger.error(f"Failed to retrieve context: {e}", exc_info=True)
+        raise ProcessingError(f"Context retrieval failed: {e}") from e
 
 
 def link_entities(
@@ -413,8 +413,8 @@ def link_entities(
             )
 
     except Exception as e:
-        logger.error(f"Failed to link entities: {e}")
-        raise
+        logger.error(f"Failed to link entities: {e}", exc_info=True)
+        raise ProcessingError(f"Entity linking failed: {e}") from e
 
 
 def get_context_method(task: str, name: str) -> Optional[Callable]:

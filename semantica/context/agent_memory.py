@@ -588,3 +588,610 @@ class AgentMemory:
             "max_size": self.max_memory_size,
             "retention_policy": self.retention_policy,
         }
+
+    # Basic Operations
+    def exists(self, memory_id: str) -> bool:
+        """
+        Check if memory exists.
+        
+        Args:
+            memory_id: Memory ID to check
+        
+        Returns:
+            True if exists, False otherwise
+        
+        Example:
+            >>> if memory.exists("mem123"):
+            ...     print("Memory exists")
+        """
+        return memory_id in self.memory_items
+
+    def count(self, **filters) -> int:
+        """
+        Get count with filters.
+        
+        Args:
+            **filters: Filter criteria
+        
+        Returns:
+            Count of memories matching filters
+        
+        Example:
+            >>> total = memory.count()
+            >>> conv_count = memory.count(conversation_id="conv1")
+        """
+        if not filters:
+            return len(self.memory_items)
+        
+        count = 0
+        for memory_id, memory_item in self.memory_items.items():
+            if self._matches_filters(memory_item, filters):
+                count += 1
+        return count
+
+    def get(self, memory_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get memory by ID.
+        
+        Args:
+            memory_id: Memory ID
+        
+        Returns:
+            Memory dict or None if not found
+        
+        Example:
+            >>> memory = memory.get("mem123")
+        """
+        return self.get_memory(memory_id)
+
+    def update(
+        self,
+        memory_id: str,
+        content: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        **kwargs
+    ) -> bool:
+        """
+        Update memory.
+        
+        Args:
+            memory_id: Memory ID to update
+            content: New content (optional)
+            metadata: New metadata (optional, merged with existing)
+            **kwargs: Additional fields to update
+        
+        Returns:
+            True if updated, False if not found
+        
+        Example:
+            >>> memory.update("mem123", content="Updated content")
+        """
+        if memory_id not in self.memory_items:
+            return False
+        
+        memory_item = self.memory_items[memory_id]
+        current_content = content if content is not None else memory_item.content
+        current_metadata = memory_item.metadata.copy()
+        if metadata:
+            current_metadata.update(metadata)
+        
+        # Delete old and create new
+        self.delete_memory(memory_id)
+        new_id = self.store(
+            current_content,
+            metadata=current_metadata,
+            entities=memory_item.entities,
+            relationships=memory_item.relationships,
+            **kwargs
+        )
+        
+        return new_id is not None
+
+    def delete(self, memory_id: str) -> bool:
+        """
+        Delete memory (alias for delete_memory).
+        
+        Args:
+            memory_id: Memory ID to delete
+        
+        Returns:
+            True if deleted, False if not found
+        
+        Example:
+            >>> memory.delete("mem123")
+        """
+        return self.delete_memory(memory_id)
+
+    def clear(self, **filters) -> int:
+        """
+        Clear with filters (alias for clear_memory).
+        
+        Args:
+            **filters: Filter criteria
+        
+        Returns:
+            Number of memories deleted
+        
+        Example:
+            >>> deleted = memory.clear(conversation_id="conv1")
+        """
+        return self.clear_memory(**filters)
+
+    # Search Methods
+    def search(self, query: str, **filters) -> List[Dict[str, Any]]:
+        """
+        Simple search (alias for retrieve).
+        
+        Args:
+            query: Search query
+            **filters: Additional filters
+        
+        Returns:
+            List of memory dicts
+        
+        Example:
+            >>> results = memory.search("Python", max_results=10)
+        """
+        return self.retrieve(query, **filters)
+
+    def find_similar(self, content: str, limit: int = 5, **kwargs) -> List[Dict[str, Any]]:
+        """
+        Find similar content.
+        
+        Args:
+            content: Content to find similar items for
+            limit: Maximum results (default: 5)
+            **kwargs: Additional options
+        
+        Returns:
+            List of similar memory dicts
+        
+        Example:
+            >>> similar = memory.find_similar("Python programming", limit=5)
+        """
+        return self.retrieve(content, max_results=limit, **kwargs)
+
+    def find_by_entity(self, entity_id: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Find by entity.
+        
+        Args:
+            entity_id: Entity ID to search for
+            limit: Maximum results (default: 10)
+        
+        Returns:
+            List of memory dicts containing the entity
+        
+        Example:
+            >>> results = memory.find_by_entity("entity_123")
+        """
+        results = []
+        for memory_id, memory_item in self.memory_items.items():
+            for entity in memory_item.entities:
+                if entity.get("id") == entity_id:
+                    mem_dict = self.get_memory(memory_id)
+                    if mem_dict:
+                        results.append(mem_dict)
+                    break
+            if len(results) >= limit:
+                break
+        return results[:limit]
+
+    def find_by_relationship(self, relationship_type: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Find by relationship.
+        
+        Args:
+            relationship_type: Relationship type to search for
+            limit: Maximum results (default: 10)
+        
+        Returns:
+            List of memory dicts containing the relationship
+        
+        Example:
+            >>> results = memory.find_by_relationship("related_to")
+        """
+        results = []
+        for memory_id, memory_item in self.memory_items.items():
+            for relationship in memory_item.relationships:
+                if relationship.get("type") == relationship_type:
+                    mem_dict = self.get_memory(memory_id)
+                    if mem_dict:
+                        results.append(mem_dict)
+                    break
+            if len(results) >= limit:
+                break
+        return results[:limit]
+
+    # List and Filter Methods
+    def list(
+        self,
+        conversation_id: Optional[str] = None,
+        user_id: Optional[str] = None,
+        limit: int = 100,
+        offset: int = 0,
+        **filters
+    ) -> List[Dict[str, Any]]:
+        """
+        List memories.
+        
+        Args:
+            conversation_id: Filter by conversation ID
+            user_id: Filter by user ID
+            limit: Maximum items (default: 100)
+            offset: Number of items to skip (default: 0)
+            **filters: Additional filters
+        
+        Returns:
+            List of memory dicts
+        
+        Example:
+            >>> memories = memory.list(conversation_id="conv1", limit=50)
+        """
+        all_filters = {**filters}
+        if conversation_id:
+            all_filters["conversation_id"] = conversation_id
+        if user_id:
+            all_filters["user_id"] = user_id
+        
+        results = []
+        for memory_id in list(self.memory_items.keys())[offset:offset + limit]:
+            memory_item = self.memory_items[memory_id]
+            if not all_filters or self._matches_filters(memory_item, all_filters):
+                # Also check user_id and conversation_id in metadata
+                if user_id and memory_item.metadata.get("user_id") != user_id:
+                    continue
+                if conversation_id and memory_item.metadata.get("conversation_id") != conversation_id:
+                    continue
+                
+                mem_dict = self.get_memory(memory_id)
+                if mem_dict:
+                    results.append(mem_dict)
+        
+        return results
+
+    def get_by_conversation(self, conversation_id: str, limit: int = 100) -> List[Dict[str, Any]]:
+        """
+        Get conversation memories.
+        
+        Args:
+            conversation_id: Conversation ID
+            limit: Maximum items (default: 100)
+        
+        Returns:
+            List of memory dicts in conversation
+        
+        Example:
+            >>> memories = memory.get_by_conversation("conv1")
+        """
+        return self.get_conversation_history(conversation_id=conversation_id, max_items=limit)
+
+    def get_by_user(self, user_id: str, limit: int = 100) -> List[Dict[str, Any]]:
+        """
+        Get user memories.
+        
+        Args:
+            user_id: User ID
+            limit: Maximum items (default: 100)
+        
+        Returns:
+            List of memory dicts for user
+        
+        Example:
+            >>> memories = memory.get_by_user("user123")
+        """
+        results = []
+        for memory_id, memory_item in self.memory_items.items():
+            if memory_item.metadata.get("user_id") == user_id:
+                mem_dict = self.get_memory(memory_id)
+                if mem_dict:
+                    results.append(mem_dict)
+                if len(results) >= limit:
+                    break
+        return results
+
+    def get_recent(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Get recent memories.
+        
+        Args:
+            limit: Maximum items (default: 10)
+        
+        Returns:
+            List of recent memory dicts
+        
+        Example:
+            >>> recent = memory.get_recent(limit=20)
+        """
+        results = []
+        sorted_items = sorted(
+            self.memory_items.items(),
+            key=lambda x: x[1].timestamp,
+            reverse=True
+        )
+        for memory_id, _ in sorted_items[:limit]:
+            mem_dict = self.get_memory(memory_id)
+            if mem_dict:
+                results.append(mem_dict)
+        return results
+
+    def get_by_date(
+        self,
+        start_date: Union[str, datetime],
+        end_date: Union[str, datetime],
+        limit: int = 100
+    ) -> List[Dict[str, Any]]:
+        """
+        Get by date range.
+        
+        Args:
+            start_date: Start date (ISO string or datetime)
+            end_date: End date (ISO string or datetime)
+            limit: Maximum items (default: 100)
+        
+        Returns:
+            List of memory dicts in date range
+        
+        Example:
+            >>> memories = memory.get_by_date("2024-01-01", "2024-12-31")
+        """
+        if isinstance(start_date, str):
+            from dateutil.parser import parse
+            start_date = parse(start_date)
+        if isinstance(end_date, str):
+            from dateutil.parser import parse
+            end_date = parse(end_date)
+        
+        results = []
+        for memory_id, memory_item in self.memory_items.items():
+            if start_date <= memory_item.timestamp <= end_date:
+                mem_dict = self.get_memory(memory_id)
+                if mem_dict:
+                    results.append(mem_dict)
+                if len(results) >= limit:
+                    break
+        return results
+
+    def get_by_type(self, type: str, limit: int = 100) -> List[Dict[str, Any]]:
+        """
+        Get by type.
+        
+        Args:
+            type: Memory type
+            limit: Maximum items (default: 100)
+        
+        Returns:
+            List of memory dicts of specified type
+        
+        Example:
+            >>> memories = memory.get_by_type("conversation")
+        """
+        results = []
+        for memory_id, memory_item in self.memory_items.items():
+            if memory_item.metadata.get("type") == type:
+                mem_dict = self.get_memory(memory_id)
+                if mem_dict:
+                    results.append(mem_dict)
+                if len(results) >= limit:
+                    break
+        return results
+
+    # Batch Operations
+    def batch_store(self, items: List[Union[str, Dict[str, Any]]]) -> List[str]:
+        """
+        Batch store.
+        
+        Args:
+            items: List of items to store
+        
+        Returns:
+            List of memory IDs
+        
+        Example:
+            >>> ids = memory.batch_store(["Item 1", "Item 2"])
+        """
+        memory_ids = []
+        for item in items:
+            if isinstance(item, str):
+                memory_id = self.store(item)
+                memory_ids.append(memory_id)
+            elif isinstance(item, dict):
+                content = item.get("content", "")
+                if content:
+                    memory_id = self.store(
+                        content,
+                        metadata=item.get("metadata"),
+                        **{k: v for k, v in item.items() if k not in ["content", "metadata"]}
+                    )
+                    memory_ids.append(memory_id)
+        return memory_ids
+
+    def batch_delete(self, memory_ids: List[str]) -> int:
+        """
+        Batch delete.
+        
+        Args:
+            memory_ids: List of memory IDs to delete
+        
+        Returns:
+            Number of memories deleted
+        
+        Example:
+            >>> deleted = memory.batch_delete(["mem1", "mem2"])
+        """
+        deleted = 0
+        for memory_id in memory_ids:
+            if self.delete_memory(memory_id):
+                deleted += 1
+        return deleted
+
+    def batch_update(self, updates: List[Dict[str, Any]]) -> int:
+        """
+        Batch update.
+        
+        Args:
+            updates: List of update dicts with 'memory_id' and fields
+        
+        Returns:
+            Number of memories updated
+        
+        Example:
+            >>> updated = memory.batch_update([{"memory_id": "mem1", "content": "New"}])
+        """
+        updated = 0
+        for update in updates:
+            memory_id = update.get("memory_id")
+            if memory_id and self.update(memory_id, **{k: v for k, v in update.items() if k != "memory_id"}):
+                updated += 1
+        return updated
+
+    # Export/Import
+    def export(
+        self,
+        conversation_id: Optional[str] = None,
+        format: str = 'json',
+        **filters
+    ) -> Union[str, Dict[str, Any]]:
+        """
+        Export memories.
+        
+        Args:
+            conversation_id: Export specific conversation (optional)
+            format: Export format ('json' or 'dict', default: 'json')
+            **filters: Additional filters
+        
+        Returns:
+            Exported data
+        
+        Example:
+            >>> data = memory.export(conversation_id="conv1")
+        """
+        all_filters = {**filters}
+        if conversation_id:
+            all_filters["conversation_id"] = conversation_id
+        
+        memories = []
+        for memory_id, memory_item in self.memory_items.items():
+            if not all_filters or self._matches_filters(memory_item, all_filters):
+                mem_dict = self.get_memory(memory_id)
+                if mem_dict:
+                    memories.append(mem_dict)
+        
+        export_data = {
+            "exported_at": datetime.now().isoformat(),
+            "count": len(memories),
+            "memories": memories
+        }
+        
+        if format == 'json':
+            import json
+            return json.dumps(export_data, indent=2, default=str)
+        return export_data
+
+    def import_data(self, data: Union[str, Dict[str, Any]], format: str = 'json') -> int:
+        """
+        Import memories.
+        
+        Args:
+            data: Data to import
+            format: Data format ('json' or 'dict', default: 'json')
+        
+        Returns:
+            Number of memories imported
+        
+        Example:
+            >>> imported = memory.import_data(json_string)
+        """
+        if format == 'json':
+            import json
+            if isinstance(data, str):
+                data = json.loads(data)
+        
+        if not isinstance(data, dict):
+            raise ValueError("Invalid data format")
+        
+        memories = data.get("memories", [])
+        if not memories:
+            return 0
+        
+        imported = 0
+        for memory in memories:
+            try:
+                memory_id = self.store(
+                    memory.get("content", ""),
+                    metadata=memory.get("metadata", {}),
+                )
+                if memory_id:
+                    imported += 1
+            except Exception as e:
+                self.logger.warning(f"Failed to import memory: {e}")
+        
+        return imported
+
+    # Statistics
+    def stats(self, **filters) -> Dict[str, Any]:
+        """
+        Get statistics (enhance existing).
+        
+        Args:
+            **filters: Optional filters
+        
+        Returns:
+            Statistics dict
+        
+        Example:
+            >>> stats = memory.stats()
+            >>> conv_stats = memory.stats(conversation_id="conv1")
+        """
+        base_stats = self.get_statistics()
+        if filters:
+            base_stats["filtered_count"] = self.count(**filters)
+        return base_stats
+
+    def count_by_type(self) -> Dict[str, int]:
+        """
+        Count by type.
+        
+        Returns:
+            Dict mapping type to count
+        
+        Example:
+            >>> counts = memory.count_by_type()
+        """
+        counts = {}
+        for memory_item in self.memory_items.values():
+            mem_type = memory_item.metadata.get("type", "unknown")
+            counts[mem_type] = counts.get(mem_type, 0) + 1
+        return counts
+
+    def count_by_user(self) -> Dict[str, int]:
+        """
+        Count by user.
+        
+        Returns:
+            Dict mapping user_id to count
+        
+        Example:
+            >>> counts = memory.count_by_user()
+        """
+        counts = {}
+        for memory_item in self.memory_items.values():
+            user_id = memory_item.metadata.get("user_id", "unknown")
+            counts[user_id] = counts.get(user_id, 0) + 1
+        return counts
+
+    def count_by_conversation(self) -> Dict[str, int]:
+        """
+        Count by conversation.
+        
+        Returns:
+            Dict mapping conversation_id to count
+        
+        Example:
+            >>> counts = memory.count_by_conversation()
+        """
+        counts = {}
+        for memory_item in self.memory_items.values():
+            conv_id = memory_item.metadata.get("conversation_id", "unknown")
+            counts[conv_id] = counts.get(conv_id, 0) + 1
+        return counts

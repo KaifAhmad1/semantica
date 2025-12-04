@@ -522,3 +522,343 @@ class EntityLinker:
                 )
 
         return web
+
+    # Linking Methods
+    def link_text(self, text: str, entities: Optional[List[EntityDict]] = None) -> List[LinkedEntity]:
+        """
+        Link entities in text.
+        
+        Args:
+            text: Text containing entities
+            entities: List of entities to link (optional)
+        
+        Returns:
+            List of LinkedEntity objects
+        
+        Example:
+            >>> linked = linker.link_text("Python is used for ML", entities=[...])
+        """
+        return self.link(text, entities=entities or [])
+
+    def link_batch(self, entities: List[EntityDict]) -> List[LinkedEntity]:
+        """
+        Link multiple entities.
+        
+        Args:
+            entities: List of entities to link
+        
+        Returns:
+            List of LinkedEntity objects
+        
+        Example:
+            >>> linked = linker.link_batch(entities)
+        """
+        linked_results = []
+        for entity in entities:
+            uri = self.assign_uri(
+                entity.get("id", ""),
+                entity.get("text"),
+                entity.get("type")
+            )
+            
+            # Find similar entities
+            similar = self.find_similar_entities(
+                entity.get("text", ""),
+                entity.get("type", ""),
+                threshold=self.similarity_threshold
+            )
+            
+            linked_entities = []
+            for similar_id, similarity in similar:
+                linked_entities.append(
+                    EntityLink(
+                        source_entity_id=entity.get("id", ""),
+                        target_entity_id=similar_id,
+                        link_type="similar_to",
+                        confidence=similarity
+                    )
+                )
+            
+            linked_results.append(
+                LinkedEntity(
+                    entity_id=entity.get("id", ""),
+                    uri=uri,
+                    text=entity.get("text", ""),
+                    type=entity.get("type", ""),
+                    linked_entities=linked_entities,
+                    confidence=1.0
+                )
+            )
+        
+        return linked_results
+
+    # Search Methods
+    def find_similar(self, entity: Union[str, EntityDict], threshold: float = 0.8) -> List[Tuple[str, float]]:
+        """
+        Find similar entities.
+        
+        Args:
+            entity: Entity text or EntityDict
+            threshold: Similarity threshold (default: 0.8)
+        
+        Returns:
+            List of (entity_id, similarity) tuples
+        
+        Example:
+            >>> similar = linker.find_similar("Python", threshold=0.8)
+        """
+        if isinstance(entity, dict):
+            text = entity.get("text", "")
+            entity_type = entity.get("type", "")
+        else:
+            text = entity
+            entity_type = ""
+        
+        return self.find_similar_entities(text, entity_type, threshold=threshold)
+
+    def find_by_text(self, text: str, threshold: float = 0.8) -> List[Dict[str, Any]]:
+        """
+        Find by text.
+        
+        Args:
+            text: Text to search for
+            threshold: Similarity threshold (default: 0.8)
+        
+        Returns:
+            List of matching entity dicts
+        
+        Example:
+            >>> entities = linker.find_by_text("Python", threshold=0.8)
+        """
+        results = []
+        for entity_id, uri in self.entity_registry.items():
+            # Get entity text from knowledge graph or registry
+            if self.knowledge_graph:
+                nodes = self.knowledge_graph.get("nodes", [])
+                for node in nodes:
+                    if node.get("id") == entity_id:
+                        similarity = self._calculate_similarity(text, node.get("content", ""))
+                        if similarity >= threshold:
+                            results.append({
+                                "entity_id": entity_id,
+                                "uri": uri,
+                                "text": node.get("content", ""),
+                                "type": node.get("type", ""),
+                                "similarity": similarity,
+                            })
+                        break
+        return sorted(results, key=lambda x: x.get("similarity", 0), reverse=True)
+
+    def find_by_type(self, type: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Find by type.
+        
+        Args:
+            type: Entity type
+            limit: Maximum results (default: 10)
+        
+        Returns:
+            List of entity dicts of specified type
+        
+        Example:
+            >>> entities = linker.find_by_type("PROGRAMMING_LANGUAGE", limit=10)
+        """
+        results = []
+        if self.knowledge_graph:
+            nodes = self.knowledge_graph.get("nodes", [])
+            for node in nodes:
+                if node.get("type") == type:
+                    entity_id = node.get("id", "")
+                    uri = self.entity_registry.get(entity_id, "")
+                    results.append({
+                        "entity_id": entity_id,
+                        "uri": uri,
+                        "text": node.get("content", ""),
+                        "type": type,
+                    })
+                    if len(results) >= limit:
+                        break
+        return results
+
+    def find_related(self, entity_id: str, max_hops: int = 2) -> List[Dict[str, Any]]:
+        """
+        Find related entities.
+        
+        Args:
+            entity_id: Entity ID
+            max_hops: Maximum hops (default: 2)
+        
+        Returns:
+            List of related entity dicts
+        
+        Example:
+            >>> related = linker.find_related("entity_123", max_hops=2)
+        """
+        related = []
+        visited = {entity_id}
+        current_level = {entity_id}
+        
+        for hop in range(max_hops):
+            next_level = set()
+            for current_id in current_level:
+                links = self.entity_links.get(current_id, [])
+                for link in links:
+                    target_id = link.target_entity_id
+                    if target_id not in visited:
+                        visited.add(target_id)
+                        next_level.add(target_id)
+                        
+                        # Get entity info
+                        uri = self.entity_registry.get(target_id, "")
+                        if self.knowledge_graph:
+                            nodes = self.knowledge_graph.get("nodes", [])
+                            for node in nodes:
+                                if node.get("id") == target_id:
+                                    related.append({
+                                        "entity_id": target_id,
+                                        "uri": uri,
+                                        "text": node.get("content", ""),
+                                        "type": node.get("type", ""),
+                                        "link_type": link.link_type,
+                                        "confidence": link.confidence,
+                                        "hop": hop + 1,
+                                    })
+                                    break
+            
+            current_level = next_level
+        
+        return related
+
+    # URI Methods
+    def get_uri(self, entity_id: str) -> Optional[str]:
+        """
+        Get URI for entity.
+        
+        Args:
+            entity_id: Entity ID
+        
+        Returns:
+            URI or None if not found
+        
+        Example:
+            >>> uri = linker.get_uri("entity_123")
+        """
+        return self.entity_registry.get(entity_id)
+
+    def get_all_uris(self) -> Dict[str, str]:
+        """
+        Get all URIs.
+        
+        Returns:
+            Dict mapping entity_id to URI
+        
+        Example:
+            >>> uris = linker.get_all_uris()
+        """
+        return self.entity_registry.copy()
+
+    def resolve_uri(self, uri: str) -> Optional[Dict[str, Any]]:
+        """
+        Resolve URI to entity.
+        
+        Args:
+            uri: URI to resolve
+        
+        Returns:
+            Entity dict or None if not found
+        
+        Example:
+            >>> entity = linker.resolve_uri("https://semantica.dev/entity/python")
+        """
+        # Find entity_id by URI
+        for entity_id, entity_uri in self.entity_registry.items():
+            if entity_uri == uri:
+                # Get entity info
+                if self.knowledge_graph:
+                    nodes = self.knowledge_graph.get("nodes", [])
+                    for node in nodes:
+                        if node.get("id") == entity_id:
+                            return {
+                                "entity_id": entity_id,
+                                "uri": uri,
+                                "text": node.get("content", ""),
+                                "type": node.get("type", ""),
+                            }
+                return {
+                    "entity_id": entity_id,
+                    "uri": uri,
+                }
+        return None
+
+    # Statistics
+    def link_count(self, entity_id: str) -> int:
+        """
+        Get link count for entity.
+        
+        Args:
+            entity_id: Entity ID
+        
+        Returns:
+            Number of links for entity
+        
+        Example:
+            >>> count = linker.link_count("entity_123")
+        """
+        return len(self.entity_links.get(entity_id, []))
+
+    def stats(self) -> Dict[str, Any]:
+        """
+        Get statistics.
+        
+        Returns:
+            Statistics dict
+        
+        Example:
+            >>> stats = linker.stats()
+        """
+        web = self.build_entity_web()
+        return {
+            "total_entities": web["statistics"]["total_entities"],
+            "total_links": web["statistics"]["total_links"],
+            "average_links_per_entity": (
+                web["statistics"]["total_links"] / web["statistics"]["total_entities"]
+                if web["statistics"]["total_entities"] > 0 else 0
+            ),
+        }
+
+    def most_linked(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Get most linked entities.
+        
+        Args:
+            limit: Maximum results (default: 10)
+        
+        Returns:
+            List of entity dicts sorted by link count
+        
+        Example:
+            >>> top = linker.most_linked(limit=10)
+        """
+        entity_link_counts = []
+        for entity_id, links in self.entity_links.items():
+            uri = self.entity_registry.get(entity_id, "")
+            entity_link_counts.append({
+                "entity_id": entity_id,
+                "uri": uri,
+                "link_count": len(links),
+            })
+        
+        # Sort by link count
+        entity_link_counts.sort(key=lambda x: x["link_count"], reverse=True)
+        
+        # Add entity text if available
+        if self.knowledge_graph:
+            nodes = self.knowledge_graph.get("nodes", [])
+            node_map = {node.get("id"): node for node in nodes}
+            for item in entity_link_counts:
+                node = node_map.get(item["entity_id"])
+                if node:
+                    item["text"] = node.get("content", "")
+                    item["type"] = node.get("type", "")
+        
+        return entity_link_counts[:limit]

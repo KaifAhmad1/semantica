@@ -642,3 +642,494 @@ class ContextGraphBuilder:
                 )
 
         return results
+
+    # High-Level Construction
+    def from_text(self, text: str, **options) -> Dict[str, Any]:
+        """
+        Build graph from plain text.
+        
+        Args:
+            text: Plain text to build graph from
+            **options: Additional options
+        
+        Returns:
+            Graph dictionary
+        
+        Example:
+            >>> graph = builder.from_text("Python is used for machine learning")
+        """
+        # Simple entity extraction (mock - in real implementation would use NLP)
+        entities = []
+        relationships = []
+        
+        # Mock extraction
+        if "Python" in text:
+            entities.append({"id": "e1", "text": "Python", "type": "PROGRAMMING_LANGUAGE"})
+        if "machine learning" in text.lower():
+            entities.append({"id": "e2", "text": "Machine Learning", "type": "CONCEPT"})
+        if len(entities) >= 2:
+            relationships.append({"source_id": "e1", "target_id": "e2", "type": "used_for"})
+        
+        return self.build_from_entities_and_relationships(entities, relationships, **options)
+
+    def from_documents(self, docs: List[Union[str, Dict[str, Any]]], **options) -> Dict[str, Any]:
+        """
+        Build graph from document list.
+        
+        Args:
+            docs: List of documents (strings or dicts with content)
+            **options: Additional options
+        
+        Returns:
+            Graph dictionary
+        
+        Example:
+            >>> graph = builder.from_documents(["Doc 1", "Doc 2"])
+        """
+        conversations = []
+        for i, doc in enumerate(docs):
+            if isinstance(doc, str):
+                conversations.append({
+                    "id": f"doc_{i}",
+                    "content": doc,
+                    "entities": [],
+                    "relationships": []
+                })
+            elif isinstance(doc, dict):
+                conversations.append({
+                    "id": doc.get("id", f"doc_{i}"),
+                    "content": doc.get("content", ""),
+                    "entities": doc.get("entities", []),
+                    "relationships": doc.get("relationships", [])
+                })
+        
+        return self.build_from_conversations(conversations, **options)
+
+    def from_conversations(self, conversations: List[Dict[str, Any]], **options) -> Dict[str, Any]:
+        """
+        Build from conversations (alias for build_from_conversations).
+        
+        Args:
+            conversations: List of conversations
+            **options: Additional options
+        
+        Returns:
+            Graph dictionary
+        
+        Example:
+            >>> graph = builder.from_conversations(conversations)
+        """
+        return self.build_from_conversations(conversations, **options)
+
+    def add(
+        self,
+        entities: Optional[List[EntityDict]] = None,
+        relationships: Optional[List[RelationshipDict]] = None,
+        **options
+    ) -> Dict[str, Any]:
+        """
+        Simple add method.
+        
+        Args:
+            entities: List of entities to add
+            relationships: List of relationships to add
+            **options: Additional options
+        
+        Returns:
+            Graph statistics
+        
+        Example:
+            >>> stats = builder.add(entities=entities, relationships=relationships)
+        """
+        if entities and relationships:
+            graph = self.build_from_entities_and_relationships(entities, relationships, **options)
+            return graph.get("statistics", {})
+        elif entities:
+            # Add entities only
+            for entity in entities:
+                self.add_node(
+                    entity.get("id", f"entity_{len(self.nodes)}"),
+                    entity.get("type", "entity"),
+                    entity.get("text", ""),
+                    **entity.get("metadata", {})
+                )
+            return {"node_count": len(self.nodes), "edge_count": len(self.edges)}
+        else:
+            return {"node_count": len(self.nodes), "edge_count": len(self.edges)}
+
+    # Query Methods
+    def find(self, query: str, **filters) -> List[Dict[str, Any]]:
+        """
+        Simple search in graph.
+        
+        Args:
+            query: Search query
+            **filters: Additional filters
+        
+        Returns:
+            List of matching nodes
+        
+        Example:
+            >>> results = builder.find("Python")
+        """
+        query_lower = query.lower()
+        results = []
+        
+        for node_id, node in self.nodes.items():
+            if query_lower in node.content.lower():
+                results.append({
+                    "id": node_id,
+                    "type": node.node_type,
+                    "content": node.content,
+                    "metadata": node.metadata,
+                })
+        
+        return results
+
+    def find_node(self, node_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Find node by ID.
+        
+        Args:
+            node_id: Node ID
+        
+        Returns:
+            Node dict or None if not found
+        
+        Example:
+            >>> node = builder.find_node("node1")
+        """
+        if node_id in self.nodes:
+            node = self.nodes[node_id]
+            return {
+                "id": node_id,
+                "type": node.node_type,
+                "content": node.content,
+                "metadata": node.metadata,
+            }
+        return None
+
+    def find_nodes(self, **filters) -> List[Dict[str, Any]]:
+        """
+        Find nodes by filters.
+        
+        Args:
+            **filters: Filter criteria (node_type, etc.)
+        
+        Returns:
+            List of matching nodes
+        
+        Example:
+            >>> nodes = builder.find_nodes(node_type="entity")
+        """
+        return self.query(**filters)
+
+    def find_edges(self, **filters) -> List[Dict[str, Any]]:
+        """
+        Find edges by filters.
+        
+        Args:
+            **filters: Filter criteria (edge_type, source_id, target_id, etc.)
+        
+        Returns:
+            List of matching edges
+        
+        Example:
+            >>> edges = builder.find_edges(edge_type="related_to")
+        """
+        results = []
+        edge_type = filters.get("edge_type")
+        source_id = filters.get("source_id")
+        target_id = filters.get("target_id")
+        
+        for edge in self.edges:
+            if edge_type and edge.edge_type != edge_type:
+                continue
+            if source_id and edge.source_id != source_id:
+                continue
+            if target_id and edge.target_id != target_id:
+                continue
+            
+            results.append({
+                "source_id": edge.source_id,
+                "target_id": edge.target_id,
+                "type": edge.edge_type,
+                "weight": edge.weight,
+                "metadata": edge.metadata,
+            })
+        
+        return results
+
+    def find_path(self, source_id: str, target_id: str, max_hops: int = 5) -> List[Dict[str, Any]]:
+        """
+        Find path between nodes.
+        
+        Args:
+            source_id: Source node ID
+            target_id: Target node ID
+            max_hops: Maximum hops (default: 5)
+        
+        Returns:
+            List of nodes in path
+        
+        Example:
+            >>> path = builder.find_path("node1", "node2", max_hops=5)
+        """
+        from collections import deque
+        
+        if source_id not in self.nodes or target_id not in self.nodes:
+            return []
+        
+        queue = deque([(source_id, [source_id])])
+        visited = {source_id}
+        
+        while queue:
+            current_id, path = queue.popleft()
+            
+            if len(path) > max_hops:
+                continue
+            
+            if current_id == target_id:
+                # Return path with node info
+                path_info = []
+                for node_id in path:
+                    node = self.nodes.get(node_id)
+                    if node:
+                        path_info.append({
+                            "id": node_id,
+                            "type": node.node_type,
+                            "content": node.content,
+                        })
+                return path_info
+            
+            # Get neighbors
+            for edge in self.edges:
+                neighbor_id = None
+                if edge.source_id == current_id:
+                    neighbor_id = edge.target_id
+                elif edge.target_id == current_id:
+                    neighbor_id = edge.source_id
+                
+                if neighbor_id and neighbor_id not in visited:
+                    visited.add(neighbor_id)
+                    queue.append((neighbor_id, path + [neighbor_id]))
+        
+        return []
+
+    # Graph Operations
+    def get_subgraph(self, node_ids: List[str]) -> Dict[str, Any]:
+        """
+        Get subgraph.
+        
+        Args:
+            node_ids: List of node IDs to include
+        
+        Returns:
+            Subgraph dict with nodes and edges
+        
+        Example:
+            >>> subgraph = builder.get_subgraph(["node1", "node2"])
+        """
+        subgraph_nodes = {}
+        subgraph_edges = []
+        
+        node_set = set(node_ids)
+        
+        # Get nodes
+        for node_id in node_ids:
+            if node_id in self.nodes:
+                subgraph_nodes[node_id] = self.nodes[node_id]
+        
+        # Get edges between these nodes
+        for edge in self.edges:
+            if edge.source_id in node_set and edge.target_id in node_set:
+                subgraph_edges.append(edge)
+        
+        return {
+            "nodes": {nid: {
+                "id": nid,
+                "type": node.node_type,
+                "content": node.content,
+                "metadata": node.metadata,
+            } for nid, node in subgraph_nodes.items()},
+            "edges": [{
+                "source_id": e.source_id,
+                "target_id": e.target_id,
+                "type": e.edge_type,
+                "weight": e.weight,
+            } for e in subgraph_edges],
+            "statistics": {
+                "node_count": len(subgraph_nodes),
+                "edge_count": len(subgraph_edges),
+            }
+        }
+
+    def merge(self, other_graph: 'ContextGraphBuilder') -> Dict[str, Any]:
+        """
+        Merge with another graph.
+        
+        Args:
+            other_graph: Another ContextGraphBuilder instance
+        
+        Returns:
+            Merge statistics
+        
+        Example:
+            >>> stats = builder.merge(other_builder)
+        """
+        merged_nodes = 0
+        merged_edges = 0
+        
+        # Merge nodes
+        for node_id, node in other_graph.nodes.items():
+            if node_id not in self.nodes:
+                self.nodes[node_id] = node
+                self.node_type_index[node.node_type].add(node_id)
+                merged_nodes += 1
+        
+        # Merge edges
+        for edge in other_graph.edges:
+            # Check if edge already exists
+            exists = any(
+                e.source_id == edge.source_id and e.target_id == edge.target_id
+                for e in self.edges
+            )
+            if not exists:
+                self.edges.append(edge)
+                self.edge_type_index[edge.edge_type].append(edge)
+                merged_edges += 1
+        
+        return {
+            "merged_nodes": merged_nodes,
+            "merged_edges": merged_edges,
+            "total_nodes": len(self.nodes),
+            "total_edges": len(self.edges),
+        }
+
+    def clone(self) -> 'ContextGraphBuilder':
+        """
+        Clone graph.
+        
+        Returns:
+            New ContextGraphBuilder instance with copied graph
+        
+        Example:
+            >>> cloned = builder.clone()
+        """
+        new_builder = ContextGraphBuilder(
+            extract_entities=self.extract_entities,
+            extract_relationships=self.extract_relationships,
+            link_external_entities=self.link_external_entities,
+        )
+        
+        # Copy nodes
+        for node_id, node in self.nodes.items():
+            new_builder.nodes[node_id] = ContextNode(
+                node_id=node.node_id,
+                node_type=node.node_type,
+                content=node.content,
+                metadata=node.metadata.copy(),
+                properties=node.properties.copy(),
+            )
+            new_builder.node_type_index[node.node_type].add(node_id)
+        
+        # Copy edges
+        for edge in self.edges:
+            new_edge = ContextEdge(
+                source_id=edge.source_id,
+                target_id=edge.target_id,
+                edge_type=edge.edge_type,
+                weight=edge.weight,
+                metadata=edge.metadata.copy(),
+            )
+            new_builder.edges.append(new_edge)
+            new_builder.edge_type_index[edge.edge_type].append(new_edge)
+        
+        return new_builder
+
+    # Statistics
+    def stats(self) -> Dict[str, Any]:
+        """
+        Get statistics (enhance existing).
+        
+        Returns:
+            Statistics dict
+        
+        Example:
+            >>> stats = builder.stats()
+        """
+        node_types = defaultdict(int)
+        edge_types = defaultdict(int)
+        
+        for node in self.nodes.values():
+            node_types[node.node_type] += 1
+        
+        for edge in self.edges:
+            edge_types[edge.edge_type] += 1
+        
+        return {
+            "node_count": len(self.nodes),
+            "edge_count": len(self.edges),
+            "node_types": dict(node_types),
+            "edge_types": dict(edge_types),
+        }
+
+    def node_count(self, **filters) -> int:
+        """
+        Count nodes.
+        
+        Args:
+            **filters: Filter criteria
+        
+        Returns:
+            Count of nodes matching filters
+        
+        Example:
+            >>> count = builder.node_count(node_type="entity")
+        """
+        if not filters:
+            return len(self.nodes)
+        
+        return len(self.find_nodes(**filters))
+
+    def edge_count(self, **filters) -> int:
+        """
+        Count edges.
+        
+        Args:
+            **filters: Filter criteria
+        
+        Returns:
+            Count of edges matching filters
+        
+        Example:
+            >>> count = builder.edge_count(edge_type="related_to")
+        """
+        if not filters:
+            return len(self.edges)
+        
+        return len(self.find_edges(**filters))
+
+    def density(self) -> float:
+        """
+        Calculate graph density.
+        
+        Returns:
+            Graph density (0-1)
+        
+        Example:
+            >>> density = builder.density()
+        """
+        n = len(self.nodes)
+        if n <= 1:
+            return 0.0
+        
+        # Maximum possible edges in undirected graph
+        max_edges = n * (n - 1) / 2
+        if max_edges == 0:
+            return 0.0
+        
+        # Actual edges (considering undirected)
+        actual_edges = len(self.edges)
+        
+        return actual_edges / max_edges

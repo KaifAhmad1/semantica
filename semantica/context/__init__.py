@@ -42,6 +42,7 @@ Entity Linking:
     - Entity Web Construction: Graph-based entity connection web
 
 Key Features:
+    - High-level interface (AgentContext) for easy use
     - Context graph construction from entities, relationships, and conversations
     - Agent memory management with RAG integration
     - Entity linking across sources with URI assignment
@@ -51,8 +52,11 @@ Key Features:
     - Graph-based context traversal and querying
     - Method registry for custom context methods
     - Configuration management with environment variables and config files
+    - Boolean flags for common options (user-friendly)
+    - Auto-detection of content types and retrieval strategies
 
 Main Classes:
+    - AgentContext: High-level interface for agent context management (store, retrieve, forget, conversation)
     - ContextGraphBuilder: Builds context graphs from various sources
     - ContextNode: Context graph node data structure
     - ContextEdge: Context graph edge data structure
@@ -63,51 +67,48 @@ Main Classes:
     - LinkedEntity: Linked entity with context
     - ContextRetriever: Retrieves relevant context from multiple sources
     - RetrievedContext: Retrieved context item data structure
-    - MethodRegistry: Registry for custom context methods
-    - ContextConfig: Configuration manager for context module
+    - MethodRegistry: Registry for custom context methods (accessed via registry submodule)
+    - ContextConfig: Configuration manager for context module (accessed via config submodule)
 
-Convenience Functions:
-    - build_context: Build context graph and manage memory in one call
+Submodules:
+    - methods: Context engineering methods (build_context_graph, store_memory, retrieve_context, etc.)
+    - registry: Method registry for custom methods (method_registry, MethodRegistry)
+    - config: Configuration management (context_config, ContextConfig)
 
 Example Usage:
-    >>> from semantica.context import build_context, ContextGraphBuilder, AgentMemory
-    >>> # Using convenience function
-    >>> result = build_context(
-    ...     entities=entities,
-    ...     relationships=relationships,
-    ...     vector_store=vs,
-    ...     knowledge_graph=kg
-    ... )
-    >>> # Using classes directly
+    >>> # High-level interface (recommended for most users)
+    >>> from semantica.context import AgentContext
+    >>> context = AgentContext(vector_store=vs, knowledge_graph=kg)
+    >>> memory_id = context.store("User asked about Python", conversation_id="conv1")
+    >>> results = context.retrieve("Python programming")
+    >>> stats = context.store(["Doc 1", "Doc 2"], extract_entities=True)
+    
+    >>> # Low-level classes (for advanced use cases)
+    >>> from semantica.context import ContextGraphBuilder, AgentMemory, methods
     >>> builder = ContextGraphBuilder()
     >>> graph = builder.build_from_entities_and_relationships(entities, relationships)
     >>> memory = AgentMemory(vector_store=vs, knowledge_graph=kg)
     >>> memory_id = memory.store("User asked about Python", metadata={"type": "conversation"})
     >>> results = memory.retrieve("Python", max_results=5)
+    >>> # Using methods submodule
+    >>> graph = methods.build_context_graph(entities, relationships, method="entities_relationships")
 
 Author: Semantica Contributors
 License: MIT
 """
 
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
-
+from .agent_context import AgentContext
 from .agent_memory import AgentMemory, MemoryItem
-from .config import ContextConfig, context_config
 from .context_graph import ContextEdge, ContextGraphBuilder, ContextNode
 from .context_retriever import ContextRetriever, RetrievedContext
 from .entity_linker import EntityLink, EntityLinker, LinkedEntity
-from .methods import (
-    build_context_graph,
-    get_context_method,
-    link_entities,
-    list_available_methods,
-    retrieve_context,
-    store_memory,
-)
-from .registry import MethodRegistry, method_registry
+from . import methods
+from . import registry
+from . import config
 
 __all__ = [
+    # High-level interface
+    "AgentContext",
     # Main classes
     "ContextGraphBuilder",
     "ContextNode",
@@ -119,112 +120,8 @@ __all__ = [
     "MemoryItem",
     "ContextRetriever",
     "RetrievedContext",
-    # Registry
-    "MethodRegistry",
-    "method_registry",
-    # Methods
-    "build_context_graph",
-    "store_memory",
-    "retrieve_context",
-    "link_entities",
-    "get_context_method",
-    "list_available_methods",
-    # Config
-    "ContextConfig",
-    "context_config",
-    # Convenience
-    "build_context",
+    # Submodules
+    "methods",
+    "registry",
+    "config",
 ]
-
-
-def build_context(
-    entities: Optional[List[Dict[str, Any]]] = None,
-    relationships: Optional[List[Dict[str, Any]]] = None,
-    conversations: Optional[List[Union[str, Dict[str, Any]]]] = None,
-    vector_store: Optional[Any] = None,
-    knowledge_graph: Optional[Any] = None,
-    graph_method: str = "entities_relationships",
-    store_initial_memories: bool = False,
-    **options,
-) -> Dict[str, Any]:
-    """
-    Build context graph and optionally manage memory (convenience function).
-
-    This is a user-friendly wrapper that builds context graphs and optionally
-    stores initial memories in one call.
-
-    Args:
-        entities: List of entity dictionaries
-        relationships: List of relationship dictionaries
-        conversations: List of conversation files or dictionaries
-        vector_store: Vector store instance for memory
-        knowledge_graph: Knowledge graph instance
-        graph_method: Graph construction method (default: "entities_relationships")
-        store_initial_memories: Whether to store initial memories from entities
-        **options: Additional options passed to builders
-
-    Returns:
-        Dictionary containing:
-            - graph: Context graph dictionary
-            - memory_ids: List of stored memory IDs (if store_initial_memories=True)
-            - statistics: Graph and memory statistics
-
-    Examples:
-        >>> from semantica.context import build_context
-        >>> entities = [{"id": "e1", "text": "Python", "type": "PROGRAMMING_LANGUAGE"}]
-        >>> relationships = [{"source_id": "e1", "target_id": "e2", "type": "related_to"}]
-        >>> result = build_context(
-        ...     entities=entities,
-        ...     relationships=relationships,
-        ...     vector_store=vs,
-        ...     knowledge_graph=kg
-        ... )
-        >>> print(f"Graph has {result['graph']['statistics']['node_count']} nodes")
-    """
-    from ..utils.logging import get_logger
-
-    logger = get_logger("context")
-
-    # Build context graph
-    graph = build_context_graph(
-        entities=entities,
-        relationships=relationships,
-        conversations=conversations,
-        method=graph_method,
-        **options,
-    )
-
-    memory_ids = []
-
-    # Optionally store initial memories
-    if store_initial_memories and vector_store:
-        memory = AgentMemory(
-            vector_store=vector_store, knowledge_graph=knowledge_graph, **options
-        )
-
-        # Store entity-based memories
-        if entities:
-            for entity in entities[:10]:  # Limit to first 10
-                entity_text = (
-                    entity.get("text") or entity.get("label") or entity.get("name", "")
-                )
-                if entity_text:
-                    memory_id = memory.store(
-                        f"Entity: {entity_text}",
-                        metadata={
-                            "type": "entity",
-                            "entity_id": entity.get("id"),
-                            "entity_type": entity.get("type"),
-                        },
-                        entities=[entity] if entity.get("id") else None,
-                    )
-                    memory_ids.append(memory_id)
-
-    return {
-        "graph": graph,
-        "memory_ids": memory_ids,
-        "statistics": {
-            "graph": graph.get("statistics", {}),
-            "memories_stored": len(memory_ids),
-        },
-    }
