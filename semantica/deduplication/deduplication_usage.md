@@ -4,69 +4,14 @@ This guide demonstrates how to use the deduplication module for detecting and me
 
 ## Table of Contents
 
-1. [Basic Usage](#basic-usage)
-2. [Similarity Calculation](#similarity-calculation)
-3. [Duplicate Detection](#duplicate-detection)
-4. [Entity Merging](#entity-merging)
-5. [Clustering](#clustering)
-6. [Using Methods](#using-methods)
-7. [Using Registry](#using-registry)
-8. [Configuration](#configuration)
-9. [Advanced Examples](#advanced-examples)
-
-## Basic Usage
-
-### Using the Convenience Function
-
-```python
-from semantica.deduplication import deduplicate
-
-# Sample entities with potential duplicates
-entities = [
-    {"id": "1", "name": "Apple Inc.", "type": "Company", "founded": 1976},
-    {"id": "2", "name": "Apple", "type": "Company", "founded": 1976},
-    {"id": "3", "name": "Microsoft Corporation", "type": "Company", "founded": 1975},
-    {"id": "4", "name": "Microsoft", "type": "Company", "founded": 1975},
-]
-
-# Deduplicate entities
-result = deduplicate(
-    entities,
-    similarity_threshold=0.8,
-    confidence_threshold=0.7,
-    merge_strategy="keep_most_complete",
-    preserve_provenance=True
-)
-
-print(f"Merged {len(result['merged_entities'])} entities")
-print(f"Found {len(result['duplicate_groups'])} duplicate groups")
-print(f"Statistics: {result['statistics']}")
-```
-
-### Using Main Classes
-
-```python
-from semantica.deduplication import DuplicateDetector, EntityMerger, MergeStrategy
-
-# Step 1: Detect duplicates
-detector = DuplicateDetector(
-    similarity_threshold=0.8,
-    confidence_threshold=0.7
-)
-
-duplicate_groups = detector.detect_duplicate_groups(entities)
-print(f"Found {len(duplicate_groups)} duplicate groups")
-
-# Step 2: Merge duplicates
-merger = EntityMerger(preserve_provenance=True)
-merge_operations = merger.merge_duplicates(
-    entities,
-    strategy=MergeStrategy.KEEP_MOST_COMPLETE
-)
-
-for op in merge_operations:
-    print(f"Merged {len(op.source_entities)} entities into 1")
-```
+1. [Similarity Calculation](#similarity-calculation)
+2. [Duplicate Detection](#duplicate-detection)
+3. [Entity Merging](#entity-merging)
+4. [Clustering](#clustering)
+5. [Using Methods](#using-methods)
+6. [Using Registry](#using-registry)
+7. [Configuration](#configuration)
+8. [Advanced Examples](#advanced-examples)
 
 ## Similarity Calculation
 

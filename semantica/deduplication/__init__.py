@@ -57,16 +57,12 @@ Main Components:
     - Deduplication Methods: Reusable functions for common deduplication tasks
 
 Example Usage:
-    >>> from semantica.deduplication import DuplicateDetector, EntityMerger, deduplicate
+    >>> from semantica.deduplication import DuplicateDetector, EntityMerger
     >>> # Using main classes
     >>> detector = DuplicateDetector(similarity_threshold=0.8)
     >>> duplicates = detector.detect_duplicates(entities)
     >>> merger = EntityMerger()
     >>> merged = merger.merge_duplicates(entities)
-    >>> 
-    >>> # Using convenience function
-    >>> from semantica.deduplication import deduplicate
-    >>> result = deduplicate(entities, similarity_threshold=0.8, merge_strategy="keep_most_complete")
     >>> 
     >>> # Using methods directly
     >>> from semantica.deduplication.methods import detect_duplicates, calculate_similarity
@@ -129,116 +125,4 @@ __all__ = [
     # Config
     "DeduplicationConfig",
     "dedup_config",
-    # Convenience
-    "deduplicate",
 ]
-
-
-def deduplicate(
-    entities: List[Dict[str, Any]],
-    similarity_threshold: float = 0.7,
-    confidence_threshold: float = 0.6,
-    merge_strategy: str = "keep_most_complete",
-    preserve_provenance: bool = True,
-    **options,
-) -> Dict[str, Any]:
-    """
-    Deduplicate entities (module-level convenience function).
-
-    This is a user-friendly wrapper that performs comprehensive deduplication
-    including duplicate detection and entity merging.
-
-    Args:
-        entities: List of entity dictionaries to deduplicate
-        similarity_threshold: Minimum similarity score to consider duplicates (default: 0.7)
-        confidence_threshold: Minimum confidence score for duplicate candidates (default: 0.6)
-        merge_strategy: Merge strategy to use (default: "keep_most_complete")
-            - "keep_first": Preserve first entity, merge others
-            - "keep_last": Preserve last entity, merge others
-            - "keep_most_complete": Preserve entity with most properties/relationships
-            - "keep_highest_confidence": Preserve entity with highest confidence
-            - "merge_all": Combine all properties and relationships
-        preserve_provenance: Whether to preserve provenance information (default: True)
-        **options: Additional deduplication options
-
-    Returns:
-        Dictionary containing:
-            - merged_entities: List of merged entities
-            - duplicate_groups: List of duplicate groups found
-            - merge_operations: List of merge operations performed
-            - statistics: Deduplication statistics
-
-    Examples:
-        >>> import semantica
-        >>> entities = [
-        ...     {"id": "1", "name": "Apple Inc.", "type": "Company"},
-        ...     {"id": "2", "name": "Apple", "type": "Company"},
-        ...     {"id": "3", "name": "Microsoft", "type": "Company"}
-        ... ]
-        >>> result = semantica.deduplication.deduplicate(
-        ...     entities,
-        ...     similarity_threshold=0.8,
-        ...     merge_strategy="keep_most_complete"
-        ... )
-        >>> print(f"Merged {len(result['merged_entities'])} entities")
-    """
-    # Detect duplicates
-    detector = DuplicateDetector(
-        similarity_threshold=similarity_threshold,
-        confidence_threshold=confidence_threshold,
-        **options.get("detection_config", {}),
-    )
-
-    duplicate_groups = detector.detect_duplicate_groups(entities, **options)
-
-    # Merge duplicates
-    merger = EntityMerger(
-        preserve_provenance=preserve_provenance, **options.get("merger_config", {})
-    )
-
-    # Map strategy string to enum
-    strategy_map = {
-        "keep_first": MergeStrategy.KEEP_FIRST,
-        "keep_last": MergeStrategy.KEEP_LAST,
-        "keep_most_complete": MergeStrategy.KEEP_MOST_COMPLETE,
-        "keep_highest_confidence": MergeStrategy.KEEP_HIGHEST_CONFIDENCE,
-        "merge_all": MergeStrategy.MERGE_ALL,
-    }
-
-    strategy = strategy_map.get(merge_strategy, MergeStrategy.KEEP_MOST_COMPLETE)
-
-    merge_operations = merger.merge_duplicates(entities, strategy=strategy, **options)
-
-    # Collect merged entities
-    merged_entities = [op.merged_entity for op in merge_operations]
-
-    # Collect non-duplicate entities
-    duplicate_entity_ids = set()
-    for group in duplicate_groups:
-        for entity in group.entities:
-            entity_id = entity.get("id") or id(entity)
-            duplicate_entity_ids.add(entity_id)
-
-    non_duplicate_entities = [
-        e for e in entities if (e.get("id") or id(e)) not in duplicate_entity_ids
-    ]
-
-    # Combine merged and non-duplicate entities
-    all_merged = merged_entities + non_duplicate_entities
-
-    # Calculate statistics
-    statistics = {
-        "total_entities": len(entities),
-        "duplicate_groups": len(duplicate_groups),
-        "merged_entities": len(merged_entities),
-        "non_duplicate_entities": len(non_duplicate_entities),
-        "final_entities": len(all_merged),
-        "reduction": len(entities) - len(all_merged),
-    }
-
-    return {
-        "merged_entities": all_merged,
-        "duplicate_groups": duplicate_groups,
-        "merge_operations": merge_operations,
-        "statistics": statistics,
-    }

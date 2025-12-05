@@ -653,19 +653,21 @@ These modules ensure data quality, handle duplicates, and resolve conflicts.
 **Quick Example:**
 
 ```python
-from semantica.deduplication import deduplicate, DuplicateDetector
+from semantica.deduplication import DuplicateDetector, EntityMerger, MergeStrategy
 
-# Using convenience function
-result = deduplicate(
-    entities,
-    similarity_threshold=0.8,
-    merge_strategy="keep_most_complete"
-)
-print(f"Reduced from {result['statistics']['total_entities']} to {result['statistics']['final_entities']}")
-
-# Using classes directly
+# Detect duplicates
 detector = DuplicateDetector(similarity_threshold=0.8)
-duplicates = detector.detect_duplicates(entities)
+duplicate_groups = detector.detect_duplicate_groups(entities)
+
+# Merge duplicates
+merger = EntityMerger(preserve_provenance=True)
+merge_operations = merger.merge_duplicates(
+    entities,
+    strategy=MergeStrategy.KEEP_MOST_COMPLETE
+)
+
+merged_entities = [op.merged_entity for op in merge_operations]
+print(f"Reduced from {len(entities)} to {len(merged_entities)} entities")
 ```
 
 ---
@@ -1038,7 +1040,7 @@ from semantica.split import TextSplitter
 from semantica.normalize import TextNormalizer
 from semantica.semantic_extract import NERExtractor, RelationExtractor
 from semantica.kg import GraphBuilder
-from semantica.deduplication import deduplicate
+from semantica.deduplication import DuplicateDetector, EntityMerger, MergeStrategy
 
 # Ingest and parse
 documents = FileIngestor().ingest("data/")
@@ -1053,8 +1055,12 @@ entities = NERExtractor().extract(normalized)
 relationships = RelationExtractor().extract(normalized, entities)
 kg = GraphBuilder().build(entities, relationships)
 
-# Quality assurance
-deduplicated = deduplicate(entities)
+# Quality assurance - deduplicate entities
+detector = DuplicateDetector(similarity_threshold=0.8)
+duplicate_groups = detector.detect_duplicate_groups(entities)
+merger = EntityMerger()
+merge_operations = merger.merge_duplicates(entities, strategy=MergeStrategy.KEEP_MOST_COMPLETE)
+deduplicated = [op.merged_entity for op in merge_operations]
 ```
 
 ### Pattern 3: GraphRAG with Hybrid Search
