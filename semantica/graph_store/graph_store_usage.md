@@ -455,6 +455,81 @@ from semantica.graph_store import (
 )
 ```
 
+## Configuration Management
+
+### Using GraphStoreConfig
+
+The `GraphStoreConfig` class provides centralized configuration management:
+
+```python
+from semantica.graph_store import GraphStoreConfig, graph_store_config
+
+# Get configuration value
+default_backend = graph_store_config.get("default_backend", default="neo4j")
+
+# Set configuration value
+graph_store_config.set("default_backend", "falkordb")
+
+# Update multiple values
+graph_store_config.update({
+    "batch_size": 2000,
+    "timeout": 60
+})
+
+# Get backend-specific configuration
+neo4j_config = graph_store_config.get_neo4j_config()
+kuzu_config = graph_store_config.get_kuzu_config()
+falkordb_config = graph_store_config.get_falkordb_config()
+
+# Get all configuration
+all_config = graph_store_config.get_all()
+
+# Reset to defaults
+graph_store_config.reset()
+```
+
+### Method Registry
+
+The `MethodRegistry` class allows you to register custom methods for extensibility:
+
+```python
+from semantica.graph_store import MethodRegistry, method_registry
+
+# Register a custom node creation method
+def validated_create_node(labels, properties, **options):
+    """Custom node creation with validation."""
+    if "name" not in properties:
+        raise ValueError("name is required")
+    
+    from semantica.graph_store import _get_store
+    store = _get_store()
+    return store.create_node(labels, properties, **options)
+
+# Register the custom method
+method_registry.register("node", "validated", validated_create_node)
+
+# Use the custom method
+from semantica.graph_store import create_node
+node = create_node(
+    labels=["Person"],
+    properties={"name": "Alice"},
+    method="validated"
+)
+
+# List available methods
+available = method_registry.list_all("node")
+# Returns: {"node": ["validated"]}
+
+# Check if a method exists
+exists = method_registry.has("node", "validated")
+
+# Get method metadata
+metadata = method_registry.get_metadata("node", "validated")
+
+# Unregister a method
+method_registry.unregister("node", "validated")
+```
+
 ## Advanced Usage
 
 ### Context Manager
@@ -470,7 +545,7 @@ with GraphStore(backend="neo4j", uri="bolt://localhost:7687") as store:
 ### Custom Method Registration
 
 ```python
-from semantica.graph_store import method_registry
+from semantica.graph_store import method_registry, GraphStore
 
 def custom_create_node(labels, properties, **options):
     """Custom node creation with validation."""
@@ -479,9 +554,12 @@ def custom_create_node(labels, properties, **options):
         raise ValueError("name is required")
     
     # Call default implementation
-    from semantica.graph_store import _get_store
-    store = _get_store()
-    return store.create_node(labels, properties, **options)
+    store = GraphStore()
+    store.connect()
+    try:
+        return store.create_node(labels, properties, **options)
+    finally:
+        store.close()
 
 # Register custom method
 method_registry.register("node", "validated", custom_create_node)

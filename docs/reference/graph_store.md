@@ -74,7 +74,9 @@
 
 ## Main Classes
 
-### GraphStore
+### Core Classes
+
+#### GraphStore
 
 The main facade for graph operations.
 
@@ -82,9 +84,28 @@ The main facade for graph operations.
 
 | Method | Description |
 |--------|-------------|
-| `execute_query(query, params)` | Run Cypher query |
-| `create_node(labels, props)` | Add node |
-| `create_relationship(start, end, type)` | Add edge |
+| `connect(**options)` | Connect to the graph database |
+| `close()` | Close connection to the graph database |
+| `create_node(labels, properties, **options)` | Create a single node |
+| `create_nodes(nodes, **options)` | Create multiple nodes in batch |
+| `get_node(node_id, **options)` | Get a node by ID |
+| `get_nodes(labels, properties, limit, **options)` | Get nodes matching criteria |
+| `update_node(node_id, properties, merge, **options)` | Update node properties |
+| `delete_node(node_id, detach, **options)` | Delete a node |
+| `create_relationship(start_node_id, end_node_id, rel_type, properties, **options)` | Create a relationship |
+| `get_relationships(node_id, rel_type, direction, limit, **options)` | Get relationships |
+| `delete_relationship(rel_id, **options)` | Delete a relationship |
+| `execute_query(query, parameters, **options)` | Execute a Cypher/OpenCypher query |
+| `shortest_path(start_node_id, end_node_id, rel_type, max_depth, **options)` | Find shortest path between nodes |
+| `get_neighbors(node_id, rel_type, direction, depth, **options)` | Get neighboring nodes |
+| `get_stats()` | Get graph statistics |
+| `create_index(label, property_name, index_type, **options)` | Create an index |
+
+**Properties:**
+- `nodes` - Access to NodeManager
+- `relationships` - Access to RelationshipManager
+- `query_engine` - Access to QueryEngine
+- `analytics` - Access to GraphAnalytics
 
 **Example:**
 
@@ -92,51 +113,262 @@ The main facade for graph operations.
 from semantica.graph_store import GraphStore
 
 store = GraphStore(backend="neo4j")
+store.connect()
 store.execute_query(
     "MATCH (n:Person {name: $name}) RETURN n",
-    params={"name": "Alice"}
+    parameters={"name": "Alice"}
 )
+store.close()
 ```
 
-### Neo4jAdapter
+#### GraphManager
 
-Enterprise-grade backend.
+Manager for graph store operations. Provides access to node, relationship, query, and analytics managers.
+
+**Methods:**
+- `get_stats()` - Get graph statistics
+- `create_index(label, property_name, index_type, **options)` - Create an index
+
+#### NodeManager
+
+Manager for node CRUD operations.
+
+**Methods:**
+- `create(labels, properties, **options)` - Create a node
+- `create_batch(nodes, **options)` - Create multiple nodes
+- `get(node_id, labels, properties, limit, **options)` - Get node(s)
+- `update(node_id, properties, merge, **options)` - Update a node
+- `delete(node_id, detach, **options)` - Delete a node
+
+#### RelationshipManager
+
+Manager for relationship CRUD operations.
+
+**Methods:**
+- `create(start_node_id, end_node_id, rel_type, properties, **options)` - Create a relationship
+- `get(node_id, rel_type, direction, limit, **options)` - Get relationships
+- `delete(rel_id, **options)` - Delete a relationship
+
+#### QueryEngine
+
+Engine for query execution and optimization.
+
+**Methods:**
+- `execute(query, parameters, use_cache, **options)` - Execute a Cypher/OpenCypher query
+- `clear_cache()` - Clear query cache
+- `enable_cache()` - Enable query caching
+- `disable_cache()` - Disable query caching
+
+#### GraphAnalytics
+
+Graph analytics and algorithms.
+
+**Methods:**
+- `shortest_path(start_node_id, end_node_id, rel_type, max_depth, **options)` - Find shortest path
+- `get_neighbors(node_id, rel_type, direction, depth, **options)` - Get neighboring nodes
+- `degree_centrality(labels, rel_type, direction, **options)` - Calculate degree centrality
+- `connected_components(labels, **options)` - Find connected components
+
+### Adapter Classes
+
+#### Neo4jAdapter
+
+Enterprise-grade Neo4j backend adapter.
 
 **Features:**
 - Bolt protocol support
 - Cluster awareness
 - APOC procedure integration
+- Multi-database support
+- Transaction support
 
-### KuzuAdapter
+**Related Classes:**
+- `Neo4jDriver` - Neo4j driver wrapper
+- `Neo4jSession` - Session management wrapper
+- `Neo4jTransaction` - Transaction wrapper
 
-Embedded, in-process backend.
+#### KuzuAdapter
+
+Embedded, in-process KuzuDB backend adapter.
 
 **Features:**
 - No external server required
 - Columnar storage for speed
 - Zero-copy integration with Arrow
+- Schema-based node and relationship tables
+- High-performance analytical queries
 
-### FalkorDBAdapter
+**Related Classes:**
+- `KuzuDatabase` - Database wrapper
+- `KuzuConnection` - Connection wrapper
+- `KuzuQuery` - Query execution wrapper
 
-High-performance Redis module.
+**Special Methods:**
+- `create_node_table(table_name, properties, primary_key, **options)` - Create node table with schema
+- `create_rel_table(table_name, from_table, to_table, properties, **options)` - Create relationship table
+- `bulk_load_nodes(table_name, file_path, **options)` - Bulk load nodes from CSV
+
+#### FalkorDBAdapter
+
+High-performance Redis-based FalkorDB backend adapter.
 
 **Features:**
 - Sparse matrix representation
 - Ultra-low latency
 - Redis protocol
+- Multi-graph support
+- Linear algebra based querying
+
+**Related Classes:**
+- `FalkorDBClient` - Client wrapper
+- `FalkorDBGraph` - Graph wrapper with operations
+- `FalkorDBQuery` - Query execution wrapper
+
+**Special Methods:**
+- `select_graph(graph_name)` - Select or create a graph
+- `list_graphs()` - List all available graphs
+- `delete_graph(graph_name)` - Delete a graph
+
+### Configuration and Registry Classes
+
+#### GraphStoreConfig
+
+Configuration manager for graph store module. Supports environment variables, config files (YAML, JSON, TOML), and programmatic configuration.
+
+**Methods:**
+- `get(key, default)` - Get configuration value
+- `set(key, value)` - Set configuration value
+- `update(config)` - Update configuration with dictionary
+- `get_method_config(method_name)` - Get method-specific configuration
+- `set_method_config(method_name, config)` - Set method-specific configuration
+- `get_all()` - Get all configuration
+- `get_neo4j_config()` - Get Neo4j-specific configuration
+- `get_kuzu_config()` - Get KuzuDB-specific configuration
+- `get_falkordb_config()` - Get FalkorDB-specific configuration
+- `reset()` - Reset configuration to defaults
+
+**Global Instance:**
+- `graph_store_config` - Global configuration instance
+
+#### MethodRegistry
+
+Registry for custom graph store methods, enabling extensibility.
+
+**Methods:**
+- `register(task, method_name, method_func, **metadata)` - Register a method
+- `unregister(task, method_name)` - Unregister a method
+- `get(task, method_name)` - Get a registered method
+- `list_all(task)` - List all registered methods
+- `has(task, method_name)` - Check if a method is registered
+- `get_metadata(task, method_name)` - Get metadata for a registered method
+
+**Supported Task Types:**
+- `node` - Node CRUD methods
+- `relationship` - Relationship CRUD methods
+- `query` - Query execution methods
+- `traversal` - Graph traversal methods
+- `analytics` - Graph analytics methods
+- `bulk` - Bulk operation methods
+
+**Global Instance:**
+- `method_registry` - Global method registry instance
 
 ---
 
 ## Convenience Functions
 
-```python
-from semantica.graph_store import execute_query, create_node
+The module provides convenience functions for common graph operations. These functions use a global GraphStore instance and support method registration for extensibility.
 
-# Quick query
-results = execute_query("MATCH (n) RETURN count(n) as count")
+### Node Operations
+
+| Function | Description |
+|----------|-------------|
+| `create_node(labels, properties, method, **options)` | Create a single node |
+| `create_nodes(nodes, method, **options)` | Create multiple nodes in batch |
+| `get_nodes(labels, properties, limit, method, **options)` | Get nodes matching criteria |
+| `update_node(node_id, properties, merge, method, **options)` | Update node properties |
+| `delete_node(node_id, detach, method, **options)` | Delete a node |
+
+### Relationship Operations
+
+| Function | Description |
+|----------|-------------|
+| `create_relationship(start_id, end_id, rel_type, properties, method, **options)` | Create a relationship |
+| `create_relationships(relationships, method, **options)` | Create multiple relationships in batch |
+| `get_relationships(node_id, rel_type, direction, limit, method, **options)` | Get relationships matching criteria |
+| `update_relationship(rel_id, properties, method, **options)` | Update relationship properties |
+| `delete_relationship(rel_id, method, **options)` | Delete a relationship |
+
+### Query Operations
+
+| Function | Description |
+|----------|-------------|
+| `execute_query(query, parameters, method, **options)` | Execute a Cypher/OpenCypher query |
+
+### Analytics Operations
+
+| Function | Description |
+|----------|-------------|
+| `shortest_path(start_node_id, end_node_id, rel_type, max_depth, method, **options)` | Find shortest path between nodes |
+| `get_neighbors(node_id, rel_type, direction, depth, method, **options)` | Get neighboring nodes |
+| `run_analytics(algorithm, method, **options)` | Run graph analytics algorithm |
+
+### Utility Functions
+
+| Function | Description |
+|----------|-------------|
+| `get_graph_store_method(task, method_name)` | Get graph store method by task and name |
+| `list_available_methods(task)` | List all available graph store methods |
+
+**Example:**
+
+```python
+from semantica.graph_store import (
+    create_node,
+    create_nodes,
+    create_relationship,
+    execute_query,
+    shortest_path,
+    get_neighbors,
+    run_analytics
+)
 
 # Quick node creation
-create_node(["Person"], {"name": "Bob"})
+alice = create_node(["Person"], {"name": "Alice", "age": 30})
+bob = create_node(["Person"], {"name": "Bob", "age": 25})
+
+# Batch node creation
+people = create_nodes([
+    {"labels": ["Person"], "properties": {"name": "Charlie"}},
+    {"labels": ["Person"], "properties": {"name": "Diana"}}
+])
+
+# Create relationship
+rel = create_relationship(
+    start_id=alice["id"],
+    end_id=bob["id"],
+    rel_type="KNOWS",
+    properties={"since": 2020}
+)
+
+# Quick query
+results = execute_query("MATCH (n:Person) RETURN count(n) as count")
+
+# Find shortest path
+path = shortest_path(
+    start_node_id=alice["id"],
+    end_node_id=bob["id"],
+    max_depth=5
+)
+
+# Get neighbors
+neighbors = get_neighbors(node_id=alice["id"], depth=2)
+
+# Run analytics
+centrality = run_analytics(
+    algorithm="degree_centrality",
+    labels=["Person"]
+)
 ```
 
 ---
@@ -189,7 +421,7 @@ MATCH (n)-[r]-(m)
 WHERE elementId(n) IN $ids
 RETURN n, r, m
 """
-subgraph = graph_store.execute_query(query, params={"ids": node_ids})
+subgraph = graph_store.execute_query(query, parameters={"ids": node_ids})
 ```
 
 ---

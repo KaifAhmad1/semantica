@@ -185,9 +185,19 @@ store = GraphStore(
 store.connect()
 
 # Create nodes and relationships
-apple = store.create_node(["Company"], {"name": "Apple Inc."})
-tim = store.create_node(["Person"], {"name": "Tim Cook"})
-store.create_relationship(tim["id"], apple["id"], "CEO_OF")
+apple = store.create_node(
+    labels=["Company"],
+    properties={"name": "Apple Inc."}
+)
+tim = store.create_node(
+    labels=["Person"],
+    properties={"name": "Tim Cook"}
+)
+store.create_relationship(
+    start_node_id=tim["id"],
+    end_node_id=apple["id"],
+    rel_type="CEO_OF"
+)
 
 store.close()
 ```

@@ -54,7 +54,7 @@ Main Functions:
 Example Usage:
     >>> from semantica.graph_store.methods import create_node, create_relationship, execute_query
     >>> node_id = create_node(labels=["Person"], properties={"name": "Alice"})
-    >>> rel = create_relationship(start_id=node1_id, end_id=node2_id, type="KNOWS")
+    >>> rel = create_relationship(start_id=node1_id, end_id=node2_id, rel_type="KNOWS")
     >>> results = execute_query("MATCH (p:Person) RETURN p.name")
 """
 

@@ -84,7 +84,7 @@ Example Usage:
     >>> from semantica.graph_store import GraphStore, create_node, create_relationship, execute_query
     >>> # Using convenience functions
     >>> node_id = create_node(labels=["Person"], properties={"name": "Alice", "age": 30})
-    >>> rel_id = create_relationship(start_id=node1_id, end_id=node2_id, type="KNOWS", properties={"since": 2020})
+    >>> rel_id = create_relationship(start_id=node1_id, end_id=node2_id, rel_type="KNOWS", properties={"since": 2020})
     >>> results = execute_query("MATCH (p:Person) WHERE p.age > 25 RETURN p.name")
     >>> # Using classes directly
     >>> store = GraphStore(backend="neo4j", uri="bolt://localhost:7687")

@@ -541,9 +541,20 @@ store = GraphStore(backend="neo4j", uri="bolt://localhost:7687")
 store.connect()
 
 # Create nodes and relationships
-alice = store.create_node(["Person"], {"name": "Alice", "age": 30})
-bob = store.create_node(["Person"], {"name": "Bob", "age": 25})
-store.create_relationship(alice["id"], bob["id"], "KNOWS", {"since": 2020})
+alice = store.create_node(
+    labels=["Person"],
+    properties={"name": "Alice", "age": 30}
+)
+bob = store.create_node(
+    labels=["Person"],
+    properties={"name": "Bob", "age": 25}
+)
+store.create_relationship(
+    start_node_id=alice["id"],
+    end_node_id=bob["id"],
+    rel_type="KNOWS",
+    properties={"since": 2020}
+)
 
 # Query with Cypher
 results = store.execute_query("MATCH (p:Person) RETURN p.name")
