@@ -462,14 +462,13 @@ print(f"Answer: {result.answer} | Nodes: {kg.node_count}, Edges: {kg.edge_count}
 - [x] Core framework (v1.0)
 - [x] GraphRAG engine
 - [x] 6-stage ontology pipeline
-- [] Quality assurance features
+- [ ] Quality assurance features and Quality Assurance module
 - [ ] Enhanced multi-language support
 - [ ] Real-time streaming improvements
-- [ ] `semantica.kg_qa` (KG Quality Assurance) module
+- [ ] Advanced reasoning v2
 
 ### Q2 2026
 - [ ] Multi-modal processing
-- [ ] Advanced reasoning v2
 
 ---
 
