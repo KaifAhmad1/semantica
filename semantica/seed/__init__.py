@@ -55,30 +55,21 @@ Main Classes:
     - SeedDataSource: Seed data source definition dataclass
     - SeedData: Seed data container dataclass
 
-Convenience Functions:
-    - register_seed_source: Register seed data source wrapper
-    - load_seed_data: Load seed data from source wrapper
-    - create_foundation: Create foundation graph wrapper
-    - validate_seed_quality: Validate seed data quality wrapper
-    - integrate_seed_extracted: Integrate seed with extracted data wrapper
-    - export_seed_data: Export seed data wrapper
-    - get_seed_method: Get seed method by task and name
-    - list_available_methods: List registered seed methods
 
 Example Usage:
-    >>> from semantica.seed import SeedDataManager, register_seed_source, create_foundation
-    >>> # Using convenience functions
-    >>> register_seed_source("entities", "json", "data/entities.json", entity_type="Person")
-    >>> foundation = create_foundation()
-    >>> # Using classes directly
+    >>> from semantica.seed import SeedDataManager
     >>> manager = SeedDataManager()
     >>> manager.register_source("entities", "json", "data/entities.json")
     >>> foundation = manager.create_foundation_graph()
-    >>> validation = manager.validate_quality(foundation)
 
 Author: Semantica Contributors
 License: MIT
 """
+
+
+from typing import Any, Dict, List, Optional, Union
+from pathlib import Path
+
 
 from .seed_manager import SeedData, SeedDataManager, SeedDataSource
 

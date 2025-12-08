@@ -83,10 +83,11 @@ Coordinator for all seed data operations.
 
 | Method | Description |
 |--------|-------------|
-| `register_source(name, type, path)` | Add data source |
+| `register_source(name, format, location)` | Add data source |
 | `create_foundation_graph()` | Build KG from sources |
-| `validate_quality(graph)` | Check data quality |
-| `integrate(seed_kg, extracted_kg)` | Merge graphs |
+| `validate_quality(seed_data)` | Check data quality |
+| `integrate_with_extracted(seed, extracted)` | Merge graphs |
+| `export_seed_data(path, format)` | Export data |
 
 **Example:**
 
@@ -110,17 +111,7 @@ Data class defining a source.
 
 ---
 
-## Convenience Functions
 
-```python
-from semantica.seed import register_seed_source, create_foundation
-
-# Quick setup
-register_seed_source("products", "json", "products.json")
-kg = create_foundation()
-```
-
----
 
 ## Configuration
 

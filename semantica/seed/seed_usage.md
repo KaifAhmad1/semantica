@@ -17,12 +17,12 @@ This comprehensive guide demonstrates how to use the seed data system module for
 
 ## Basic Usage
 
-### Using SeedDataManager
+The Seed module adheres to a class-based design for explicit control and scalability.
 
 ```python
-from semantica.seed import SeedDataManager
+from semantica.seed import SeedDataManager, SeedDataSource
 
-# Create seed data manager
+# Create seed data manager instance
 manager = SeedDataManager()
 
 # Register and load seed data
@@ -30,33 +30,6 @@ manager.register_source("entities", "json", "data/entities.json", entity_type="P
 records = manager.load_source("entities")
 
 # Create foundation graph
-foundation = manager.create_foundation_graph()
-
-print(f"Foundation graph: {len(foundation['entities'])} entities")
-print(f"Relationships: {len(foundation['relationships'])}")
-```
-
-### Using Main Classes
-
-```python
-from semantica.seed import SeedDataManager, SeedDataSource, SeedData
-
-# Create manager
-manager = SeedDataManager()
-
-# Create source definition
-source = SeedDataSource(
-    name="entities",
-    format="json",
-    location="data/entities.json",
-    entity_type="Person",
-    verified=True
-)
-
-# Register source
-manager.sources[source.name] = source
-
-# Load and create foundation
 foundation = manager.create_foundation_graph()
 ```
 
