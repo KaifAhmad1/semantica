@@ -106,6 +106,101 @@ ids = store.store_vectors(
 results = store.search(query_vector=[0.1, 0.2, ...], k=5)
 ```
 
+---
+
+### VectorIndexer
+
+Vector indexing engine for creating and managing vector indices.
+
+**Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `create_index(vectors, ids)` | Create vector index |
+| `train_index(index, vectors)` | Train index on vectors |
+| `add_to_index(index, vectors)` | Add vectors to index |
+| `optimize_index(index)` | Optimize index performance |
+
+**Example:**
+
+```python
+from semantica.vector_store import VectorIndexer
+import numpy as np
+
+indexer = VectorIndexer(backend="faiss", dimension=768)
+
+# Create index
+vectors = [np.random.rand(768) for _ in range(1000)]
+vector_ids = [f"vec_{i}" for i in range(1000)]
+index = indexer.create_index(vectors, vector_ids)
+
+# Optimize index
+indexer.optimize_index(index)
+```
+
+---
+
+### VectorRetriever
+
+Vector retrieval and similarity search engine.
+
+**Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `search_similar(query, vectors, ids, k)` | Find k most similar vectors |
+| `batch_search(queries, vectors, ids, k)` | Batch similarity search |
+| `get_vector(vector_id)` | Retrieve vector by ID |
+
+**Example:**
+
+```python
+from semantica.vector_store import VectorRetriever
+import numpy as np
+
+retriever = VectorRetriever(backend="faiss")
+
+# Search similar vectors
+query_vector = np.random.rand(768)
+vectors = [np.random.rand(768) for _ in range(1000)]
+vector_ids = [f"vec_{i}" for i in range(1000)]
+
+results = retriever.search_similar(query_vector, vectors, vector_ids, k=10)
+print(f"Found {len(results)} similar vectors")
+```
+
+---
+
+### VectorManager
+
+Vector store management and operations coordinator.
+
+**Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `create_store(backend, config)` | Create vector store |
+| `get_store(store_id)` | Get store by ID |
+| `list_stores()` | List all stores |
+| `delete_store(store_id)` | Delete store |
+
+**Example:**
+
+```python
+from semantica.vector_store import VectorManager
+
+manager = VectorManager()
+
+# Create store
+store = manager.create_store("faiss", {"dimension": 768})
+
+# List stores
+stores = manager.list_stores()
+print(f"Active stores: {stores}")
+```
+
+---
+
 ### HybridSearch
 
 Combines vector and metadata search.
@@ -140,16 +235,478 @@ Backend-specific implementations:
 - `QdrantAdapter`: Rust-based high-performance DB.
 - `MilvusAdapter`: Scalable cloud-native DB.
 
+#### FAISSAdapter
+
+Local vector storage with multiple index types.
+
+**Helper Classes:**
+- `FAISSIndex`: Index wrapper
+- `FAISSSearch`: Search operations  
+- `FAISSIndexBuilder`: Index construction
+
+**Example:**
+
+```python
+from semantica.vector_store import FAISSAdapter, FAISSIndexBuilder
+import numpy as np
+
+adapter = FAISSAdapter(dimension=768)
+
+# Create HNSW index
+builder = FAISSIndexBuilder()
+index = builder.build(index_type="hnsw", dimension=768, m=16)
+
+# Add vectors
+vectors = np.random.rand(1000, 768).astype('float32')
+adapter.add_vectors(index, vectors, ids=[f"vec_{i}" for i in range(1000)])
+
+# Search
+query = np.random.rand(768).astype('float32')
+distances, indices = adapter.search(index, query, k=10)
+```
+
+#### PineconeAdapter
+
+Managed cloud vector database.
+
+**Helper Classes:**
+- `PineconeIndex`: Index management
+- `PineconeQuery`: Query operations
+- `PineconeMetadata`: Metadata handling
+
+**Example:**
+
+```python
+from semantica.vector_store import PineconeAdapter
+
+adapter = PineconeAdapter(api_key="your-key", environment="us-west1-gcp")
+adapter.connect()
+
+# Create index
+index = adapter.create_index("my-index", dimension=768, metric="cosine")
+
+# Upsert with metadata
+adapter.upsert_vectors(
+    vectors=[[0.1, 0.2, ...], ...],
+    ids=["vec_1", "vec_2"],
+    metadata=[{"category": "news"}, ...]
+)
+
+# Query with filter
+results = adapter.query_vectors(
+    query_vector=[0.1, 0.2, ...],
+    top_k=10,
+    filter={"category": {"$eq": "news"}}
+)
+```
+
+#### WeaviateAdapter
+
+Schema-aware vector database with GraphQL.
+
+**Helper Classes:**
+- `WeaviateClient`: Client wrapper
+- `WeaviateSchema`: Schema management
+- `WeaviateQuery`: GraphQL queries
+
+**Example:**
+
+```python
+from semantica.vector_store import WeaviateAdapter
+
+adapter = WeaviateAdapter(url="http://localhost:8080")
+adapter.connect()
+
+# Create schema
+adapter.create_schema(
+    "Document",
+    properties=[{"name": "text", "dataType": "text"}]
+)
+
+# Add objects
+adapter.add_objects(
+    objects=[{"text": "Hello world"}],
+    vectors=[[0.1, 0.2, ...]]
+)
+```
+
+#### QdrantAdapter
+
+High-performance Rust-based vector database.
+
+**Helper Classes:**
+- `QdrantClient`: Client wrapper
+- `QdrantCollection`: Collection management
+- `QdrantSearch`: Search operations
+
+**Example:**
+
+```python
+from semantica.vector_store import QdrantAdapter
+
+adapter = QdrantAdapter(url="http://localhost:6333")
+adapter.connect()
+
+# Create collection
+collection = adapter.create_collection("my-collection", dimension=768)
+
+# Upsert with payload
+adapter.upsert_vectors(
+    collection,
+    vectors=[[0.1, 0.2, ...], ...],
+    ids=["vec_1", "vec_2"],
+    payloads=[{"category": "news"}, ...]
+)
+```
+
+#### MilvusAdapter
+
+Scalable cloud-native vector database.
+
+**Helper Classes:**
+- `MilvusClient`: Client wrapper
+- `MilvusCollection`: Collection management
+- `MilvusSearch`: Search operations
+
+**Example:**
+
+```python
+from semantica.vector_store import MilvusAdapter
+
+adapter = MilvusAdapter(host="localhost", port="19530")
+adapter.connect()
+
+# Create collection
+collection = adapter.create_collection(
+    "my-collection",
+    dimension=768,
+    metric_type="L2"
+)
+
+# Insert vectors
+adapter.insert_vectors(collection, vectors, ids)
+```
+
+---
+
+## Metadata and Hybrid Search
+
+### MetadataFilter
+
+Metadata filtering for hybrid search.
+
+**Operators:**
+- `eq(field, value)`: Equality
+- `ne(field, value)`: Not equal
+- `gt(field, value)`: Greater than
+- `lt(field, value)`: Less than
+- `in_list(field, values)`: In list
+- `contains(field, value)`: Contains
+
+**Example:**
+
+```python
+from semantica.vector_store import MetadataFilter
+
+filter = MetadataFilter() \
+    .eq("category", "science") \
+    .gt("year", 2020) \
+    .in_list("tags", ["AI", "ML"])
+
+# Test metadata
+metadata = {"category": "science", "year": 2023, "tags": ["AI"]}
+matches = filter.matches(metadata)  # True
+```
+
+### SearchRanker
+
+Result ranking and fusion for multi-source search.
+
+**Strategies:**
+- `reciprocal_rank_fusion`: RRF algorithm
+- `weighted_average`: Weighted score fusion
+
+**Example:**
+
+```python
+from semantica.vector_store import SearchRanker
+
+ranker = SearchRanker(strategy="reciprocal_rank_fusion")
+
+# Fuse multiple result lists
+results1 = [{"id": "vec_1", "score": 0.9}, ...]
+results2 = [{"id": "vec_2", "score": 0.85}, ...]
+
+fused = ranker.rank([results1, results2], k=60)
+```
+
+### MetadataStore
+
+Metadata storage and querying.
+
+**Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `store_metadata(id, metadata)` | Store metadata |
+| `get_metadata(id)` | Retrieve metadata |
+| `query_metadata(conditions, operator)` | Query by metadata |
+
+**Example:**
+
+```python
+from semantica.vector_store import MetadataStore
+
+store = MetadataStore()
+store.store_metadata("vec_1", {"category": "science", "year": 2023})
+
+# Query
+matching_ids = store.query_metadata({"category": "science"}, operator="AND")
+```
+
+### MetadataIndex
+
+Metadata indexing for fast lookups.
+
+**Example:**
+
+```python
+from semantica.vector_store import MetadataIndex
+
+index = MetadataIndex()
+index.index_metadata("vec_1", {"category": "science"})
+
+# Query indexed metadata
+matching_ids = index.query({"category": "science"}, operator="AND")
+```
+
+### MetadataSchema
+
+Schema validation for metadata.
+
+**Example:**
+
+```python
+from semantica.vector_store import MetadataSchema
+
+schema = MetadataSchema({
+    "category": {"type": str, "required": True},
+    "year": {"type": int, "required": True}
+})
+
+# Validate
+is_valid = schema.validate({"category": "science", "year": 2023})
+```
+
+---
+
+## Namespace Management
+
+### NamespaceManager
+
+Multi-tenant namespace isolation.
+
+**Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `create_namespace(name, description)` | Create namespace |
+| `add_vector_to_namespace(id, namespace)` | Add vector to namespace |
+| `get_namespace_vectors(namespace)` | Get namespace vectors |
+| `delete_namespace(name)` | Delete namespace |
+
+**Example:**
+
+```python
+from semantica.vector_store import NamespaceManager
+
+manager = NamespaceManager()
+
+# Create namespace
+namespace = manager.create_namespace("tenant1", "Tenant 1 vectors")
+
+# Add vectors
+for i in range(100):
+    manager.add_vector_to_namespace(f"vec_{i}", "tenant1")
+
+# Get vectors
+vectors = manager.get_namespace_vectors("tenant1")
+```
+
+### Namespace
+
+Namespace dataclass with access control.
+
+**Attributes:**
+- `name`: Namespace name
+- `description`: Description
+- `metadata`: Additional metadata
+- `permissions`: Access control permissions
+
+**Example:**
+
+```python
+from semantica.vector_store import Namespace
+
+namespace = Namespace(
+    name="docs",
+    description="Document vectors",
+    metadata={"owner": "user1"}
+)
+
+# Set permissions
+namespace.set_access_control("user1", ["read", "write"])
+namespace.set_access_control("user2", ["read"])
+
+# Check permissions
+has_write = namespace.has_permission("user1", "write")  # True
+```
+
 ---
 
 ## Convenience Functions
 
-```python
-from semantica.vector_store import store_vectors, search_vectors
+Quick access wrappers for common vector store operations.
 
-# Quick usage (uses default configured backend)
-store_vectors(embeddings, metadata)
-results = search_vectors(query_embedding)
+### store_vectors
+
+Store vectors with metadata.
+
+```python
+from semantica.vector_store import store_vectors
+
+ids = store_vectors(
+    vectors=[[0.1, 0.2, ...], ...],
+    metadata=[{"text": "Hello"}, ...],
+    method="default"
+)
+```
+
+### search_vectors
+
+Search for similar vectors.
+
+```python
+from semantica.vector_store import search_vectors
+
+results = search_vectors(
+    query_vector=[0.1, 0.2, ...],
+    vectors=all_vectors,
+    vector_ids=all_ids,
+    k=10,
+    method="default"
+)
+```
+
+### update_vectors
+
+Update existing vectors.
+
+```python
+from semantica.vector_store import update_vectors
+
+success = update_vectors(
+    vector_ids=["vec_1", "vec_2"],
+    new_vectors=[[0.2, 0.3, ...], ...],
+    method="default"
+)
+```
+
+### delete_vectors
+
+Delete vectors by ID.
+
+```python
+from semantica.vector_store import delete_vectors
+
+success = delete_vectors(
+    vector_ids=["vec_1", "vec_2"],
+    method="default"
+)
+```
+
+### create_index
+
+Create vector index.
+
+```python
+from semantica.vector_store import create_index
+
+index = create_index(
+    vectors=[[0.1, 0.2, ...], ...],
+    index_type="hnsw",
+    method="default"
+)
+```
+
+### hybrid_search
+
+Hybrid vector and metadata search.
+
+```python
+from semantica.vector_store import hybrid_search, MetadataFilter
+
+filter = MetadataFilter().eq("category", "news")
+results = hybrid_search(
+    query_vector=[0.1, 0.2, ...],
+    vectors=all_vectors,
+    metadata=all_metadata,
+    vector_ids=all_ids,
+    filter=filter,
+    k=10,
+    method="default"
+)
+```
+
+### filter_metadata
+
+Filter vectors by metadata.
+
+```python
+from semantica.vector_store import filter_metadata
+
+matching_ids = filter_metadata(
+    metadata=all_metadata,
+    conditions={"category": "news"},
+    operator="AND",
+    method="default"
+)
+```
+
+### manage_namespace
+
+Manage vector namespaces.
+
+```python
+from semantica.vector_store import manage_namespace
+
+namespace = manage_namespace(
+    action="create",
+    namespace="tenant1",
+    description="Tenant 1 vectors",
+    method="default"
+)
+```
+
+### get_vector_store_method
+
+Get registered vector store method.
+
+```python
+from semantica.vector_store import get_vector_store_method
+
+method = get_vector_store_method(task="store", name="custom_store")
+```
+
+### list_available_methods
+
+List all registered methods.
+
+```python
+from semantica.vector_store import list_available_methods
+
+methods = list_available_methods()
+print(f"Available methods: {methods}")
 ```
 
 ---
