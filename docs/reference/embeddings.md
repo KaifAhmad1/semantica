@@ -38,11 +38,16 @@ The **Embeddings Module** provides a unified interface for generating vector rep
 
 </div>
 
+!!! tip "When to Use"
+    - **Vectorization**: Converting text to embeddings for storage.
+    - **Semantic Comparison**: Calculating similarity between two text snippets.
+    - **Model Abstraction**: Switching between local and API-based models without code changes.
+
 ---
 
 ## 🏗️ Architecture Components
 
-### 1. EmbeddingGenerator (The Orchestrator)
+### EmbeddingGenerator (The Orchestrator)
 The main entry point for generating embeddings. It manages the active model and routes requests to the appropriate provider adapter.
 
 #### **Constructor Parameters**
@@ -52,10 +57,13 @@ The main entry point for generating embeddings. It manages the active model and 
 *   `normalize` (Default: `True`): Whether to L2-normalize embeddings (crucial for cosine similarity).
 
 #### **Core Methods**
-*   **`generate_embeddings(data, data_type="text")`**: Generates an embedding for a single item.
-*   **`process_batch(items)`**: Generates embeddings for a list of items (optimized).
-*   **`compare_embeddings(emb1, emb2)`**: Calculates cosine similarity between two vectors.
-*   **`get_text_method()`**: Returns the active embedding strategy.
+
+| Method | Description |
+|--------|-------------|
+| `generate_embeddings(data, data_type="text")` | Generates an embedding for a single item. |
+| `process_batch(items)` | Generates embeddings for a list of items (optimized). |
+| `compare_embeddings(emb1, emb2)` | Calculates cosine similarity between two vectors. |
+| `get_text_method()` | Returns the active embedding strategy. |
 
 #### **Code Example**
 ```python
@@ -79,13 +87,16 @@ print(f"Similarity: {similarity}")
 
 ---
 
-### 2. TextEmbedder (The Worker)
+### TextEmbedder (The Worker)
 A specialized class focused purely on text-to-vector operations. It wraps the `EmbeddingGenerator` with text-specific logic and simplified methods.
 
 #### **Core Methods**
-*   **`embed_text(text)`**: Returns a list of floats for the input string.
-*   **`embed_batch(texts)`**: Returns a list of lists (vectors) for the input strings.
-*   **`get_embedding_dimension()`**: Returns the size of the output vector (e.g., 384, 768, 1536).
+
+| Method | Description |
+|--------|-------------|
+| `embed_text(text)` | Returns a list of floats for the input string. |
+| `embed_batch(texts)` | Returns a list of lists (vectors) for the input strings. |
+| `get_embedding_dimension()` | Returns the size of the output vector (e.g., 384, 768, 1536). |
 
 #### **Code Example**
 ```python
@@ -106,13 +117,16 @@ print(f"Dimension: {embedder.get_embedding_dimension()}")
 
 ---
 
-### 3. VectorEmbeddingManager (The Bridge)
+### VectorEmbeddingManager (The Bridge)
 A utility class that prepares raw embeddings for insertion into specific vector databases. It handles formatting differences between backends like FAISS and Pinecone.
 
 #### **Core Methods**
-*   **`prepare_for_vector_db(embeddings, backend, ...)`**: Formats data for the target DB.
-*   **`validate_dimensions(embeddings, expected_dim)`**: Ensures vectors match the index configuration.
-*   **`batch_prepare(embeddings_list)`**: Prepares a batch of embeddings for storage.
+
+| Method | Description |
+|--------|-------------|
+| `prepare_for_vector_db(embeddings, backend, ...)` | Formats data for the target DB. |
+| `validate_dimensions(embeddings, expected_dim)` | Ensures vectors match the index configuration. |
+| `batch_prepare(embeddings_list)` | Prepares a batch of embeddings for storage. |
 
 #### **Code Example**
 ```python
@@ -136,10 +150,9 @@ formatted_data = manager.prepare_for_vector_db(
 
 ---
 
-## ⚙️ Configuration & Tuning
+## ⚙️ Configuration
 
 ### Environment Variables
-You can configure defaults globally using `.env` files.
 
 ```bash
 export EMBEDDING_MODEL=all-MiniLM-L6-v2
@@ -148,7 +161,6 @@ export OPENAI_API_KEY=sk-...
 ```
 
 ### YAML Configuration
-For project-specific settings.
 
 ```yaml
 embeddings:
@@ -183,5 +195,11 @@ providers = check_available_providers()
 if providers["fastembed"]:
     print("FastEmbed is ready!")
 if providers["openai"]:
-    print("OpenAI is configured!")
-```
+
+## See Also
+- [Vector Store](vector_store.md) - Stores the generated embeddings
+- [Ingest](ingest.md) - Uses embeddings during processing
+
+## Cookbook
+- [Embedding Generation](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/introduction/12_Embedding_Generation.ipynb)
+- [Vector Store](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/introduction/13_Vector_Store.ipynb)

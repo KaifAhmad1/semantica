@@ -44,11 +44,16 @@ The **Context Module** provides agents with a persistent, searchable, and struct
 
 </div>
 
+!!! tip "When to Use"
+    - **Memory Persistence**: Enabling agents to remember user preferences and history.
+    - **Complex Retrieval**: When simple vector search fails to capture relationships.
+    - **Knowledge Graph**: Building a structured world model from unstructured text.
+
 ---
 
 ## 🏗️ Architecture Components
 
-### 1. AgentContext (The Orchestrator)
+### AgentContext (The Orchestrator)
 The high-level facade that unifies all context operations. It routes data to the appropriate subsystems (Memory, Graph, Vector Store) and manages the lifecycle of context.
 
 #### **Constructor Parameters**
@@ -61,14 +66,10 @@ The high-level facade that unifies all context operations. It routes data to the
 
 #### **Core Methods**
 
-*   **`store(content, ...)`**: Writes information to memory.
-    *   *Auto-Detection*: Automatically determines if input is a simple string (memory) or a list of documents.
-    *   *Write-Through*: Saves to both Short-term (RAM) and Long-term (Vector Store) memory simultaneously.
-    *   *Entity Extraction*: If enabled, extracts entities and relationships to update the Knowledge Graph.
-*   **`retrieve(query, ...)`**: Fetches relevant context.
-    *   *Hybrid Search*: Queries Vector Store, Short-term Memory, and Knowledge Graph in parallel.
-    *   *Reranking*: Merges and ranks results based on relevance scores.
-    *   *Context Window Optimization*: Returns results that fit within the agent's context window.
+| Method | Description |
+|--------|-------------|
+| `store(content, ...)` | Writes information to memory. Handles auto-detection, write-through to vector store, and entity extraction. |
+| `retrieve(query, ...)` | Fetches relevant context using hybrid search (Vector + Graph) and reranking. |
 
 #### **Code Example**
 ```python
@@ -95,7 +96,7 @@ results = context.retrieve("What is the user building?")
 
 ---
 
-### 2. AgentMemory (The Storage Engine)
+### AgentMemory (The Storage Engine)
 Manages the storage and lifecycle of memory items. It implements the **Hierarchical Memory** pattern.
 
 #### **Features & Functions**
@@ -114,9 +115,12 @@ Manages the storage and lifecycle of memory items. It implements the **Hierarchi
     *   *Count-Based*: Can limit the total number of memories to `max_memories`.
 
 #### **Key Methods**
-*   `store_vectors()`: Handles the low-level interaction with concrete Vector Store implementations.
-*   `_prune_short_term_memory()`: Internal algorithm that enforces token and count limits.
-*   `get_conversation_history()`: Retrieves a chronological list of interactions for a specific session.
+
+| Method | Description |
+|--------|-------------|
+| `store_vectors()` | Handles the low-level interaction with concrete Vector Store implementations. |
+| `_prune_short_term_memory()` | Internal algorithm that enforces token and count limits. |
+| `get_conversation_history()` | Retrieves a chronological list of interactions for a specific session. |
 
 #### **Code Example**
 ```python
@@ -135,7 +139,7 @@ print(f"Stored Memories: {stats['total_memories']}")
 
 ---
 
-### 3. ContextGraph (The Knowledge Structure)
+### ContextGraph (The Knowledge Structure)
 Manages the structured relationships between entities. It provides the "World Model" for the agent.
 
 #### **Features & Functions**
@@ -149,10 +153,13 @@ Manages the structured relationships between entities. It provides the "World Mo
     *   *Typed Schema*: Supports distinct types for nodes (e.g., "Person", "Concept") and edges (e.g., "KNOWS", "RELATED_TO").
 
 #### **Key Methods**
-*   `add_nodes(nodes)`: Bulk adds nodes using a list of dictionaries.
-*   `add_edges(edges)`: Bulk adds edges using a list of dictionaries.
-*   `get_neighbors(node_id, hops)`: Returns connected nodes within a specified distance.
-*   `query(query_str)`: Performs keyword-based search specifically on graph nodes.
+
+| Method | Description |
+|--------|-------------|
+| `add_nodes(nodes)` | Bulk adds nodes using a list of dictionaries. |
+| `add_edges(edges)` | Bulk adds edges using a list of dictionaries. |
+| `get_neighbors(node_id, hops)` | Returns connected nodes within a specified distance. |
+| `query(query_str)` | Performs keyword-based search specifically on graph nodes. |
 
 #### **Code Example**
 ```python
@@ -189,7 +196,7 @@ neighbors = graph.get_neighbors("FastAPI", hops=1)
 
 ---
 
-### 4. ContextRetriever (The Search Engine)
+### ContextRetriever (The Search Engine)
 The retrieval logic that powers the `retrieve()` command. It implements the **Hybrid Retrieval** algorithm.
 
 #### **Retrieval Strategy**
@@ -219,12 +226,15 @@ results = retriever.retrieve(
 
 ---
 
-### 5. EntityLinker (The Connector)
+### EntityLinker (The Connector)
 Resolves text mentions to unique entities and assigns URIs.
 
 #### **Key Methods**
-*   `link_entities(source, target, type)`: Creates a link between two entities.
-*   `assign_uri(entity_name, type)`: Generates a consistent URI for an entity.
+
+| Method | Description |
+|--------|-------------|
+| `link_entities(source, target, type)` | Creates a link between two entities. |
+| `assign_uri(entity_name, type)` | Generates a consistent URI for an entity. |
 
 #### **Code Example**
 ```python
@@ -243,21 +253,24 @@ linker.link_entities(
 
 ---
 
-## ⚙️ Configuration & Tuning
+## ⚙️ Configuration
 
-### Token Management
-*   **`CONTEXT_TOKEN_LIMIT`**: Environment variable to set the global default for short-term memory size.
-*   **`short_term_limit`**: Configurable per-agent to limit the *count* of recent items.
+### Environment Variables
 
-### Tuning Retrieval
-*   **`hybrid_alpha`**:
-    *   `0.0`: Relies entirely on Vector Search (Standard RAG).
-    *   `0.5`: Balanced approach (Recommended).
-    *   `1.0`: Relies entirely on Graph traversal (Graph RAG).
-*   **`max_expansion_hops`**:
-    *   `1`: Only direct neighbors.
-    *   `2`: Friends of friends (Recommended for discovery).
-    *   `3+`: Can introduce noise but finds deep connections.
+```bash
+# Global token limit
+export CONTEXT_TOKEN_LIMIT=2000
+```
+
+### YAML Configuration
+
+```yaml
+context:
+  short_term_limit: 10
+  retrieval:
+    hybrid_alpha: 0.5  # 0.0=Vector, 1.0=Graph
+    max_expansion_hops: 2
+```
 
 ---
 
@@ -325,5 +338,12 @@ from semantica.context.config import context_config
 
 # Update configuration at runtime
 context_config.set("retention_days", 60)
-context_config.set("hybrid_alpha", 0.8)
-```
+
+## See Also
+- [Vector Store](vector_store.md) - The long-term storage backend
+- [Graph Store](graph_store.md) - The knowledge graph backend
+- [Reasoning](reasoning.md) - Uses context for logic
+
+## Cookbook
+- [Context Module](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/introduction/19_Context_Module.ipynb)
+- [Advanced Context Engineering](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/advanced/11_Advanced_Context_Engineering.ipynb)
