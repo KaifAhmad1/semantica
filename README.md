@@ -10,7 +10,6 @@
 [![Downloads](https://pepy.tech/badge/semantica)](https://pepy.tech/project/semantica)
 [![Discord](https://img.shields.io/discord/semantica?color=7289da&label=discord)](https://discord.gg/semantica)
 [![CI](https://github.com/Hawksight-AI/semantica/workflows/CI/badge.svg)](https://github.com/Hawksight-AI/semantica/actions)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 <p align="center">
     <a href="https://github.com/Hawksight-AI/semantica/stargazers">
