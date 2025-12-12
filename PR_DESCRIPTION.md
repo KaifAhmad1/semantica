@@ -1,47 +1,39 @@
-# Refactor Semantic Extract Module to Class-Based Interfaces
+# Fix & Align Split Module with Documentation
 
 ## 📝 Summary
-This PR refactors the Semantic Extract module to promote a cleaner, object-oriented API for Entity, Relation, and Triple extraction. It standardizes the usage around `NERExtractor`, `RelationExtractor`, and `TripleExtractor` classes, replacing the previous low-level `get_entity_method` factory functions in user-facing code.
+This PR aligns the `semantica.split` module with its documentation, ensuring that all documented chunking strategies are fully implemented, registered, and accessible via the unified `TextSplitter` interface. It specifically enables direct usage of "structural" and "sliding_window" methods and fixes kwargs handling in hierarchical chunking.
 
 ## 🚀 Motivation
-The previous API relied heavily on factory functions (`get_entity_method("pattern")`), which made discovery and configuration difficult for users. The new class-based approach:
-- Improves code readability and IDE auto-completion.
-- Provides a consistent interface (`extractor.extract()`) across all extraction tasks.
-- Aligns the documentation and cookbooks with the actual best practices.
+Previously, the `docs/reference/split.md` documentation listed "structural" and "sliding_window" as available methods for `TextSplitter`, but they were not registered in the `_SPLIT_METHODS` dictionary in `methods.py`. This caused `TextSplitter(method="structural")` to fail or fallback unexpectedly. Additionally, there were minor discrepancies in method signatures and argument handling (specifically `chunk_size` collisions) that needed resolution.
 
 ## 🔍 Key Changes
 
-### 1. API Refactoring
-- **Standardized Classes**: Promoted `NERExtractor`, `RelationExtractor`, and `TripleExtractor` as the primary entry points.
-- **Method Aliases**: Added `extract()` aliases to `extract_entities()` and `extract_relations()` for a uniform API surface.
-- **Configuration**: Unified configuration passing via class constructors.
+### 1. Method Registration & Implementation
+- **New Wrappers**: Added `split_structural` and `split_sliding_window` wrapper functions in `semantica/split/methods.py`.
+- **Registry Update**: Registered these methods in `_SPLIT_METHODS`, enabling:
+  ```python
+  # Now works out-of-the-box
+  splitter = TextSplitter(method="structural")
+  splitter = TextSplitter(method="sliding_window")
+  ```
+- **Conditional Imports**: Added robust import handling for specialized chunkers to ensure the module remains usable even if optional dependencies are missing.
 
-### 2. Documentation Updates (`docs/reference/semantic_extract.md`)
-- Added missing documentation for **Semantic Networks**, **Coreference Resolution**, and **LLM Enhancement**.
-- Updated all code examples to use the new class-based API.
-- Added a "Semantic Networks" card to the overview for better discoverability.
+### 2. Documentation Alignment (`docs/reference/split.md`)
+- **Signature Updates**: Updated method signatures in the documentation to exactly match the code implementation (e.g., `StructuralChunker`, `TableChunker`).
+- **TableChunker**: Clarified `TableChunker` usage, documenting its specialized methods (`chunk_table`, `chunk_to_text_chunks`) since it handles structured data differently from standard text splitters.
+- **NER Aliases**: Confirmed and documented support for `ner_method="ml"` (mapping to spaCy) in Entity/Relation aware chunking.
 
-### 3. Cookbook Updates
-- **`05_Entity_Extraction.ipynb`**: Refactored to use `NERExtractor` for Pattern, Regex, ML, and LLM examples.
-- **`06_Relation_Extraction.ipynb`**: Refactored to use `RelationExtractor` for dependency and pattern-based examples.
-- **`11_Chunking_and_Splitting.ipynb`**: Updated to use consistent method names (`ner_method="ml"`).
-
-### 4. Split Module Improvements
-- **Method Aliasing**: Added aliases in `methods.py` to support "spacy" (mapping to "ml") and "ml" (mapping to "dependency" for relations), improving robustness and user experience.
-- **Robustness**: Verified `EntityAwareChunker` and `RelationAwareChunker` fallback mechanisms.
-
-### 5. Testing
-- Added `tests/test_ner_configurations.py` to verify all NER method configurations.
-- Added `tests/test_notebooks_verification.py` to ensure notebook examples run correctly.
-- Added `tests/test_semantic_extract_deepdive.py` covering relation and triple extraction scenarios.
+### 3. Bug Fixes
+- **Hierarchical Splitting**: Fixed a `TypeError: multiple values for keyword argument 'chunk_size'` bug in `split_hierarchical` by properly managing `kwargs` when delegating to sub-splitters (paragraph/sentence).
+- **Import Handling**: Resolved potential circular imports and improved error messages for missing dependencies.
 
 ## 🧪 Verification
-- [x] **Unit Tests**: All new tests pass, verifying correct instantiation and execution of extractors.
-- [x] **Notebooks**: Verified that the updated cookbooks run without errors.
-- [x] **Documentation**: previewed `semantic_extract.md` to ensure correct rendering of new sections.
+- [x] **Registry Check**: Verified that `list_available_methods()` now returns `structural` and `sliding_window`.
+- [x] **Runtime Verification**: Confirmed `TextSplitter` successfully delegates to the new wrappers.
+- [x] **Documentation**: Verified that documentation tables match the actual code capabilities.
+- [x] **Kwargs Handling**: Verified hierarchical splitting no longer throws duplicate argument errors.
 
 ## ✅ Checklist
 - [x] Code follows the project's coding standards.
 - [x] Documentation has been updated to reflect the changes.
-- [x] Tests have been added to cover the new functionality.
-- [x] Cookbooks have been updated and verified.
+- [x] All chunking strategies listed in docs are now functionally accessible.
