@@ -135,22 +135,27 @@ class RelationExtractor:
         self.validate = config.get("validate", False)
 
         # Common relation patterns
+        # Entity pattern allowing for dots and spaces (e.g., "Apple Inc.", "New York")
+        ent_pat = r"[\w\.]+(?:\s+[\w\.]+)*"
+        
         self.relation_patterns = {
             "founded_by": [
-                r"(?P<subject>\w+)\s+(?:was\s+)?founded\s+by\s+(?P<object>\w+(?:\s+\w+)*)",
-                r"(?P<object>\w+(?:\s+\w+)*)\s+founded\s+(?P<subject>\w+)",
+                # Subject founded by Object
+                fr"(?P<subject>[\w\.\s]+?)\s+(?:was\s+)?founded\s+by\s+(?P<object>{ent_pat})",
+                # Object founded Subject
+                fr"(?P<object>{ent_pat})\s+founded\s+(?P<subject>{ent_pat})",
             ],
             "located_in": [
-                r"(?P<subject>\w+)\s+is\s+located\s+in\s+(?P<object>\w+)",
-                r"(?P<subject>\w+)\s+in\s+(?P<object>\w+)",
+                fr"(?P<subject>[\w\.\s]+?)\s+is\s+located\s+in\s+(?P<object>{ent_pat})",
+                fr"(?P<subject>[\w\.\s]+?)\s+in\s+(?P<object>{ent_pat})",
             ],
             "works_for": [
-                r"(?P<subject>\w+)\s+works?\s+for\s+(?P<object>\w+)",
-                r"(?P<subject>\w+)\s+is\s+an?\s+employee\s+of\s+(?P<object>\w+)",
+                fr"(?P<subject>[\w\.\s]+?)\s+works?\s+for\s+(?P<object>{ent_pat})",
+                fr"(?P<subject>[\w\.\s]+?)\s+is\s+an?\s+employee\s+of\s+(?P<object>{ent_pat})",
             ],
             "born_in": [
-                r"(?P<subject>\w+)\s+was\s+born\s+in\s+(?P<object>\w+)",
-                r"(?P<subject>\w+)\s+born\s+in\s+(?P<object>\w+)",
+                fr"(?P<subject>[\w\.\s]+?)\s+was\s+born\s+in\s+(?P<object>{ent_pat})",
+                fr"(?P<subject>[\w\.\s]+?)\s+born\s+in\s+(?P<object>{ent_pat})",
             ],
         }
 
@@ -337,8 +342,8 @@ class RelationExtractor:
         for relation_type, patterns in self.relation_patterns.items():
             for pattern in patterns:
                 for match in re.finditer(pattern, text, re.IGNORECASE):
-                    subject_text = match.group("subject")
-                    object_text = match.group("object")
+                    subject_text = match.group("subject").strip()
+                    object_text = match.group("object").strip()
 
                     subject_entity = entity_map.get(subject_text.lower())
                     object_entity = entity_map.get(object_text.lower())

@@ -379,22 +379,74 @@ def extract_relations_pattern(
     """Pattern-based relation extraction."""
     relations = []
 
+    if not entities:
+        return []
+
+    # Create entity pattern from provided entities
+    # Sort by length descending to match longest entities first (e.g. "Apple Inc." before "Apple")
+    sorted_entities = sorted(entities, key=lambda e: len(e.text), reverse=True)
+    
+    # Escape entity texts and join with OR
+    # We use a non-capturing group for the alternatives
+    entity_texts = [re.escape(e.text) for e in sorted_entities]
+    # Remove duplicates
+    entity_texts = list(dict.fromkeys(entity_texts))
+    
+    if not entity_texts:
+        return []
+        
+    ent_pat = f"(?:{'|'.join(entity_texts)})"
+    
+    # Subject pattern: matches alphanumeric, dots, and horizontal whitespace (no newlines)
+    # Also includes common punctuation in names: , - & '
+    # Using non-greedy matching to capture the shortest possible subject
+    subject_pat = r"[\w\.\,\-\&\'\ \t]+?"
+
     relation_patterns = {
         "founded_by": [
-            r"(?P<subject>\w+)\s+(?:was\s+)?founded\s+by\s+(?P<object>\w+(?:\s+\w+)*)",
-            r"(?P<object>\w+(?:\s+\w+)*)\s+founded\s+(?P<subject>\w+)",
+            fr"(?P<subject>{subject_pat})\s+(?:was\s+)?founded\s+by\s+(?P<object>{ent_pat})",
+            fr"(?P<object>{ent_pat})\s+founded\s+(?P<subject>{ent_pat})",
+            fr"(?P<subject>{subject_pat})\s+(?:was\s+)?established\s+by\s+(?P<object>{ent_pat})",
+            fr"(?P<object>{ent_pat})\s+established\s+(?P<subject>{ent_pat})",
+            fr"(?P<subject>{subject_pat})\s+(?:was\s+)?created\s+by\s+(?P<object>{ent_pat})",
+            fr"(?P<object>{ent_pat})\s+created\s+(?P<subject>{ent_pat})",
+            fr"(?P<subject>{subject_pat})\s+(?:was\s+)?started\s+by\s+(?P<object>{ent_pat})",
+            fr"(?P<object>{ent_pat})\s+started\s+(?P<subject>{ent_pat})",
+            fr"(?P<subject>{subject_pat})\s+(?:was\s+)?co-founded\s+by\s+(?P<object>{ent_pat})",
+            fr"(?P<object>{ent_pat})\s+co-founded\s+(?P<subject>{ent_pat})",
+            fr"(?P<object>{ent_pat})\s+is\s+(?:the\s+)?founder\s+of\s+(?P<subject>{ent_pat})",
         ],
         "located_in": [
-            r"(?P<subject>\w+)\s+is\s+located\s+in\s+(?P<object>\w+)",
-            r"(?P<subject>\w+)\s+in\s+(?P<object>\w+)",
+            fr"(?P<subject>{subject_pat})\s+is\s+located\s+in\s+(?P<object>{ent_pat})",
+            fr"(?P<subject>{subject_pat})\s+in\s+(?P<object>{ent_pat})",
+            fr"(?P<subject>{subject_pat})\s+(?:is\s+)?headquartered\s+in\s+(?P<object>{ent_pat})",
+            fr"(?P<subject>{subject_pat})\s+(?:is\s+)?based\s+in\s+(?P<object>{ent_pat})",
+            fr"(?P<subject>{subject_pat})\s+has\s+(?:its\s+)?headquarters\s+in\s+(?P<object>{ent_pat})",
+            fr"(?P<subject>{subject_pat})\s+operates\s+(?:out\s+of|from)\s+(?P<object>{ent_pat})",
+            fr"(?P<subject>{subject_pat})\s+has\s+offices\s+in\s+(?P<object>{ent_pat})",
         ],
         "works_for": [
-            r"(?P<subject>\w+)\s+works?\s+for\s+(?P<object>\w+)",
-            r"(?P<subject>\w+)\s+is\s+an?\s+employee\s+of\s+(?P<object>\w+)",
+            fr"(?P<subject>{subject_pat})\s+works?\s+for\s+(?P<object>{ent_pat})",
+            fr"(?P<subject>{subject_pat})\s+works?\s+at\s+(?P<object>{ent_pat})",
+            fr"(?P<subject>{subject_pat})\s+is\s+an?\s+employee\s+of\s+(?P<object>{ent_pat})",
+            fr"(?P<subject>{subject_pat})\s+is\s+(?:the\s+)?(?:CEO|CFO|CTO|COO|director|manager|president|founder)\s+of\s+(?P<object>{ent_pat})",
+            fr"(?P<subject>{subject_pat})\s+joined\s+(?P<object>{ent_pat})",
+            fr"(?P<subject>{subject_pat})\s+was\s+hired\s+by\s+(?P<object>{ent_pat})",
+            fr"(?P<subject>{subject_pat})\s+serves\s+at\s+(?P<object>{ent_pat})",
         ],
         "born_in": [
-            r"(?P<subject>\w+)\s+was\s+born\s+in\s+(?P<object>\w+)",
-            r"(?P<subject>\w+)\s+born\s+in\s+(?P<object>\w+)",
+            fr"(?P<subject>{subject_pat})\s+was\s+born\s+in\s+(?P<object>{ent_pat})",
+            fr"(?P<subject>{subject_pat})\s+born\s+in\s+(?P<object>{ent_pat})",
+            fr"(?P<subject>{subject_pat})\s+is\s+a\s+native\s+of\s+(?P<object>{ent_pat})",
+            fr"(?P<subject>{subject_pat})\s+hails\s+from\s+(?P<object>{ent_pat})",
+            fr"(?P<subject>{subject_pat})\s+is\s+originally\s+from\s+(?P<object>{ent_pat})",
+        ],
+        "acquired_by": [
+            fr"(?P<subject>{subject_pat})\s+(?:was\s+)?acquired\s+by\s+(?P<object>{ent_pat})",
+            fr"(?P<object>{ent_pat})\s+acquired\s+(?P<subject>{ent_pat})",
+            fr"(?P<subject>{subject_pat})\s+(?:was\s+)?bought\s+by\s+(?P<object>{ent_pat})",
+            fr"(?P<object>{ent_pat})\s+bought\s+(?P<subject>{ent_pat})",
+            fr"(?P<subject>{subject_pat})\s+is\s+a\s+subsidiary\s+of\s+(?P<object>{ent_pat})",
         ],
     }
 
@@ -403,8 +455,8 @@ def extract_relations_pattern(
     for relation_type, patterns in relation_patterns.items():
         for pattern in patterns:
             for match in re.finditer(pattern, text, re.IGNORECASE):
-                subject_text = match.group("subject")
-                object_text = match.group("object")
+                subject_text = match.group("subject").strip()
+                object_text = match.group("object").strip()
 
                 subject_entity = entity_map.get(subject_text.lower())
                 object_entity = entity_map.get(object_text.lower())
