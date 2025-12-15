@@ -46,11 +46,11 @@ except ImportError:
 @dataclass
 class Chunk:
     """Chunk representation."""
-
     text: str
     start_index: int
     end_index: int
     metadata: Dict[str, Any] = field(default_factory=dict)
+    id: Optional[str] = None
 
 
 class SemanticChunker:

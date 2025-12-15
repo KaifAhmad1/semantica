@@ -96,7 +96,14 @@ class ProvenanceTracker:
         Returns:
             str: Provenance ID
         """
-        chunk_id = str(uuid4())
+        chunk_id = getattr(chunk, "id", None)
+        if not chunk_id:
+            chunk_id = str(uuid4())
+            try:
+                chunk.id = chunk_id
+            except AttributeError:
+                pass  # Chunk might be immutable
+        
         provenance_id = str(uuid4())
 
         provenance_info = ProvenanceInfo(
