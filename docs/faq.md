@@ -70,7 +70,7 @@ A structured representation where entities (nodes) are connected by relationship
 ### How do I build a knowledge graph?
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 
 semantica = Semantica()
 result = semantica.build_knowledge_base(["document.pdf"])
@@ -102,7 +102,7 @@ Yes! Semantica supports PDF, DOCX, HTML, JSON, CSV, and many other formats.
 ### How do I extract entities from text?
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 
 semantica = Semantica()
 result = semantica.semantic_extract.extract_entities("Your text")

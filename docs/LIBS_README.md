@@ -84,7 +84,7 @@ pip install -e ".[dev]"
 
 **Pattern 1: Using Semantica class (Recommended)**
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 
 # Initialize and build knowledge base
 semantica = Semantica()
@@ -105,7 +105,7 @@ ingestor = FileIngestor()
 
 ### 1. Basic Document Processing
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 
 # Build knowledge base from documents (auto-initializes)
 semantica = Semantica()
@@ -138,7 +138,7 @@ kg_viz.visualize_network(knowledge_graph, output="html", file_path="knowledge_gr
 
 ### 2. Web Content Processing
 ```python
-import semantica
+from semantica.core import Semantica
 from semantica.ingest import WebIngestor
 
 # Ingest web content
@@ -166,7 +166,7 @@ result = semantica_instance.build_knowledge_base(sources)
 
 ### 3. Knowledge Graph Analytics
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 from semantica.kg import GraphBuilder, GraphAnalyzer, CentralityCalculator, CommunityDetector
 
 # Build knowledge graph using Semantica class
@@ -565,7 +565,6 @@ for event in events:
 
 **Option 1: Using module-level build function (Recommended)**
 ```python
-import semantica
 import numpy as np
 
 # Generate embeddings using EmbeddingGenerator
@@ -770,7 +769,7 @@ for pattern in patterns:
 
 #### Custom Pipeline
 ```python
-from semantica import PipelineBuilder
+from semantica.pipeline import PipelineBuilder
 from semantica.pipeline import ExecutionEngine
 
 # Build custom pipeline
@@ -861,7 +860,6 @@ csv_exporter.export_knowledge_graph(graph, "knowledge_graph.csv")
 ### 8. Complete End-to-End Example
 
 ```python
-import semantica
 from semantica.ingest import FileIngestor
 from semantica.semantic_extract import NERExtractor, RelationExtractor
 from semantica.embeddings import EmbeddingGenerator
@@ -1199,7 +1197,7 @@ temporal_viz.visualize_metrics_evolution(metrics_history, timestamps,
 #### Quick Visualization Example
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 from semantica.visualization import KGVisualizer, EmbeddingVisualizer
 import numpy as np
 
@@ -1231,8 +1229,7 @@ if "embeddings" in result:
 
 ### Basic Configuration
 ```python
-import semantica
-from semantica import Config
+from semantica.core import Semantica, Config
 
 # Create configuration
 config = Config({
@@ -1257,7 +1254,7 @@ result = semantica_instance.build_knowledge_base(["document.pdf"])
 
 ### Advanced Configuration
 ```python
-from semantica import Semantica, Config
+from semantica.core import Semantica, Config
 
 # Advanced configuration
 config = Config({

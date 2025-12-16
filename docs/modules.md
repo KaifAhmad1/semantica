@@ -1007,7 +1007,7 @@ result = pipeline.execute(sources=["data/"], parallel=True)
 ### Pattern 1: Complete Knowledge Graph Pipeline
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 
 semantica = Semantica()
 result = semantica.build_knowledge_base(
@@ -1053,7 +1053,7 @@ deduplicated = [op.merged_entity for op in merge_operations]
 ### Pattern 3: GraphRAG with Hybrid Search
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 from semantica.vector_store import VectorStore, HybridSearch
 from semantica.context import AgentMemory
 

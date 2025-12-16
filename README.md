@@ -287,7 +287,7 @@ print(f" Ingested {len(sources)} sources")
 > **Entity & Relation Extraction** • NER, Relationships, Events, Triplets with LLM Enhancement
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 
 text = "Apple Inc., founded by Steve Jobs in 1976, acquired Beats Electronics for $3 billion."
 
@@ -304,7 +304,7 @@ print(f"Entities: {len(results.entities)}, Relationships: {len(results.relations
 > **Production-Ready KGs** • Entity Resolution • Temporal Support • Graph Analytics
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 from semantica.kg import GraphAnalyzer
 
 documents = ["doc1.txt", "doc2.txt", "doc3.txt"]
@@ -328,15 +328,12 @@ print(f"Nodes: {kg.node_count}, Answer: {result.answer}")
 > **6-Stage LLM Pipeline** • Automatic OWL Generation • HermiT/Pellet Validation
 
 ```python
-from semantica.ontology import OntologyGenerator, OntologyValidator
+from semantica.ontology import OntologyGenerator
 
 generator = OntologyGenerator(llm_provider="openai", model="gpt-4")
 ontology = generator.generate_from_documents(sources=["domain_docs/"])
 
-validator = OntologyValidator(reasoner="hermit")
-validation = validator.validate(ontology)
-
-print(f"Classes: {len(ontology.classes)}, Valid: {validation.is_consistent}")
+print(f"Classes: {len(ontology.classes)}")
 ```
 
 [**Cookbook: Ontology**](https://github.com/Hawksight-AI/semantica/tree/main/cookbook/introduction/14_Ontology.ipynb)
@@ -429,7 +426,7 @@ exporter.export("graph.ttl", format="turtle")
 > **For comprehensive examples, see the [**Cookbook**](https://github.com/Hawksight-AI/semantica/tree/main/cookbook) with 50+ interactive notebooks!**
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 
 # Initialize and build knowledge graph
 core = Semantica(ner_model="transformer", relation_strategy="hybrid")

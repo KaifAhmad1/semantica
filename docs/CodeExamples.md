@@ -26,7 +26,7 @@ pip install -e ".[dev]"
 ### ⚡ 30-Second Demo: From Any Format to Knowledge
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 
 # Initialize with preferred providers
 core = Semantica(
