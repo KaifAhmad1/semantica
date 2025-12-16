@@ -290,12 +290,12 @@ for rel in relationships[:5]:
 
 - `GraphBuilder` — Construct knowledge graphs
 - `GraphAnalyzer` — Analyze graph structure and properties
-- `GraphValidator` — Validate graph quality and consistency
 - `EntityResolver` — Resolve entity conflicts and duplicates
 - `ConflictDetector` — Detect conflicting information
 - `CentralityCalculator` — Calculate node importance metrics
-- `CommunityDetector` — Detect communities in graphs
+- `CommunityDetector` — Detect community structure
 - `ConnectivityAnalyzer` — Analyze graph connectivity
+- `SeedManager` — Manage seed data for KG initialization
 - `TemporalQuery` — Query temporal knowledge graphs
 - `Deduplicator` — Remove duplicate entities/relationships
 
@@ -926,7 +926,6 @@ CSVExporter().export(kg, "output.csv")
 
 - Interactive graph visualization
 - Embedding visualization (t-SNE, PCA, UMAP)
-- Quality metrics visualization
 - Temporal data visualization
 - Ontology visualization
 - Multiple output formats (HTML, PNG, SVG)
@@ -936,7 +935,6 @@ CSVExporter().export(kg, "output.csv")
 
 - `KGVisualizer` — Visualize knowledge graphs
 - `EmbeddingVisualizer` — Visualize embeddings (t-SNE, PCA, UMAP)
-- `QualityVisualizer` — Visualize quality metrics
 - `AnalyticsVisualizer` — Visualize graph analytics
 - `TemporalVisualizer` — Visualize temporal data
 - `OntologyVisualizer` — Visualize ontology structure

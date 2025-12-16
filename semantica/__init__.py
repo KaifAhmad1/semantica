@@ -39,7 +39,6 @@ from .visualization import (
     EmbeddingVisualizer,
     KGVisualizer,
     OntologyVisualizer,
-    QualityVisualizer,
     SemanticNetworkVisualizer,
     TemporalVisualizer,
 )
@@ -213,7 +212,6 @@ __all__ = [
     "OntologyVisualizer",
     "EmbeddingVisualizer",
     "SemanticNetworkVisualizer",
-    "QualityVisualizer",
     "AnalyticsVisualizer",
     "TemporalVisualizer",
 ]

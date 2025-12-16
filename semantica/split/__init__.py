@@ -33,7 +33,6 @@ Key Features:
     - Structure-aware chunking (headings, paragraphs, lists)
     - Sliding window chunking with overlap
     - Table-specific chunking
-    - Chunk validation and quality assessment
     - Provenance tracking for data lineage
 
 Main Classes:
@@ -47,7 +46,6 @@ Main Classes:
     - GraphBasedChunker: Graph structure-based chunker
     - OntologyAwareChunker: Ontology concept-based chunker
     - HierarchicalChunker: Multi-level hierarchical chunker
-    - ChunkValidator: Chunk quality validation
     - ProvenanceTracker: Chunk provenance tracking
     - Chunk: Chunk representation dataclass
 
@@ -69,7 +67,6 @@ Author: Semantica Contributors
 License: MIT
 """
 
-from .chunk_validator import ChunkValidator
 from .config import SplitConfig, split_config
 from .kg_chunkers import (
     EntityAwareChunker,
@@ -117,7 +114,6 @@ __all__ = [
     "StructuralChunker",
     "SlidingWindowChunker",
     "TableChunker",
-    "ChunkValidator",
     "ProvenanceTracker",
     # KG/Ontology chunkers
     "EntityAwareChunker",

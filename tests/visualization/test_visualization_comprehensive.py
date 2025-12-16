@@ -27,7 +27,6 @@ from semantica.visualization.kg_visualizer import KGVisualizer
 from semantica.visualization.ontology_visualizer import OntologyVisualizer
 from semantica.visualization.embedding_visualizer import EmbeddingVisualizer
 from semantica.visualization.semantic_network_visualizer import SemanticNetworkVisualizer
-from semantica.visualization.quality_visualizer import QualityVisualizer
 from semantica.visualization.analytics_visualizer import AnalyticsVisualizer
 from semantica.visualization.temporal_visualizer import TemporalVisualizer
 from semantica.visualization.utils.color_schemes import ColorScheme
@@ -49,8 +48,6 @@ class TestVisualizationComprehensive(unittest.TestCase):
             patch('semantica.visualization.embedding_visualizer.get_progress_tracker', return_value=self.mock_tracker),
             patch('semantica.visualization.semantic_network_visualizer.get_logger', return_value=self.mock_logger),
             patch('semantica.visualization.semantic_network_visualizer.get_progress_tracker', return_value=self.mock_tracker),
-            patch('semantica.visualization.quality_visualizer.get_logger', return_value=self.mock_logger),
-            patch('semantica.visualization.quality_visualizer.get_progress_tracker', return_value=self.mock_tracker),
             patch('semantica.visualization.analytics_visualizer.get_logger', return_value=self.mock_logger),
             patch('semantica.visualization.analytics_visualizer.get_progress_tracker', return_value=self.mock_tracker),
             patch('semantica.visualization.temporal_visualizer.get_logger', return_value=self.mock_logger),
@@ -152,30 +149,6 @@ class TestVisualizationComprehensive(unittest.TestCase):
         
         # Test visualize_edge_types
         viz.visualize_edge_types(semantic_network)
-
-    # --- QualityVisualizer Tests ---
-    def test_quality_visualizer(self):
-        viz = QualityVisualizer()
-        
-        # Test visualize_dashboard
-        report = {"overall_score": 0.8, "consistency_score": 0.9, "completeness_score": 0.7}
-        viz.visualize_dashboard(report)
-        
-        # Test visualize_score_distribution
-        scores = [0.1, 0.5, 0.9]
-        viz.visualize_score_distribution(scores)
-        
-        # Test visualize_issues
-        report_issues = {"issues": [{"type": "error", "severity": "high"}]}
-        viz.visualize_issues(report_issues)
-        
-        # Test visualize_completeness_metrics
-        metrics = {"entity_completeness": 0.8}
-        viz.visualize_completeness_metrics(metrics)
-        
-        # Test visualize_consistency_heatmap
-        consistency = {"consistency_matrix": [[1.0]], "labels": ["C1"]}
-        viz.visualize_consistency_heatmap(consistency)
 
     # --- AnalyticsVisualizer Tests ---
     def test_analytics_visualizer(self):

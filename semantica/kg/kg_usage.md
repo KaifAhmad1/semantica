@@ -11,16 +11,15 @@ For deduplication, use the `semantica.deduplication` module.
 2. [Knowledge Graph Building](#knowledge-graph-building)
 3. [Graph Analysis](#graph-analysis)
 4. [Entity Resolution](#entity-resolution)
-5. [Graph Validation](#graph-validation)
-6. [Centrality Calculation](#centrality-calculation)
-7. [Community Detection](#community-detection)
-8. [Connectivity Analysis](#connectivity-analysis)
-9. [Temporal Queries](#temporal-queries)
-10. [Provenance Tracking](#provenance-tracking)
-11. [Using Methods](#using-methods)
-12. [Using Registry](#using-registry)
-13. [Configuration](#configuration)
-14. [Advanced Examples](#advanced-examples)
+5. [Centrality Calculation](#centrality-calculation)
+6. [Community Detection](#community-detection)
+7. [Connectivity Analysis](#connectivity-analysis)
+8. [Temporal Queries](#temporal-queries)
+9. [Provenance Tracking](#provenance-tracking)
+10. [Using Methods](#using-methods)
+11. [Using Registry](#using-registry)
+12. [Configuration](#configuration)
+13. [Advanced Examples](#advanced-examples)
 
 ## Basic Usage
 
@@ -256,62 +255,7 @@ semantic_resolver = EntityResolver(strategy="semantic", similarity_threshold=0.9
 semantic_resolved = semantic_resolver.resolve_entities(entities)
 ```
 
-## Graph Validation
 
-### Comprehensive Validation
-
-```python
-from semantica.kg import GraphValidator
-
-# Create validator and validate graph
-validator = GraphValidator()
-result = validator.validate(kg)
-
-if result.valid:
-    print("Graph is valid!")
-else:
-    print(f"Found {len(result.errors)} errors:")
-    for error in result.errors:
-        print(f"  - {error}")
-    
-    print(f"Found {len(result.warnings)} warnings:")
-    for warning in result.warnings:
-        print(f"  - {warning}")
-```
-
-### Structure-Only Validation
-
-```python
-from semantica.kg import GraphValidator
-
-# Validate structure only
-validator = GraphValidator()
-result = validator.validate(kg)  # Full validation includes structure
-```
-
-### Consistency Checking
-
-```python
-from semantica.kg import GraphValidator
-
-# Check consistency only
-validator = GraphValidator()
-is_consistent = validator.check_consistency(kg)
-```
-
-### Different Validation Approaches
-
-```python
-from semantica.kg import GraphValidator
-
-validator = GraphValidator()
-
-# Full validation (includes structure and consistency)
-full_result = validator.validate(kg)
-
-# Consistency check only
-is_consistent = validator.check_consistency(kg)
-```
 
 !!! note "Conflict Detection and Resolution"
     Conflict detection and resolution have been moved to the dedicated `semantica.conflicts` module.
@@ -748,7 +692,6 @@ from semantica.kg.methods import (
     build_kg,
     analyze_graph,
     resolve_entities,
-    validate_graph,
     detect_conflicts,
     calculate_centrality,
     detect_communities,
@@ -765,9 +708,6 @@ analysis = analyze_graph(kg, method="default")
 
 # Resolve entities
 resolved = resolve_entities(entities, method="fuzzy")
-
-# Validate graph
-result = validate_graph(kg, method="default")
 
 # Detect conflicts
 conflicts = detect_conflicts(kg, method="default")
@@ -926,7 +866,6 @@ kg_config = KGConfig(config_file="config.yaml")
 from semantica.kg import (
     GraphBuilder,
     EntityResolver,
-    GraphValidator,
     GraphAnalyzer,
     CentralityCalculator,
     CommunityDetector
@@ -943,11 +882,7 @@ resolved_entities = resolver.resolve_entities(entities)
 kg["entities"] = resolved_entities
 
 # 3. Validate graph
-validator = GraphValidator()
-validation = validator.validate(kg)
-if not validation.valid:
-    print("Validation errors:", validation.errors)
-    return
+# Validation logic temporarily removed
 
 # 4. Analyze graph
 analyzer = GraphAnalyzer()

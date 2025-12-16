@@ -108,15 +108,15 @@ class TestOptionalDependencies(unittest.TestCase):
             
             self.assertIn("Plotly is required", str(cm.exception))
 
-    def test_quality_visualizer_without_plotly(self):
-        """Test QualityVisualizer behavior when plotly is missing."""
+    def test_analytics_visualizer_without_plotly(self):
+        """Test AnalyticsVisualizer behavior when plotly is missing."""
         with patch.dict(sys.modules, {'plotly': None, 'plotly.express': None, 'plotly.graph_objects': None}):
-            from semantica.visualization.quality_visualizer import QualityVisualizer, ProcessingError
+            from semantica.visualization.analytics_visualizer import AnalyticsVisualizer, ProcessingError
             
-            viz = QualityVisualizer()
+            viz = AnalyticsVisualizer()
             
             with self.assertRaises(ProcessingError) as cm:
-                viz.visualize_dashboard({})
+                viz.visualize_centrality_rankings({})
             
             self.assertIn("Plotly is required", str(cm.exception))
 

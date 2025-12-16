@@ -3,7 +3,7 @@ Visualization Module
 
 This module provides comprehensive visualization capabilities for all knowledge artifacts
 created by the Semantica framework, including knowledge graphs, ontologies, embeddings,
-semantic networks, quality metrics, analytics results, and temporal graphs with interactive
+semantic networks, analytics results, and temporal graphs with interactive
 and static output formats.
 
 Algorithms Used:
@@ -33,12 +33,6 @@ Semantic Network Visualization:
     - Network Structure Visualization: Node/edge extraction from semantic network, graph construction, layout computation, network rendering
     - Type Distribution: Node type frequency counting, edge type frequency counting, distribution chart generation, type-based color assignment
     - Relationship Patterns: Relationship frequency analysis, pattern detection, relationship matrix construction, pattern visualization
-
-Quality Visualization:
-    - Metrics Dashboard Construction: Quality score extraction (overall, consistency, completeness), gauge indicator generation, score-to-color mapping, dashboard layout construction
-    - Completeness Charts: Completeness metric calculation, completeness score visualization, field-level completeness tracking, completeness heatmap
-    - Consistency Visualization: Consistency score calculation, consistency issue detection, consistency heatmap generation, issue severity visualization
-    - Issue Tracking: Issue categorization (error, warning, info), issue severity ranking, issue frequency counting, issue timeline visualization
 
 Analytics Visualization:
     - Centrality Rankings: Centrality score extraction (degree, betweenness, closeness, eigenvector), score normalization, ranking calculation (argsort descending), top-k selection, bar chart generation
@@ -75,7 +69,6 @@ Key Features:
     - Ontology hierarchy and structure visualizations
     - Embedding dimensionality reduction and clustering visualizations
     - Semantic network visualizations
-    - Quality metrics dashboards and issue tracking
     - Graph analytics visualizations (centrality, communities, connectivity)
     - Temporal graph timeline and evolution visualizations
     - Customizable color schemes and layout algorithms
@@ -87,7 +80,6 @@ Main Classes:
     - OntologyVisualizer: Ontology hierarchy, properties, and structure visualizations
     - EmbeddingVisualizer: Vector embedding projections, similarity, and clustering
     - SemanticNetworkVisualizer: Semantic network structure and type distributions
-    - QualityVisualizer: Quality metrics dashboards, completeness, and consistency
     - AnalyticsVisualizer: Graph analytics, centrality rankings, and metrics dashboards
     - TemporalVisualizer: Temporal timeline, patterns, and snapshot comparisons
 
@@ -96,7 +88,6 @@ Convenience Functions:
     - visualize_ontology: Ontology visualization wrapper
     - visualize_embeddings: Embedding visualization wrapper
     - visualize_semantic_network: Semantic network visualization wrapper
-    - visualize_quality: Quality metrics visualization wrapper
     - visualize_analytics: Analytics visualization wrapper
     - visualize_temporal: Temporal visualization wrapper
     - get_visualization_method: Get visualization method by task and name
@@ -135,12 +126,10 @@ from .methods import (
     visualize_embeddings,
     visualize_kg,
     visualize_ontology,
-    visualize_quality,
     visualize_semantic_network,
     visualize_temporal,
 )
 from .ontology_visualizer import OntologyVisualizer
-from .quality_visualizer import QualityVisualizer
 from .registry import MethodRegistry, method_registry
 from .semantic_network_visualizer import SemanticNetworkVisualizer
 from .temporal_visualizer import TemporalVisualizer
@@ -151,7 +140,6 @@ __all__ = [
     "OntologyVisualizer",
     "EmbeddingVisualizer",
     "SemanticNetworkVisualizer",
-    "QualityVisualizer",
     "AnalyticsVisualizer",
     "TemporalVisualizer",
     # Convenience functions
@@ -159,7 +147,6 @@ __all__ = [
     "visualize_ontology",
     "visualize_embeddings",
     "visualize_semantic_network",
-    "visualize_quality",
     "visualize_analytics",
     "visualize_temporal",
     "get_visualization_method",

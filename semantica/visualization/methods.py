@@ -2,8 +2,8 @@
 Visualization Methods Module
 
 This module provides all visualization methods as simple, reusable functions for
-visualizing knowledge graphs, ontologies, embeddings, semantic networks, quality
-metrics, analytics, and temporal data. It supports multiple approaches and integrates
+visualizing knowledge graphs, ontologies, embeddings, semantic networks,
+analytics, and temporal data. It supports multiple approaches and integrates
 with the method registry for extensibility.
 
 Supported Methods:
@@ -32,13 +32,6 @@ Semantic Network Visualization:
     - "network": Network structure visualization
     - "node_types": Node type distribution visualization
     - "edge_types": Edge type distribution visualization
-
-Quality Visualization:
-    - "default": Default quality visualization using QualityVisualizer
-    - "dashboard": Quality metrics dashboard
-    - "completeness": Completeness metrics visualization
-    - "consistency": Consistency visualization
-    - "issues": Issue tracking visualization
 
 Analytics Visualization:
     - "default": Default analytics visualization using AnalyticsVisualizer
@@ -74,7 +67,6 @@ Main Functions:
     - visualize_ontology: Ontology visualization wrapper
     - visualize_embeddings: Embedding visualization wrapper
     - visualize_semantic_network: Semantic network visualization wrapper
-    - visualize_quality: Quality metrics visualization wrapper
     - visualize_analytics: Analytics visualization wrapper
     - visualize_temporal: Temporal visualization wrapper
     - get_visualization_method: Get visualization method by task and name
@@ -96,7 +88,6 @@ from .config import visualization_config
 from .embedding_visualizer import EmbeddingVisualizer
 from .kg_visualizer import KGVisualizer
 from .ontology_visualizer import OntologyVisualizer
-from .quality_visualizer import QualityVisualizer
 from .registry import method_registry
 from .semantic_network_visualizer import SemanticNetworkVisualizer
 from .temporal_visualizer import TemporalVisualizer
@@ -106,7 +97,7 @@ _global_kg_visualizer: Optional[KGVisualizer] = None
 _global_ontology_visualizer: Optional[OntologyVisualizer] = None
 _global_embedding_visualizer: Optional[EmbeddingVisualizer] = None
 _global_semantic_network_visualizer: Optional[SemanticNetworkVisualizer] = None
-_global_quality_visualizer: Optional[QualityVisualizer] = None
+
 _global_analytics_visualizer: Optional[AnalyticsVisualizer] = None
 _global_temporal_visualizer: Optional[TemporalVisualizer] = None
 
@@ -149,16 +140,6 @@ def _get_semantic_network_visualizer(**config) -> SemanticNetworkVisualizer:
         cfg.update(config)
         _global_semantic_network_visualizer = SemanticNetworkVisualizer(**cfg)
     return _global_semantic_network_visualizer
-
-
-def _get_quality_visualizer(**config) -> QualityVisualizer:
-    """Get or create global QualityVisualizer instance."""
-    global _global_quality_visualizer
-    if _global_quality_visualizer is None:
-        cfg = visualization_config.get_all()
-        cfg.update(config)
-        _global_quality_visualizer = QualityVisualizer(**cfg)
-    return _global_quality_visualizer
 
 
 def _get_analytics_visualizer(**config) -> AnalyticsVisualizer:
@@ -420,66 +401,6 @@ def visualize_semantic_network(
         )
 
 
-def visualize_quality(
-    quality_report: Any,
-    output: str = "interactive",
-    file_path: Optional[Union[str, Path]] = None,
-    method: str = "default",
-    **options,
-) -> Optional[Any]:
-    """
-    Visualize quality metrics.
-
-    Args:
-        quality_report: QualityReport object or dictionary
-        output: Output type
-        file_path: Output file path
-        method: Visualization method ("default", "dashboard", "completeness", "consistency", "issues")
-        **options: Additional options
-
-    Returns:
-        Visualization figure or None
-    """
-    # Check for custom method
-    custom_method = method_registry.get("quality", method)
-    if custom_method:
-        return custom_method(
-            quality_report, output=output, file_path=file_path, **options
-        )
-
-    # Use default method
-    viz = _get_quality_visualizer(**options)
-
-    if method == "dashboard" or method == "default":
-        return viz.visualize_dashboard(
-            quality_report, output=output, file_path=file_path, **options
-        )
-    elif method == "completeness":
-        completeness_metrics = options.pop("completeness_metrics", None)
-        return viz.visualize_completeness_metrics(
-            completeness_metrics or quality_report,
-            output=output,
-            file_path=file_path,
-            **options,
-        )
-    elif method == "consistency":
-        consistency_data = options.pop("consistency_data", None)
-        return viz.visualize_consistency_heatmap(
-            consistency_data or quality_report,
-            output=output,
-            file_path=file_path,
-            **options,
-        )
-    elif method == "issues":
-        return viz.visualize_issues(
-            quality_report, output=output, file_path=file_path, **options
-        )
-    else:
-        return viz.visualize_dashboard(
-            quality_report, output=output, file_path=file_path, **options
-        )
-
-
 def visualize_analytics(
     analytics_data: Dict[str, Any],
     output: str = "interactive",
@@ -611,7 +532,7 @@ def get_visualization_method(task: str, method_name: str) -> Optional[Any]:
     Get visualization method by task and name.
 
     Args:
-        task: Task type (kg, ontology, embedding, semantic_network, quality, analytics, temporal)
+        task: Task type (kg, ontology, embedding, semantic_network, analytics, temporal)
         method_name: Method name
 
     Returns:

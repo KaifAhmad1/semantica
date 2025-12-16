@@ -1,6 +1,6 @@
 # Visualization Module Usage Guide
 
-This comprehensive guide demonstrates how to use the visualization module for visualizing knowledge graphs, ontologies, embeddings, semantic networks, quality metrics, analytics results, and temporal graphs with interactive and static output formats.
+This comprehensive guide demonstrates how to use the visualization module for visualizing knowledge graphs, ontologies, embeddings, semantic networks, analytics results, and temporal graphs with interactive and static output formats.
 
 ## Table of Contents
 
@@ -9,16 +9,15 @@ This comprehensive guide demonstrates how to use the visualization module for vi
 3. [Ontology Visualization](#ontology-visualization)
 4. [Embedding Visualization](#embedding-visualization)
 5. [Semantic Network Visualization](#semantic-network-visualization)
-6. [Quality Visualization](#quality-visualization)
-7. [Analytics Visualization](#analytics-visualization)
-8. [Temporal Visualization](#temporal-visualization)
-9. [Layout Algorithms](#layout-algorithms)
-10. [Color Schemes](#color-schemes)
-11. [Export Formats](#export-formats)
-12. [Algorithms and Methods](#algorithms-and-methods)
-13. [Configuration](#configuration)
-14. [Advanced Examples](#advanced-examples)
-15. [Best Practices](#best-practices)
+6. [Analytics Visualization](#analytics-visualization)
+7. [Temporal Visualization](#temporal-visualization)
+8. [Layout Algorithms](#layout-algorithms)
+9. [Color Schemes](#color-schemes)
+10. [Export Formats](#export-formats)
+11. [Algorithms and Methods](#algorithms-and-methods)
+12. [Configuration](#configuration)
+13. [Advanced Examples](#advanced-examples)
+14. [Best Practices](#best-practices)
 
 ## Basic Usage
 
@@ -419,81 +418,6 @@ from semantica.visualization import SemanticNetworkVisualizer
 viz = SemanticNetworkVisualizer()
 
 fig = viz.visualize_edge_types(semantic_network, output="interactive", file_path="edge_types.png")
-```
-
-## Quality Visualization
-
-### Quality Dashboard
-
-```python
-from semantica.visualization import QualityVisualizer
-
-viz = QualityVisualizer()
-
-quality_report = {
-    "overall_score": 0.85,
-    "consistency_score": 0.90,
-    "completeness_score": 0.80
-}
-
-fig = viz.visualize_dashboard(quality_report, output="interactive", file_path="quality_dashboard.html")
-```
-
-### Completeness Metrics
-
-```python
-from semantica.visualization import QualityVisualizer
-
-viz = QualityVisualizer()
-
-completeness_metrics = {
-    "field1": 0.95,
-    "field2": 0.80,
-    "field3": 0.70
-}
-
-fig = viz.visualize_completeness_metrics(
-    completeness_metrics,
-    output="interactive",
-    file_path="completeness.html"
-)
-```
-
-### Consistency Visualization
-
-```python
-from semantica.visualization import QualityVisualizer
-
-viz = QualityVisualizer()
-
-consistency_data = {
-    "entity1": {"consistency": 0.9},
-    "entity2": {"consistency": 0.7},
-    "entity3": {"consistency": 0.85}
-}
-
-fig = viz.visualize_consistency_heatmap(
-    consistency_data,
-    output="interactive",
-    file_path="consistency.html"
-)
-```
-
-### Issue Tracking
-
-```python
-from semantica.visualization import QualityVisualizer
-
-viz = QualityVisualizer()
-
-quality_report = {
-    "issues": [
-        {"type": "error", "severity": "high", "message": "Missing required field"},
-        {"type": "warning", "severity": "medium", "message": "Inconsistent data"}
-    ]
-}
-
-fig = viz.visualize_issues(quality_report, output="interactive", file_path="issues.html")
 ```
 
 ## Analytics Visualization
@@ -951,19 +875,11 @@ viz = KGVisualizer(layout="circular", radius=1.5)
 - `visualize_similarity_heatmap(embeddings, labels, output, file_path, **options)`: Similarity heatmap
 - `visualize_clustering(embeddings, cluster_labels, method, output, file_path, **options)`: Clustering visualization
 - `visualize_multimodal_comparison(text_emb, image_emb, audio_emb, output, file_path, **options)`: Multi-modal comparison
-- `visualize_quality_metrics(embeddings, output, file_path, **options)`: Quality metrics (norms, stats)
 
 #### SemanticNetworkVisualizer Methods
 - `visualize_network(semantic_network, output, file_path, **options)`: Visualize semantic network
 - `visualize_node_types(semantic_network, output, file_path, **options)`: Node type distribution
 - `visualize_edge_types(semantic_network, output, file_path, **options)`: Edge type distribution
-
-#### QualityVisualizer Methods
-- `visualize_dashboard(quality_report, output, file_path, **options)`: Quality metrics dashboard
-- `visualize_score_distribution(quality_scores, output, file_path, **options)`: Score distribution
-- `visualize_issues(quality_report, output, file_path, **options)`: Issues by type and severity
-- `visualize_completeness_metrics(completeness_metrics, output, file_path, **options)`: Completeness metrics
-- `visualize_consistency_heatmap(consistency_data, output, file_path, **options)`: Consistency heatmap
 
 #### AnalyticsVisualizer Methods
 - `visualize_centrality_rankings(centrality, centrality_type, top_n, output, file_path, **options)`: Centrality rankings
@@ -985,7 +901,6 @@ viz = KGVisualizer(layout="circular", radius=1.5)
 - `visualize_ontology(ontology, output, file_path, method, **options)`: Ontology visualization wrapper
 - `visualize_embeddings(embeddings, labels, output, file_path, method, **options)`: Embedding visualization wrapper
 - `visualize_semantic_network(semantic_network, output, file_path, method, **options)`: Semantic network visualization wrapper
-- `visualize_quality(quality_report, output, file_path, method, **options)`: Quality visualization wrapper
 - `visualize_analytics(analytics_data, output, file_path, method, **options)`: Analytics visualization wrapper
 - `visualize_temporal(temporal_data, output, file_path, method, **options)`: Temporal visualization wrapper
 - `get_visualization_method(task, method_name)`: Get visualization method by task and name
@@ -1084,7 +999,10 @@ from semantica.visualization import (
     visualize_kg,
     visualize_embeddings,
     visualize_ontology,
-    visualize_quality
+    visualize_semantic_network,
+    visualize_analytics,
+    visualize_temporal,
+    list_available_methods
 )
 import numpy as np
 
@@ -1106,10 +1024,9 @@ ontology = {"classes": [...], "properties": [...]}
 fig_ont = visualize_ontology(ontology, method="hierarchy", 
                             output="html", file_path="ontology.html")
 
-# 4. Quality visualization
-quality_report = {"overall_score": 0.85, ...}
-fig_quality = visualize_quality(quality_report, output="html", 
-                                file_path="quality.html")
+# 4. Analytics visualization
+fig_analytics = visualize_analytics({"centrality": {}}, method="centrality", 
+                                  output="html", file_path="analytics.html")
 ```
 
 ### Custom Method Registration

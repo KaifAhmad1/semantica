@@ -186,9 +186,8 @@ print(f"New nodes since 2020: {len(diff.nodes)}")
 1.  **Clean Data First**: Use `EntityResolver` to resolve similar entities and prevent "entity explosion" (too many duplicate nodes).
 2.  **Use Provenance**: Always track sources (`track_history=True`) to debug where bad data came from.
 3.  **Temporal Granularity**: Choose the right granularity (Day vs Second) to balance performance and precision.
-4.  **Validate**: Run `GraphValidator` after building to ensure structural integrity.
-5.  **Deduplication**: Use `semantica.deduplication` module for advanced deduplication needs.
-6.  **Conflict Resolution**: Use `semantica.conflicts` module for conflict detection and resolution.
+4.  **Deduplication**: Use `semantica.deduplication` module for advanced deduplication needs.
+5.  **Conflict Resolution**: Use `semantica.conflicts` module for conflict detection and resolution.
 
 ---
 
@@ -204,7 +203,6 @@ print(f"New nodes since 2020: {len(diff.nodes)}")
 - [Building Knowledge Graphs](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/introduction/07_Building_Knowledge_Graphs.ipynb)
 - [Your First Knowledge Graph](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/introduction/08_Your_First_Knowledge_Graph.ipynb)
 - [Graph Analytics](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/introduction/10_Graph_Analytics.ipynb)
-- [Graph Quality](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/introduction/11_Graph_Quality.ipynb)
 - [Advanced Graph Analytics](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/advanced/02_Advanced_Graph_Analytics.ipynb)
 - [Temporal Knowledge Graphs](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/advanced/10_Temporal_Knowledge_Graphs.ipynb)
 - [Deduplication Module](deduplication.md) - Advanced deduplication

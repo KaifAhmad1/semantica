@@ -44,17 +44,5 @@ class TestMethodsWrappers(unittest.TestCase):
         mock_resolver_cls.assert_called_once()
         mock_resolver.resolve_entities.assert_called_once_with(entities)
 
-    @patch("semantica.kg.methods.GraphValidator")
-    def test_validate_graph(self, mock_validator_cls):
-        mock_validator = mock_validator_cls.return_value
-        mock_validator.validate.return_value = MagicMock(valid=True)
-        
-        graph = {"entities": [], "relationships": []}
-        result = methods.validate_graph(graph)
-        
-        mock_validator_cls.assert_called_once()
-        mock_validator.validate.assert_called_once_with(graph)
-        self.assertTrue(result.valid)
-
 if __name__ == "__main__":
     unittest.main()

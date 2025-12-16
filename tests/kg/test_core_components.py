@@ -9,7 +9,6 @@ import shutil
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 from semantica.kg.entity_resolver import EntityResolver
-from semantica.kg.graph_validator import GraphValidator
 from semantica.kg.provenance_tracker import ProvenanceTracker
 from semantica.kg.seed_manager import SeedManager
 
@@ -45,36 +44,6 @@ class TestEntityResolver(unittest.TestCase):
         # For now, let's just assert result structure is valid.
         self.assertIsInstance(resolved, list)
         self.assertTrue(len(resolved) <= 2)
-
-class TestGraphValidator(unittest.TestCase):
-    def setUp(self):
-        self.validator = GraphValidator()
-
-    def test_valid_graph(self):
-        graph = {
-            "entities": [{"id": "1", "type": "person"}],
-            "relationships": [{"source": "1", "target": "1", "type": "self"}]
-        }
-        result = self.validator.validate(graph)
-        self.assertTrue(result.valid)
-
-    def test_missing_ids(self):
-        graph = {
-            "entities": [{"type": "person"}], # Missing ID
-            "relationships": []
-        }
-        result = self.validator.validate(graph)
-        self.assertFalse(result.valid)
-
-    def test_broken_relationship(self):
-        graph = {
-            "entities": [{"id": "1"}],
-            "relationships": [{"source": "1", "target": "2"}] # Target 2 does not exist
-        }
-        result = self.validator.validate(graph)
-        # This might be valid structurally but invalid consistency-wise depending on implementation.
-        # GraphValidator usually checks if source/target exist.
-        self.assertFalse(result.valid)
 
 class TestProvenanceTracker(unittest.TestCase):
     def setUp(self):

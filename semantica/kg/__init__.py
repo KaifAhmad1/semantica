@@ -39,12 +39,6 @@ Entity Resolution:
     - Entity Merging: Property conflict resolution, metadata aggregation
     - ID Normalization: Canonical ID assignment for merged entities
 
-Graph Validation:
-    - Entity Validation: Required field checking (ID, type), unique ID verification
-    - Relationship Validation: Source/target reference validation, required field checking
-    - Consistency Checking: Type consistency verification, circular relationship detection (DFS-based cycle detection)
-    - Orphaned Entity Detection: Relationship-based entity connectivity checking
-    - Validation Reporting: Error and warning categorization
 
 Temporal Operations:
     - Time-Point Queries: Temporal filtering using valid_from/valid_until comparison
@@ -70,7 +64,6 @@ Key Features:
     - Temporal knowledge graph support with time-aware edges
     - Entity resolution
     - Comprehensive graph analytics (centrality, communities, connectivity)
-    - Graph validation and consistency checking
     - Temporal queries and pattern detection
     - Provenance tracking and lineage management
     - Method registry for extensibility
@@ -87,7 +80,6 @@ Main Classes:
     - CentralityCalculator: Centrality measures calculation
     - CommunityDetector: Community detection
     - ConnectivityAnalyzer: Connectivity analysis
-    - GraphValidator: Graph validation
     - SeedManager: Seed data management
     - MethodRegistry: Registry for custom KG methods
     - KGConfig: Configuration manager for KG module
@@ -120,7 +112,6 @@ from .connectivity_analyzer import ConnectivityAnalyzer
 from .entity_resolver import EntityResolver
 from .graph_analyzer import GraphAnalyzer
 from .graph_builder import GraphBuilder
-from .graph_validator import GraphValidator
 from .provenance_tracker import ProvenanceTracker
 from .registry import MethodRegistry, method_registry
 from .seed_manager import SeedManager
@@ -142,7 +133,6 @@ __all__ = [
     "CentralityCalculator",
     "CommunityDetector",
     "ConnectivityAnalyzer",
-    "GraphValidator",
     "SeedManager",
     # Registry and Configuration
     "MethodRegistry",

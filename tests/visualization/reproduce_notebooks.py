@@ -14,7 +14,6 @@ from semantica.visualization import (
     OntologyVisualizer,
     EmbeddingVisualizer,
     SemanticNetworkVisualizer,
-    QualityVisualizer,
     AnalyticsVisualizer,
     TemporalVisualizer
 )
@@ -122,10 +121,8 @@ def run_introduction_notebook():
     
     emb_viz = EmbeddingVisualizer()
     viz1 = emb_viz.visualize_multimodal_comparison(text_emb, image_emb, audio_emb, output="interactive")
-    viz2 = emb_viz.visualize_quality_metrics(text_emb, output="interactive")
     
     assert viz1 is not None, "Multimodal comparison failed"
-    assert viz2 is not None, "Quality metrics visualization failed"
     logger.info("Advanced Embedding Visualization successful")
 
 
@@ -174,18 +171,6 @@ def run_advanced_notebook():
         
     assert viz is not None, "Embedding visualization failed"
     logger.info("Embedding Visualization successful")
-
-    # Step 4: Quality Metrics Visualization
-    logger.info("Step 4: Quality Metrics Visualization")
-    quality_visualizer = QualityVisualizer()
-    quality_report = {
-        "overall_score": 0.85,
-        "consistency_score": 0.90,
-        "completeness_score": 0.80
-    }
-    viz = quality_visualizer.visualize_dashboard(quality_report, output="interactive")
-    assert viz is not None, "Quality dashboard visualization failed"
-    logger.info("Quality Visualization successful")
 
     # Step 5: Graph Analytics Visualization
     logger.info("Step 5: Graph Analytics Visualization")

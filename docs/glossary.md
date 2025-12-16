@@ -85,10 +85,10 @@ A comprehensive reference of terms and concepts used in Semantica.
 ## K
 
 **Knowledge Graph (KG)**
-: A structured representation of entities and their relationships, typically stored as a graph with nodes representing entities and edges representing relationships.
+:   A structured representation of knowledge using entities (nodes) and relationships (edges). KGs enable reasoning, querying, and semantic analysis of data.
 
-**Knowledge Graph Quality Assurance (KG QA)**
-: The process of ensuring knowledge graph quality through completeness validation, consistency checking, and conflict detection.
+**Knowledge Graph Analytics**
+:   The application of graph algorithms (e.g., centrality, community detection) to gain insights from the structure of a knowledge graph.
 
 ---
 

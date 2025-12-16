@@ -2,7 +2,7 @@
 Knowledge Graph Methods Module
 
 This module provides all knowledge graph methods as simple, reusable functions for
-building, analyzing, validating, and managing knowledge graphs. It supports multiple
+building, analyzing, and managing knowledge graphs. It supports multiple
 approaches and integrates with the method registry for extensibility.
 
 Supported Methods:
@@ -22,11 +22,6 @@ Entity Resolution:
     - "fuzzy": Fuzzy string matching resolution
     - "exact": Exact string matching resolution
     - "semantic": Semantic similarity matching resolution
-
-Graph Validation:
-    - "default": Comprehensive validation
-    - "structure": Structure-only validation
-    - "consistency": Consistency-only validation
 
 Conflict Detection:
     - "default": Comprehensive conflict detection
@@ -101,13 +96,6 @@ Conflict Detection:
     - Source Tracking: Multi-source conflict tracking, provenance-based conflict resolution
     - Conflict Categorization: Value conflicts vs relationship conflicts
 
-Graph Validation:
-    - Entity Validation: Required field checking (ID, type), unique ID verification
-    - Relationship Validation: Source/target reference validation, required field checking
-    - Consistency Checking: Type consistency verification, circular relationship detection (DFS-based cycle detection)
-    - Orphaned Entity Detection: Relationship-based entity connectivity checking
-    - Validation Reporting: Error and warning categorization
-
 Temporal Operations:
     - Time-Point Queries: Temporal filtering using valid_from/valid_until comparison
     - Time-Range Queries: Interval overlap detection, union/intersection aggregation
@@ -132,7 +120,6 @@ Main Functions:
     - build_kg: Knowledge graph building wrapper
     - analyze_graph: Graph analysis wrapper
     - resolve_entities: Entity resolution wrapper
-    - validate_graph: Graph validation wrapper
     - calculate_centrality: Centrality calculation wrapper
     - detect_communities: Community detection wrapper
     - analyze_connectivity: Connectivity analysis wrapper
@@ -161,7 +148,6 @@ from .connectivity_analyzer import ConnectivityAnalyzer
 from .entity_resolver import EntityResolver
 from .graph_analyzer import GraphAnalyzer
 from .graph_builder import GraphBuilder
-from .graph_validator import GraphValidator
 from .registry import method_registry
 from .temporal_query import TemporalGraphQuery
 
@@ -309,58 +295,6 @@ def resolve_entities(
 
     except Exception as e:
         logger.error(f"Failed to resolve entities: {e}")
-        raise
-
-
-def validate_graph(graph: Dict[str, Any], method: str = "default", **kwargs) -> Any:
-    """
-    Validate knowledge graph (convenience function).
-
-    This is a user-friendly wrapper that validates a knowledge graph using the specified method.
-
-    Args:
-        graph: Knowledge graph to validate
-        method: Validation method (default: "default")
-            - "default": Comprehensive validation
-            - "structure": Structure-only validation
-            - "consistency": Consistency-only validation
-        **kwargs: Additional options passed to GraphValidator
-
-    Returns:
-        ValidationResult object containing:
-            - valid: True if valid, False otherwise
-            - errors: List of error messages
-            - warnings: List of warning messages
-
-    Examples:
-        >>> from semantica.kg.methods import validate_graph
-        >>> result = validate_graph(kg, method="default")
-        >>> if result.valid:
-        ...     print("Graph is valid")
-    """
-    # Check for custom method in registry
-    custom_method = method_registry.get("validate", method)
-    if custom_method:
-        try:
-            return custom_method(graph, **kwargs)
-        except Exception as e:
-            logger.warning(
-                f"Custom method {method} failed: {e}, falling back to default"
-            )
-
-    try:
-        # Get config
-        config = kg_config.get_method_config("validate")
-        config.update(kwargs)
-
-        validator = GraphValidator(**config)
-        if method == "consistency":
-            return validator.check_consistency(graph)
-        else:
-            return validator.validate(graph)
-
-    except Exception as e:
-        logger.error(f"Failed to validate graph: {e}")
         raise
 
 

@@ -408,7 +408,7 @@ duplicates = DuplicateDetector().find_duplicates(entities=kg.entities, similarit
 print(f"Conflicts: {len(conflicts)} | Duplicates: {len(duplicates)}")
 ```
 
-[**Cookbook: Conflict Detection**](https://github.com/Hawksight-AI/semantica/tree/main/cookbook/introduction/17_Conflict_Detection.ipynb) • [**Deduplication**](https://github.com/Hawksight-AI/semantica/tree/main/cookbook/introduction/18_Deduplication.ipynb) • [**Graph Quality**](https://github.com/Hawksight-AI/semantica/tree/main/cookbook/introduction/11_Graph_Quality.ipynb) • [**Conflict Resolution**](https://github.com/Hawksight-AI/semantica/tree/main/cookbook/advanced/04_Conflict_Resolution_Strategies.ipynb)
+[**Cookbook: Conflict Detection**](https://github.com/Hawksight-AI/semantica/tree/main/cookbook/introduction/17_Conflict_Detection.ipynb) • [**Deduplication**](https://github.com/Hawksight-AI/semantica/tree/main/cookbook/introduction/18_Deduplication.ipynb) • [**Conflict Resolution**](https://github.com/Hawksight-AI/semantica/tree/main/cookbook/advanced/04_Conflict_Resolution_Strategies.ipynb)
 
 ### Export & Integration
 

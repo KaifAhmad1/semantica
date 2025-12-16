@@ -128,7 +128,6 @@ Project high-dimensional vectors to 2D/3D.
 | `visualize_similarity_heatmap(embeddings, labels)` | Pairwise similarity | Cosine |
 | `visualize_clustering(embeddings, cluster_labels, method)` | Colored by cluster | UMAP/t-SNE/PCA |
 | `visualize_multimodal_comparison(text_emb, image_emb, audio_emb)` | Compare modalities | UMAP/PCA |
-| `visualize_quality_metrics(embeddings)` | Norms and stats | N/A |
 
 **Example:**
 
@@ -155,20 +154,6 @@ Visualizes semantic network structure and distributions.
 | `visualize_network(semantic_network)` | Network visualization |
 | `visualize_node_types(semantic_network)` | Node type distribution |
 | `visualize_edge_types(semantic_network)` | Edge type distribution |
-
-### QualityVisualizer
-
-Visualizes data quality metrics and issues.
-
-**Methods:**
-
-| Method | Description |
-|--------|-------------|
-| `visualize_dashboard(quality_report)` | Quality metrics dashboard |
-| `visualize_score_distribution(quality_scores)` | Score histogram |
-| `visualize_issues(quality_report)` | Issues by type/severity |
-| `visualize_completeness_metrics(completeness_metrics)` | Completeness bar chart |
-| `visualize_consistency_heatmap(consistency_data)` | Consistency heatmap |
 
 ### AnalyticsVisualizer
 
@@ -209,7 +194,6 @@ from semantica.visualization import (
     visualize_embeddings,
     visualize_ontology,
     visualize_semantic_network,
-    visualize_quality,
     visualize_analytics,
     visualize_temporal,
     list_available_methods,
@@ -220,7 +204,6 @@ visualize_kg(kg, output="graph.html")
 visualize_embeddings(embeddings, method="umap")
 visualize_ontology(ontology, method="hierarchy")
 visualize_semantic_network(semantic_network)
-visualize_quality(quality_report)
 visualize_analytics({"centrality": centrality}, method="centrality")
 visualize_temporal(temporal_data, method="timeline")
 list_available_methods()
