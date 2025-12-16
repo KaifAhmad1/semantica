@@ -12,7 +12,7 @@ This module provides the main entry point for the Semantica framework, handling:
 - System health monitoring
 
 Example Usage:
-    >>> from semantica import Semantica
+    >>> from semantica.core import Semantica
     >>> framework = Semantica()
     >>> result = framework.build_knowledge_base(
     ...     sources=["doc1.pdf", "doc2.docx"],

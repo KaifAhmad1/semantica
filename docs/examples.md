@@ -48,7 +48,7 @@ Real-world examples and use cases for Semantica.
 Build a knowledge graph from a single document.
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 
 semantica = Semantica()
 
@@ -71,7 +71,7 @@ print(f"Relationships: {len(kg['relationships'])}")
 Extract entities from text using Named Entity Recognition.
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 
 semantica = Semantica()
 text = "Apple Inc. is a technology company founded by Steve Jobs."
@@ -88,7 +88,7 @@ for entity in entities["entities"]:
 Combine data from multiple sources into a unified knowledge graph.
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 
 semantica = Semantica()
 sources = [
@@ -111,7 +111,7 @@ print(f"Unified graph: {len(result['knowledge_graph']['entities'])} entities")
 Resolve conflicts in data from multiple sources.
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 from semantica.conflicts import ConflictResolver
 
 semantica = Semantica()
@@ -130,7 +130,7 @@ resolved = resolver.resolve_conflicts(conflicts)
 Use custom configuration for specific use cases.
 
 ```python
-from semantica import Semantica, Config
+from semantica.core import Semantica, Config
 
 config = Config(
     embeddings=True,
@@ -150,7 +150,7 @@ result = semantica.build_knowledge_base(["document.pdf"])
 Build knowledge graph incrementally.
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 
 semantica = Semantica()
 
@@ -236,7 +236,7 @@ Process data streams in real-time.
 
 ```python
 from semantica.ingest import StreamIngestor
-from semantica import Semantica
+from semantica.core import Semantica
 
 semantica = Semantica()
 stream_ingestor = StreamIngestor(stream_uri="kafka://localhost:9092/topic")
@@ -257,7 +257,7 @@ for batch in stream_ingestor.stream(batch_size=100):
 Process large datasets efficiently with batching.
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 
 semantica = Semantica()
 sources = [f"data/doc_{i}.pdf" for i in range(1000)]

@@ -99,7 +99,7 @@ Additional resources, tutorials, and advanced learning materials for Semantica.
 ### Common Operations
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 semantica = Semantica()
 
 # Build Knowledge Graph

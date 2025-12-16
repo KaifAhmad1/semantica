@@ -20,28 +20,28 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 # Core imports
-from .core import Config, ConfigManager, LifecycleManager, PluginRegistry, Semantica
+# from .core import Config, ConfigManager, LifecycleManager, PluginRegistry, Semantica
 
 
 # Pipeline imports
-from .pipeline import (
-    ExecutionEngine,
-    FailureHandler,
-    ParallelismManager,
-    PipelineBuilder,
-    PipelineValidator,
-    ResourceScheduler,
-)
+# from .pipeline import (
+#     ExecutionEngine,
+#     FailureHandler,
+#     ParallelismManager,
+#     PipelineBuilder,
+#     PipelineValidator,
+#     ResourceScheduler,
+# )
 
 # Visualization
-from .visualization import (
-    AnalyticsVisualizer,
-    EmbeddingVisualizer,
-    KGVisualizer,
-    OntologyVisualizer,
-    SemanticNetworkVisualizer,
-    TemporalVisualizer,
-)
+# from .visualization import (
+#     AnalyticsVisualizer,
+#     EmbeddingVisualizer,
+#     KGVisualizer,
+#     OntologyVisualizer,
+#     SemanticNetworkVisualizer,
+#     TemporalVisualizer,
+# )
 
 
 # Module proxy class for submodule access
@@ -193,28 +193,7 @@ _modules = _SemanticaModules()
 
 
 
-__all__ = [
-    # Core
-    "Semantica",
-    "Config",
-    "ConfigManager",
-    "LifecycleManager",
-    "PluginRegistry",
-    # Pipeline
-    "PipelineBuilder",
-    "ExecutionEngine",
-    "FailureHandler",
-    "ParallelismManager",
-    "ResourceScheduler",
-    "PipelineValidator",
-    # Visualization
-    "KGVisualizer",
-    "OntologyVisualizer",
-    "EmbeddingVisualizer",
-    "SemanticNetworkVisualizer",
-    "AnalyticsVisualizer",
-    "TemporalVisualizer",
-]
+__all__ = []
 
 
 # Make submodules accessible via dot notation

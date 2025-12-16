@@ -63,7 +63,7 @@ Semantica is designed to solve complex data challenges across various domains. T
 **Code Example**:
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 from semantica.visualization import KGVisualizer
 
 # Initialize
@@ -95,7 +95,7 @@ visualizer.visualize(kg, output_path="citation_network.html")
 **Code Example**:
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 from semantica.ontology import OntologyGenerator
 
 semantica = Semantica()
@@ -285,7 +285,7 @@ ontology = ontology_gen.generate_from_graph(kg)
 **Code Example**:
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 
 semantica = Semantica()
 legal_entities = ["Party", "Clause", "Section", "Contract", "Term"]
@@ -317,7 +317,7 @@ print(f"Found {len(clause_rels)} clause relationships")
 **Code Example**:
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 from semantica.ingest import FileIngestor
 
 semantica = Semantica()
@@ -349,7 +349,7 @@ print(f"Hashtags: {len(hashtags)}")
 **Code Example**:
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 from semantica.vector_store import VectorStore, HybridSearch
 
 semantica = Semantica()

@@ -37,7 +37,7 @@ See the [Installation Guide](installation.md) for detailed instructions.
 Let's build a knowledge graph from a document:
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 
 # Initialize Semantica
 semantica = Semantica()
@@ -117,7 +117,7 @@ Extracted Relationships:
 Combine data from multiple sources:
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 
 semantica = Semantica()
 
@@ -149,7 +149,7 @@ print(f"Sources processed: {len(result['metadata']['sources'])}")
 Visualize the knowledge graph you created:
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 from semantica.visualization import KGVisualizer
 
 semantica = Semantica()
@@ -171,7 +171,7 @@ Open `graph.html` in your browser to see an interactive visualization.
 Export your knowledge graph in various formats:
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 from semantica.export import export_rdf, export_json, export_csv, export_owl
 
 semantica = Semantica()
@@ -194,7 +194,7 @@ print("Exported knowledge graph to multiple formats")
 ### Pattern 1: Process Text Directly
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 
 semantica = Semantica()
 
@@ -205,7 +205,7 @@ result = semantica.process_document(text)
 ### Pattern 2: Custom Configuration
 
 ```python
-from semantica import Semantica, Config
+from semantica.core import Semantica, Config
 
 # Create custom configuration
 config = Config(
@@ -222,7 +222,7 @@ result = semantica.build_knowledge_base(["document.pdf"])
 ### Pattern 3: Incremental Building
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 
 semantica = Semantica()
 

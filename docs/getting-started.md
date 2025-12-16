@@ -72,7 +72,7 @@ Before installing Semantica, ensure you have:
 
 ```python
 import semantica
-print(semantica.version)
+print(semantica.__version__)
 ```
 
 ---

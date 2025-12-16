@@ -65,7 +65,7 @@ graph LR
     Build a knowledge graph from a document with just a few lines:
     
     ```python
-    from semantica import Semantica
+    from semantica.core import Semantica
 
     # Initialize Semantica with default settings
     semantica = Semantica()
@@ -127,7 +127,7 @@ graph LR
     Merge knowledge from multiple data sources:
     
     ```python
-    from semantica import Semantica
+    from semantica.core import Semantica
 
     semantica = Semantica()
 
@@ -1220,7 +1220,7 @@ flowchart TD
     Build a knowledge base and query with GraphRAG:
     
     ```python
-    from semantica import Semantica
+    from semantica.core import Semantica
     from semantica.vector_store import VectorStore, store_vectors, search_vectors
     from semantica.semantic_extract import NamedEntityRecognizer
     from semantica.embeddings import embed_text
@@ -1433,7 +1433,7 @@ flowchart TD
     Integrate with LLM providers for answer generation:
     
     ```python
-    from semantica import Semantica
+    from semantica.core import Semantica
     from semantica.semantic_extract import create_provider, OpenAIProvider
     from semantica.context import ContextRetriever
     from semantica.vector_store import VectorStore
@@ -2680,7 +2680,7 @@ import os
 api_key = os.getenv("OPENAI_API_KEY")
 
 # Good: Use config files
-from semantica import Config
+from semantica.core import Config
 config = Config.from_file("config.yaml")
 semantica = Semantica(config=config)
 ```
@@ -2705,7 +2705,7 @@ semantica = Semantica(config=config)
 - Gracefully handle API failures
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 import logging
 
 logging.basicConfig(level=logging.INFO)

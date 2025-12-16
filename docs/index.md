@@ -417,7 +417,7 @@ Power GraphRAG applications with:
 ## 🚦 Quick Example
 
 ```python
-from semantica import Semantica
+from semantica.core import Semantica
 
 # Initialize
 core = Semantica()
