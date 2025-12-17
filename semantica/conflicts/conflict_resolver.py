@@ -241,6 +241,17 @@ class ConflictResolver:
                 result = self._resolve_by_voting(conflict)
 
             result.resolution_strategy = strategy.value
+            conflict_type = (
+                conflict.conflict_type.value
+                if hasattr(conflict.conflict_type, "value")
+                else conflict.conflict_type
+            )
+            result.metadata.setdefault("conflict_type", conflict_type)
+            result.metadata.setdefault("entity_id", conflict.entity_id)
+            result.metadata.setdefault("property_name", conflict.property_name)
+            result.metadata.setdefault("relationship_id", conflict.relationship_id)
+            if conflict.metadata:
+                result.metadata.setdefault("conflict_metadata", conflict.metadata)
             self.resolution_history.append(result)
 
             self.progress_tracker.stop_tracking(
