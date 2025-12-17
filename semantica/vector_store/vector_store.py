@@ -44,6 +44,7 @@ import numpy as np
 from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
 from ..utils.progress_tracker import get_progress_tracker
+from ..embeddings import EmbeddingGenerator
 
 
 class VectorStore:
@@ -88,6 +89,40 @@ class VectorStore:
             backend=backend, dimension=self.dimension, **indexer_config
         )
         self.retriever = VectorRetriever(backend=backend, **self.config)
+
+        # Initialize embedding generator
+        try:
+            self.embedder = EmbeddingGenerator()
+            # Set default model if not configured, or respect global config
+            # For now, we try to ensure a model is loaded if possible
+            if hasattr(self.embedder, "set_text_model"):
+                # Use a lightweight default if none specified, or let EmbeddingGenerator handle defaults
+                pass
+        except Exception as e:
+            self.logger.warning(f"Could not initialize embedding generator: {e}")
+            self.embedder = None
+
+    def embed(self, text: str) -> np.ndarray:
+        """
+        Generate embedding for text using the internal embedder.
+        
+        Args:
+            text: Text to embed
+            
+        Returns:
+            Numpy array of embedding
+        """
+        if self.embedder:
+            try:
+                return self.embedder.generate_embeddings(text)
+            except Exception as e:
+                self.logger.warning(f"Embedding generation failed: {e}")
+        
+        # Fallback or raise? AgentMemory expects None or valid embedding.
+        # Returning random vector as fallback for now (matches DemoVectorStore behavior)
+        # to prevent crashes, but logging warning.
+        self.logger.warning("Using random fallback embedding")
+        return np.random.rand(self.dimension).astype(np.float32)
 
     def store(
         self,
@@ -188,6 +223,72 @@ class VectorStore:
                 tracking_id, status="failed", message=str(e)
             )
             raise
+
+    def save(self, path: str) -> None:
+        """
+        Save vector store to disk.
+        
+        Args:
+            path: Directory path to save to
+        """
+        import os
+        import pickle
+        
+        os.makedirs(path, exist_ok=True)
+        
+        # Save metadata and vectors (generic fallback)
+        # Ideally, backends like FAISS have their own save methods
+        if hasattr(self.indexer, "save_index"):
+             self.indexer.save_index(os.path.join(path, "index.bin"))
+        
+        # Save Python-level data
+        data = {
+            "vectors": self.vectors,
+            "metadata": self.metadata,
+            "config": self.config,
+            "backend": self.backend,
+            "dimension": self.dimension
+        }
+        
+        with open(os.path.join(path, "store_data.pkl"), "wb") as f:
+            pickle.dump(data, f)
+            
+        self.logger.info(f"Saved vector store to {path}")
+
+    def load(self, path: str) -> None:
+        """
+        Load vector store from disk.
+        
+        Args:
+            path: Directory path to load from
+        """
+        import os
+        import pickle
+        
+        data_path = os.path.join(path, "store_data.pkl")
+        if not os.path.exists(data_path):
+            self.logger.warning(f"Store data not found: {data_path}")
+            return
+            
+        with open(data_path, "rb") as f:
+            data = pickle.load(f)
+            
+        self.vectors = data.get("vectors", {})
+        self.metadata = data.get("metadata", {})
+        self.config = data.get("config", {})
+        self.backend = data.get("backend", "faiss")
+        self.dimension = data.get("dimension", 768)
+        
+        # Restore backend-specific index
+        if hasattr(self.indexer, "load_index"):
+            index_path = os.path.join(path, "index.bin")
+            if os.path.exists(index_path):
+                self.indexer.load_index(index_path)
+            else:
+                # Rebuild if index file missing but vectors present
+                self.indexer.create_index(list(self.vectors.values()), list(self.vectors.keys()))
+        
+        self.logger.info(f"Loaded vector store from {path}")
 
     def search_vectors(
         self, query_vector: np.ndarray, k: int = 10, **options

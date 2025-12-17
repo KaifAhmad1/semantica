@@ -266,6 +266,59 @@ class ContextGraph:
             metadata=properties
         ))
 
+    def save_to_file(self, path: str) -> None:
+        """
+        Save context graph to file (JSON format).
+        
+        Args:
+            path: File path to save to
+        """
+        import json
+        
+        data = {
+            "nodes": [node.to_dict() for node in self.nodes.values()],
+            "edges": [edge.to_dict() for edge in self.edges]
+        }
+        
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+            
+        self.logger.info(f"Saved context graph to {path}")
+
+    def load_from_file(self, path: str) -> None:
+        """
+        Load context graph from file (JSON format).
+        
+        Args:
+            path: File path to load from
+        """
+        import json
+        import os
+        
+        if not os.path.exists(path):
+            self.logger.warning(f"File not found: {path}")
+            return
+            
+        with open(path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            
+        # Clear existing
+        self.nodes.clear()
+        self.edges.clear()
+        self._adjacency.clear()
+        self.node_type_index.clear()
+        self.edge_type_index.clear()
+        
+        # Load nodes
+        nodes = data.get("nodes", [])
+        self.add_nodes(nodes)
+        
+        # Load edges
+        edges = data.get("edges", [])
+        self.add_edges(edges)
+        
+        self.logger.info(f"Loaded context graph from {path}")
+
     def find_node(self, node_id: str) -> Optional[Dict[str, Any]]:
         """Find a node by ID."""
         node = self.nodes.get(node_id)
@@ -277,6 +330,7 @@ class ContextGraph:
                 "metadata": node.metadata
             }
         return None
+
 
     def find_nodes(self, node_type: Optional[str] = None) -> List[Dict[str, Any]]:
         """Find nodes, optionally filtered by type."""

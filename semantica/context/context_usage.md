@@ -115,31 +115,39 @@ deleted_count = context.forget(days_old=90)
 print(f"Deleted {deleted_count} old memories")
 ```
 
-## Basic Usage
+### Persistence (Save/Load)
 
-### Using Main Classes Directly
+You can save the entire state of the agent (Memory, Graph, and Vector Index) to disk and reload it later.
 
 ```python
-from semantica.context import ContextGraph, AgentMemory, ContextRetriever
+# Save state
+context.save("./my_agent_state")
 
-# Step 1: Build context graph
-graph = ContextGraph()
-# Add entities and relationships manually or via build methods
-entities = [{"id": "e1", "text": "Python", "type": "Language"}]
-relationships = [] # ...
-graph.build_from_entities_and_relationships(entities, relationships)
+# Load state
+new_context = AgentContext(vector_store=VectorStore(), knowledge_graph=ContextGraph())
+new_context.load("./my_agent_state")
+```
 
-# Step 2: Initialize agent memory with token limits
-memory = AgentMemory(
-    vector_store=vs, 
-    knowledge_graph=graph,
-    token_limit=1000  # Custom token limit
-)
-memory_id = memory.store("User asked about Python", metadata={"type": "conversation"})
+## Basic Usage
 
-# Step 3: Retrieve context
-retriever = ContextRetriever(memory_store=memory, knowledge_graph=graph, vector_store=vs)
-results = retriever.retrieve("Python programming", max_results=5)
+### Initialization with Backends
+
+You can configure the `VectorStore` with different backends (`inmemory`, `faiss`, `chroma`, `qdrant`, `weaviate`, `milvus`) and embedding models (including FastEmbed).
+
+```python
+from semantica.context import AgentContext, ContextGraph
+from semantica.vector_store import VectorStore
+
+# Initialize Vector Store with FastEmbed
+vs = VectorStore(backend="inmemory", dimension=384)
+if hasattr(vs, "embedder") and vs.embedder:
+    vs.embedder.set_text_model(method="fastembed", model_name="BAAI/bge-small-en-v1.5")
+
+# Initialize Context Graph
+kg = ContextGraph()
+
+# Initialize Agent Context
+context = AgentContext(vector_store=vs, knowledge_graph=kg)
 ```
 
 ## Context Graph Construction

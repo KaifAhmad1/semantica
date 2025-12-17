@@ -129,6 +129,55 @@ class AgentMemory:
         # Statistics
         self.stats = {"total_items": 0, "items_by_type": {}, "last_accessed": None}
 
+    def save(self, path: str) -> None:
+        """
+        Save memory state to disk.
+        
+        Args:
+            path: Directory path to save to
+        """
+        import os
+        import pickle
+        
+        os.makedirs(path, exist_ok=True)
+        
+        data = {
+            "memory_items": self.memory_items,
+            "memory_index": self.memory_index,
+            "short_term_memory": self.short_term_memory,
+            "stats": self.stats
+        }
+        
+        with open(os.path.join(path, "agent_memory.pkl"), "wb") as f:
+            pickle.dump(data, f)
+            
+        self.logger.info(f"Saved agent memory to {path}")
+
+    def load(self, path: str) -> None:
+        """
+        Load memory state from disk.
+        
+        Args:
+            path: Directory path to load from
+        """
+        import os
+        import pickle
+        
+        file_path = os.path.join(path, "agent_memory.pkl")
+        if not os.path.exists(file_path):
+            self.logger.warning(f"Memory file not found: {file_path}")
+            return
+            
+        with open(file_path, "rb") as f:
+            data = pickle.load(f)
+            
+        self.memory_items = data.get("memory_items", {})
+        self.memory_index = data.get("memory_index", deque(maxlen=self.max_memory_size))
+        self.short_term_memory = data.get("short_term_memory", [])
+        self.stats = data.get("stats", {"total_items": 0, "items_by_type": {}, "last_accessed": None})
+        
+        self.logger.info(f"Loaded agent memory from {path}")
+
     def store(
         self,
         content: str,
