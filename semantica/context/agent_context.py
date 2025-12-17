@@ -156,6 +156,73 @@ class AgentContext:
         """Access underlying ContextGraph instance for building."""
         return self._graph_builder
 
+    def save(self, path: str) -> None:
+        """
+        Save context state (memory, vector store, graph) to disk.
+        
+        Args:
+            path: Directory path to save to
+        """
+        import os
+        os.makedirs(path, exist_ok=True)
+        
+        # 1. Save AgentMemory state
+        if hasattr(self._memory, "save"):
+            self._memory.save(path)
+            
+        # 2. Save VectorStore state
+        if hasattr(self.vector_store, "save"):
+            vs_path = os.path.join(path, "vector_store")
+            self.vector_store.save(vs_path)
+            
+        # 3. Save KnowledgeGraph state
+        if self.knowledge_graph:
+            if hasattr(self.knowledge_graph, "save_to_file"):
+                # JSON export for ContextGraph
+                kg_path = os.path.join(path, "knowledge_graph.json")
+                self.knowledge_graph.save_to_file(kg_path)
+            elif hasattr(self.knowledge_graph, "save"):
+                # Generic save
+                kg_path = os.path.join(path, "knowledge_graph")
+                self.knowledge_graph.save(kg_path)
+                
+        self.logger.info(f"Saved agent context to {path}")
+
+    def load(self, path: str) -> None:
+        """
+        Load context state from disk.
+        
+        Args:
+            path: Directory path to load from
+        """
+        import os
+        
+        if not os.path.exists(path):
+            self.logger.warning(f"Context path not found: {path}")
+            return
+            
+        # 1. Load AgentMemory state
+        if hasattr(self._memory, "load"):
+            self._memory.load(path)
+            
+        # 2. Load VectorStore state
+        if hasattr(self.vector_store, "load"):
+            vs_path = os.path.join(path, "vector_store")
+            if os.path.exists(vs_path):
+                self.vector_store.load(vs_path)
+            
+        # 3. Load KnowledgeGraph state
+        if self.knowledge_graph:
+            kg_json_path = os.path.join(path, "knowledge_graph.json")
+            kg_dir_path = os.path.join(path, "knowledge_graph")
+            
+            if hasattr(self.knowledge_graph, "load_from_file") and os.path.exists(kg_json_path):
+                self.knowledge_graph.load_from_file(kg_json_path)
+            elif hasattr(self.knowledge_graph, "load") and os.path.exists(kg_dir_path):
+                self.knowledge_graph.load(kg_dir_path)
+                
+        self.logger.info(f"Loaded agent context from {path}")
+
     def store(
         self,
         content: Union[str, List[str], List[Dict[str, Any]]],
