@@ -1,7 +1,7 @@
 """
-LLM Enhancement Module
+LLM Extraction Module
 
-This module provides LLM-based extraction enhancement capabilities using multiple
+This module provides LLM-based extraction and enhancement capabilities using multiple
 language model providers to improve entity and relation extraction quality through
 post-processing and refinement.
 
@@ -38,23 +38,23 @@ Key Features:
     - Structured prompt generation for enhancement tasks
 
 Main Classes:
-    - LLMEnhancer: Main LLM enhancement coordinator
+    - LLMExtraction: Main LLM extraction coordinator
     - LLMResponse: LLM response representation dataclass
 
 Example Usage:
-    >>> from semantica.semantic_extract import LLMEnhancer
+    >>> from semantica.semantic_extract import LLMExtraction
     >>> # Using OpenAI
-    >>> enhancer = LLMEnhancer(provider="openai", model="gpt-4")
-    >>> enhanced_entities = enhancer.enhance_entities(text, entities)
-    >>> enhanced_relations = enhancer.enhance_relations(text, relations)
+    >>> extractor = LLMExtraction(provider="openai", model="gpt-4")
+    >>> enhanced_entities = extractor.enhance_entities(text, entities)
+    >>> enhanced_relations = extractor.enhance_relations(text, relations)
     >>> 
     >>> # Using Gemini
-    >>> enhancer = LLMEnhancer(provider="gemini", model="gemini-pro")
-    >>> enhanced_entities = enhancer.enhance_entities(text, entities)
+    >>> extractor = LLMExtraction(provider="gemini", model="gemini-pro")
+    >>> enhanced_entities = extractor.enhance_entities(text, entities)
     >>> 
     >>> # Using Ollama (local)
-    >>> enhancer = LLMEnhancer(provider="ollama", model="llama2")
-    >>> enhanced_entities = enhancer.enhance_entities(text, entities)
+    >>> extractor = LLMExtraction(provider="ollama", model="llama2")
+    >>> enhanced_entities = extractor.enhance_entities(text, entities)
 
 Author: Semantica Contributors
 License: MIT
@@ -81,12 +81,12 @@ class LLMResponse:
     metadata: Dict[str, Any]
 
 
-class LLMEnhancer:
-    """LLM-based extraction enhancer."""
+class LLMExtraction:
+    """LLM-based extraction and enhancement."""
 
     def __init__(self, provider: str = "openai", **config):
         """
-        Initialize LLM enhancer.
+        Initialize LLM extraction.
 
         Args:
             provider: LLM provider ("openai", "gemini", "groq", "anthropic", "ollama", "huggingface_llm")
@@ -95,7 +95,7 @@ class LLMEnhancer:
                 - api_key: API key (from environment if not provided)
                 - temperature: Temperature for generation
         """
-        self.logger = get_logger("llm_enhancer")
+        self.logger = get_logger("llm_extraction")
         self.config = config
         self.progress_tracker = get_progress_tracker()
 
@@ -109,6 +109,38 @@ class LLMEnhancer:
         except Exception as e:
             self.logger.warning(f"Failed to initialize {provider} provider: {e}")
             self.provider = None
+
+    def enhance_extractions(
+        self, extractions: List[Any], text: str, **options
+    ) -> List[Any]:
+        """
+        Enhance generic extractions (entities, relations, etc.).
+
+        Args:
+            extractions: List of extractions
+            text: Input text
+            **options: Enhancement options
+
+        Returns:
+            list: Enhanced extractions
+        """
+        if not extractions:
+            return []
+
+        # Determine type based on first element
+        first = extractions[0]
+
+        # Check for Entity
+        if hasattr(first, "text") and hasattr(first, "label") and hasattr(first, "start_char"):
+            return self.enhance_entities(text, extractions, **options)
+
+        # Check for Relation
+        if hasattr(first, "subject") and hasattr(first, "predicate") and hasattr(first, "object"):
+            return self.enhance_relations(text, extractions, **options)
+
+        # Default/Event fallback (mock implementation for now)
+        self.logger.warning("Extraction type not fully supported for enhancement. Returning original.")
+        return extractions
 
     def enhance_entities(
         self, text: str, entities: List[Entity], **options
@@ -126,7 +158,7 @@ class LLMEnhancer:
         """
         tracking_id = self.progress_tracker.start_tracking(
             module="semantic_extract",
-            submodule="LLMEnhancer",
+            submodule="LLMExtraction",
             message="Enhancing entities using LLM",
         )
 
@@ -264,3 +296,7 @@ Return the enhanced relation list in JSON format."""
         # Simplified parsing - in practice would parse JSON
         # For now, return original relations
         return original_relations
+
+
+# Alias for backward compatibility
+LLMEnhancer = LLMExtraction

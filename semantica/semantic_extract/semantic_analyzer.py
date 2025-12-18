@@ -192,6 +192,10 @@ class SemanticAnalyzer:
         """
         return self.role_labeler.label_roles(text, **options)
 
+    def analyze_semantic_roles(self, text: str, **options) -> List[SemanticRole]:
+        """Alias for label_semantic_roles."""
+        return self.label_semantic_roles(text, **options)
+
     def cluster_semantically(
         self, texts: List[str], **options
     ) -> List[SemanticCluster]:

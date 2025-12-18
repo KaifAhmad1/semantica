@@ -25,7 +25,7 @@ Main Classes:
     - TripletExtractor: RDF triplet extraction (include_temporal, include_provenance)
     - SemanticAnalyzer: Semantic analysis engine
     - SemanticNetworkExtractor: Semantic network construction
-    - LLMEnhancer: LLM-based enhancement
+    - LLMExtraction: LLM-based extraction and enhancement
     - ExtractionValidator: Quality validation
 
 Example Usage:
@@ -64,7 +64,7 @@ from .event_detector import (
     TemporalEventProcessor,
 )
 from .extraction_validator import ExtractionValidator, ValidationResult
-from .llm_enhancer import LLMEnhancer, LLMResponse
+from .llm_extraction import LLMEnhancer, LLMExtraction, LLMResponse
 from .methods import get_entity_method, get_relation_method, get_triplet_method
 from .named_entity_recognizer import (
     CustomEntityDetector,
@@ -156,6 +156,7 @@ __all__ = [
     "SemanticEdge",
     "SemanticNetwork",
     # LLM Enhancement
+    "LLMExtraction",
     "LLMEnhancer",
     "LLMResponse",
     # Validation

@@ -77,6 +77,14 @@ class SemanticNode:
     properties: Dict[str, Any] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+    def get(self, key: str, default: Any = None) -> Any:
+        """Get attribute value like a dictionary."""
+        return getattr(self, key, default)
+
+    def __getitem__(self, key: str) -> Any:
+        """Get item like a dictionary."""
+        return getattr(self, key)
+
 
 @dataclass
 class SemanticEdge:
@@ -88,6 +96,14 @@ class SemanticEdge:
     properties: Dict[str, Any] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+    def get(self, key: str, default: Any = None) -> Any:
+        """Get attribute value like a dictionary."""
+        return getattr(self, key, default)
+
+    def __getitem__(self, key: str) -> Any:
+        """Get item like a dictionary."""
+        return getattr(self, key)
+
 
 @dataclass
 class SemanticNetwork:
@@ -96,6 +112,14 @@ class SemanticNetwork:
     nodes: List[SemanticNode]
     edges: List[SemanticEdge]
     metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def get(self, key: str, default: Any = None) -> Any:
+        """Get attribute value like a dictionary."""
+        return getattr(self, key, default)
+
+    def __getitem__(self, key: str) -> Any:
+        """Get item like a dictionary."""
+        return getattr(self, key)
 
 
 class SemanticNetworkExtractor:
@@ -316,6 +340,7 @@ class SemanticNetworkExtractor:
 
         Args:
             network: Semantic network
+            **options: Analysis options
 
         Returns:
             dict: Network analysis

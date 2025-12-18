@@ -84,6 +84,14 @@ class Triplet:
     confidence: float = 1.0
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+    def get(self, key: str, default: Any = None) -> Any:
+        """Get attribute value like a dictionary."""
+        return getattr(self, key, default)
+
+    def __getitem__(self, key: str) -> Any:
+        """Get item like a dictionary."""
+        return getattr(self, key)
+
 
 class TripletExtractor:
     """RDF triplet extraction handler."""

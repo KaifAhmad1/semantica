@@ -345,7 +345,7 @@ graph LR
     ```python
     from semantica.semantic_extract import (
         NamedEntityRecognizer,
-        LLMEnhancer,
+        LLMExtraction,
         create_provider
     )
     

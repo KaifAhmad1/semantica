@@ -38,8 +38,8 @@
 
     Extract Subject-Predicate-Object triplets for Knowledge Graphs
 
--   :material-robot:{ .lg .middle } **LLM Enhancement**
-
+-   :material-robot:{ .lg .middle } **LLM Extraction**
+    
     ---
 
     Use LLMs to improve extraction quality and handle complex schemas
@@ -340,9 +340,9 @@ print(f"Nodes: {len(network.nodes)}")
 print(f"Edges: {len(network.edges)}")
 ```
 
-### LLMEnhancer
+### LLMExtraction
 
-Enhances extraction results using Large Language Models.
+LLM-based extraction and enhancement. (Alias: `LLMEnhancer`)
 
 **Parameters:**
 
@@ -355,16 +355,17 @@ Enhances extraction results using Large Language Models.
 
 | Method | Description |
 |--------|-------------|
+| `enhance_extractions(extractions, text)` | Enhance generic extractions |
 | `enhance_entities(text, entities)` | Improve entity accuracy and details |
 | `enhance_relations(text, relations)` | Improve relation detection |
 
 **Example:**
 
 ```python
-from semantica.semantic_extract import LLMEnhancer
+from semantica.semantic_extract import LLMExtraction
 
-enhancer = LLMEnhancer(provider="openai", model="gpt-4")
-enhanced_entities = enhancer.enhance_entities(text, entities)
+extractor = LLMExtraction(provider="openai", model="gpt-4")
+enhanced_entities = extractor.enhance_entities(text, entities)
 ```
 
 ---
