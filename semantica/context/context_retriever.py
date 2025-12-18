@@ -43,12 +43,15 @@ Key Features:
     - Configurable retrieval strategies
 
 Main Classes:
-    - RetrievedContext: Retrieved context item data structure with content, score, source, metadata, related_entities, related_relationships
+    - RetrievedContext: Retrieved context item data structure with content, score,
+      source, metadata, related_entities, related_relationships
     - ContextRetriever: Context retriever for hybrid retrieval
 
 Example Usage:
     >>> from semantica.context import ContextRetriever
-    >>> retriever = ContextRetriever(memory_store=mem, knowledge_graph=kg, vector_store=vs)
+    >>> retriever = ContextRetriever(
+    ...     memory_store=mem, knowledge_graph=kg, vector_store=vs
+    ... )
     >>> results = retriever.retrieve("Python programming", max_results=5)
     >>> for result in results:
     ...     print(f"{result.content}: {result.score:.2f}")
@@ -62,7 +65,6 @@ from datetime import datetime
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
 
-from ..utils.exceptions import ProcessingError, ValidationError
 from ..utils.logging import get_logger
 from ..utils.progress_tracker import get_progress_tracker
 
@@ -103,7 +105,8 @@ class ContextRetriever:
                 - vector_store: Vector store instance
                 - use_graph_expansion: Use graph expansion (default: True)
                 - max_expansion_hops: Maximum graph expansion hops (default: 2)
-                - hybrid_alpha: Weight for hybrid retrieval (0=vector only, 1=graph only, default: 0.5)
+                - hybrid_alpha: Weight for hybrid retrieval (0=vector only, 1=graph
+                  only, default: 0.5)
         """
         self.logger = get_logger("context_retriever")
         self.config = config or {}
@@ -271,23 +274,27 @@ class ContextRetriever:
             # Check if knowledge_graph implements GraphStore protocol (has query method)
             if hasattr(self.knowledge_graph, "query"):
                 graph_results = self.knowledge_graph.query(query)
-                
+
                 for res in graph_results:
                     # Handle both interface dicts and raw dicts
                     node = res.get("node")
-                    if hasattr(node, "id"): # GraphNodeInterface
+                    if hasattr(node, "id"):  # GraphNodeInterface
                         node_id = node.id
                         node_type = node.type
                         content = node.properties.get("content", "")
                         metadata = node.properties
-                    else: # Raw dict
+                    else:  # Raw dict
                         node_id = res.get("id") or res.get("node", {}).get("id")
                         node_type = res.get("type") or res.get("node", {}).get("type")
-                        content = res.get("content") or res.get("node", {}).get("content")
-                        metadata = res.get("metadata") or res.get("node", {}).get("metadata")
+                        content = res.get("content") or res.get("node", {}).get(
+                            "content"
+                        )
+                        metadata = res.get("metadata") or res.get("node", {}).get(
+                            "metadata"
+                        )
 
                     score = res.get("score", 0.0)
-                    
+
                     # Get related entities
                     related_entities = self._get_related_entities(
                         node_id, max_hops=max_hops
@@ -306,7 +313,7 @@ class ContextRetriever:
                             related_entities=related_entities,
                         )
                     )
-                
+
                 # Sort by score
                 results.sort(key=lambda x: x.score, reverse=True)
                 return results[:max_results]
@@ -504,14 +511,14 @@ class ContextRetriever:
     def search(self, query: str, **options) -> List[RetrievedContext]:
         """
         Simple search (alias for retrieve).
-        
+
         Args:
             query: Search query
             **options: Additional options
-        
+
         Returns:
             List of RetrievedContext objects
-        
+
         Example:
             >>> results = retriever.search("Python", max_results=10)
         """
@@ -520,84 +527,84 @@ class ContextRetriever:
     def vector_search(self, query: str, **options) -> List[RetrievedContext]:
         """
         Vector-only search.
-        
+
         Args:
             query: Search query
             **options: Additional options
-        
+
         Returns:
             List of RetrievedContext objects from vector store
-        
+
         Example:
             >>> results = retriever.vector_search("Python")
         """
         # Temporarily disable graph and memory
         original_graph = self.knowledge_graph
         original_memory = self.memory_store
-        
+
         self.knowledge_graph = None
         self.memory_store = None
-        
+
         try:
             results = self.retrieve(query, use_graph_expansion=False, **options)
         finally:
             self.knowledge_graph = original_graph
             self.memory_store = original_memory
-        
+
         return results
 
     def graph_search(self, query: str, **options) -> List[RetrievedContext]:
         """
         Graph-only search.
-        
+
         Args:
             query: Search query
             **options: Additional options
-        
+
         Returns:
             List of RetrievedContext objects from graph
-        
+
         Example:
             >>> results = retriever.graph_search("Python")
         """
         if not self.knowledge_graph:
             return []
-        
+
         # Temporarily disable vector and memory
         original_vector = self.vector_store
         original_memory = self.memory_store
-        
+
         self.vector_store = None
         self.memory_store = None
-        
+
         try:
             results = self.retrieve(query, use_graph_expansion=True, **options)
         finally:
             self.vector_store = original_vector
             self.memory_store = original_memory
-        
+
         return results
 
     def memory_search(self, query: str, **options) -> List[RetrievedContext]:
         """
         Memory-only search.
-        
+
         Args:
             query: Search query
             **options: Additional options
-        
+
         Returns:
             List of RetrievedContext objects from memory
-        
+
         Example:
             >>> results = retriever.memory_search("Python")
         """
         if not self.memory_store:
             return []
-        
+
         # Use memory store's retrieve method
         memory_results = self.memory_store.retrieve(query, **options)
-        
+
         # Convert to RetrievedContext
         results = []
         for mem in memory_results:
@@ -609,72 +616,78 @@ class ContextRetriever:
                     metadata=mem.get("metadata", {}),
                 )
             )
-        
+
         return results
 
     def hybrid_search(self, query: str, **options) -> List[RetrievedContext]:
         """
         Hybrid search (all sources).
-        
+
         Args:
             query: Search query
             **options: Additional options
-        
+
         Returns:
             List of RetrievedContext objects from all sources
-        
+
         Example:
             >>> results = retriever.hybrid_search("Python")
         """
         return self.retrieve(query, **options)
 
     # Advanced Retrieval
-    def find_similar(self, content: str, limit: int = 5, **options) -> List[RetrievedContext]:
+    def find_similar(
+        self, content: str, limit: int = 5, **options
+    ) -> List[RetrievedContext]:
         """
         Find similar content.
-        
+
         Args:
             content: Content to find similar items for
             limit: Maximum results (default: 5)
             **options: Additional options
-        
+
         Returns:
             List of similar RetrievedContext objects
-        
+
         Example:
             >>> similar = retriever.find_similar("Python programming", limit=5)
         """
         return self.retrieve(content, max_results=limit, **options)
 
-    def get_context(self, query: str, max_results: int = 5, **options) -> List[RetrievedContext]:
+    def get_context(
+        self, query: str, max_results: int = 5, **options
+    ) -> List[RetrievedContext]:
         """
         Get context for query.
-        
+
         Args:
             query: Query string
             max_results: Maximum results (default: 5)
             **options: Additional options
-        
+
         Returns:
             List of RetrievedContext objects
-        
+
         Example:
             >>> context_data = retriever.get_context("Python", max_results=10)
         """
         return self.retrieve(query, max_results=max_results, **options)
 
-    def expand_query(self, query: str, max_hops: int = 2, **options) -> List[RetrievedContext]:
+    def expand_query(
+        self, query: str, max_hops: int = 2, **options
+    ) -> List[RetrievedContext]:
         """
         Expand query with graph.
-        
+
         Args:
             query: Query string
             max_hops: Maximum expansion hops (default: 2)
             **options: Additional options
-        
+
         Returns:
             List of expanded RetrievedContext objects
-        
+
         Example:
             >>> expanded = retriever.expand_query("Python", max_hops=3)
         """
@@ -682,58 +695,60 @@ class ContextRetriever:
             query,
             use_graph_expansion=True,
             max_hops=max_hops,
-            **options
+            **options,
         )
 
     def get_related(self, entity_id: str, max_hops: int = 2) -> List[Dict[str, Any]]:
         """
         Get related entities.
-        
+
         Args:
             entity_id: Entity ID
             max_hops: Maximum hops (default: 2)
-        
+
         Returns:
             List of related entity dicts
-        
+
         Example:
             >>> related = retriever.get_related("entity_123", max_hops=2)
         """
         if not self.knowledge_graph:
             return []
-        
+
         return self._get_related_entities(entity_id, max_hops=max_hops)
 
-    def get_path(self, source_id: str, target_id: str, max_hops: int = 5) -> List[Dict[str, Any]]:
+    def get_path(
+        self, source_id: str, target_id: str, max_hops: int = 5
+    ) -> List[Dict[str, Any]]:
         """
         Get path between entities.
-        
+
         Args:
             source_id: Source entity ID
             target_id: Target entity ID
             max_hops: Maximum hops (default: 5)
-        
+
         Returns:
             List of path nodes/edges
-        
+
         Example:
             >>> path = retriever.get_path("entity_1", "entity_2", max_hops=5)
         """
         if not self.knowledge_graph:
             return []
-        
+
         # Simple BFS path finding
         from collections import deque
-        
+
         queue = deque([(source_id, [source_id])])
         visited = {source_id}
-        
+
         while queue:
             current_id, path = queue.popleft()
-            
+
             if len(path) > max_hops:
                 continue
-            
+
             if current_id == target_id:
                 # Return path with node info
                 nodes = self.knowledge_graph.get("nodes", [])
@@ -741,14 +756,16 @@ class ContextRetriever:
                 for node_id in path:
                     for node in nodes:
                         if node.get("id") == node_id:
-                            path_info.append({
-                                "id": node_id,
-                                "content": node.get("content", ""),
-                                "type": node.get("type", ""),
-                            })
+                            path_info.append(
+                                {
+                                    "id": node_id,
+                                    "content": node.get("content", ""),
+                                    "type": node.get("type", ""),
+                                }
+                            )
                             break
                 return path_info
-            
+
             # Get neighbors
             edges = self.knowledge_graph.get("edges", [])
             for edge in edges:
@@ -757,26 +774,28 @@ class ContextRetriever:
                     neighbor_id = edge.get("target")
                 elif edge.get("target") == current_id:
                     neighbor_id = edge.get("source")
-                
+
                 if neighbor_id and neighbor_id not in visited:
                     visited.add(neighbor_id)
                     queue.append((neighbor_id, path + [neighbor_id]))
-        
+
         return []
 
     # Filter Methods
-    def filter_by_entity(self, entity_id: str, query: str, **options) -> List[RetrievedContext]:
+    def filter_by_entity(
+        self, entity_id: str, query: str, **options
+    ) -> List[RetrievedContext]:
         """
         Filter by entity.
-        
+
         Args:
             entity_id: Entity ID to filter by
             query: Search query
             **options: Additional options
-        
+
         Returns:
             Filtered RetrievedContext objects
-        
+
         Example:
             >>> results = retriever.filter_by_entity("entity_123", "Python")
         """
@@ -790,18 +809,20 @@ class ContextRetriever:
                     break
         return filtered
 
-    def filter_by_type(self, type: str, query: str, **options) -> List[RetrievedContext]:
+    def filter_by_type(
+        self, type: str, query: str, **options
+    ) -> List[RetrievedContext]:
         """
         Filter by type.
-        
+
         Args:
             type: Node/entity type to filter by
             query: Search query
             **options: Additional options
-        
+
         Returns:
             Filtered RetrievedContext objects
-        
+
         Example:
             >>> results = retriever.filter_by_type("PROGRAMMING_LANGUAGE", "Python")
         """
@@ -821,16 +842,16 @@ class ContextRetriever:
     ) -> List[RetrievedContext]:
         """
         Filter by date.
-        
+
         Args:
             start_date: Start date
             end_date: End date
             query: Search query
             **options: Additional options
-        
+
         Returns:
             Filtered RetrievedContext objects
-        
+
         Example:
             >>> results = retriever.filter_by_date("2024-01-01", "2024-12-31", "Python")
         """
@@ -840,7 +861,7 @@ class ContextRetriever:
         if isinstance(end_date, str):
             from dateutil.parser import parse
             end_date = parse(end_date)
-        
+
         results = self.retrieve(query, **options)
         filtered = []
         for result in results:
@@ -861,15 +882,15 @@ class ContextRetriever:
     ) -> List[RetrievedContext]:
         """
         Filter by score.
-        
+
         Args:
             min_score: Minimum score threshold
             query: Search query
             **options: Additional options
-        
+
         Returns:
             Filtered RetrievedContext objects
-        
+
         Example:
             >>> results = retriever.filter_by_score(0.7, "Python")
         """
@@ -877,17 +898,19 @@ class ContextRetriever:
         return [r for r in results if r.score >= min_score]
 
     # Batch Operations
-    def batch_search(self, queries: List[str], **options) -> Dict[str, List[RetrievedContext]]:
+    def batch_search(
+        self, queries: List[str], **options
+    ) -> Dict[str, List[RetrievedContext]]:
         """
         Search multiple queries.
-        
+
         Args:
             queries: List of queries
             **options: Additional options
-        
+
         Returns:
             Dict mapping query to results
-        
+
         Example:
             >>> results = retriever.batch_search(["Python", "Java", "C++"])
         """
@@ -904,17 +927,19 @@ class ContextRetriever:
     ) -> Dict[str, List[RetrievedContext]]:
         """
         Get context for multiple queries.
-        
+
         Args:
             queries: List of queries
             max_results: Maximum results per query (default: 5)
             **options: Additional options
-        
+
         Returns:
             Dict mapping query to context results
-        
+
         Example:
-            >>> contexts = retriever.batch_get_context(["Python", "Java"], max_results=5)
+            >>> contexts = retriever.batch_get_context(
+            ...     ["Python", "Java"], max_results=5
+            ... )
         """
         results = {}
         for query in queries:

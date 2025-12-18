@@ -56,8 +56,9 @@ Key Features:
     - Auto-detection of content types and retrieval strategies
 
 Main Classes:
-    - AgentContext: High-level interface for agent context management (store, retrieve, forget, conversation)
-    - ContextGraphBuilder: Builds context graphs from various sources
+    - AgentContext: High-level interface for agent context management (store,
+      retrieve, forget, conversation)
+    - ContextGraph: In-memory context graph store and builder methods
     - ContextNode: Context graph node data structure
     - ContextEdge: Context graph edge data structure
     - AgentMemory: Manages persistent agent memory with RAG
@@ -67,11 +68,14 @@ Main Classes:
     - LinkedEntity: Linked entity with context
     - ContextRetriever: Retrieves relevant context from multiple sources
     - RetrievedContext: Retrieved context item data structure
-    - MethodRegistry: Registry for custom context methods (accessed via registry submodule)
-    - ContextConfig: Configuration manager for context module (accessed via config submodule)
+    - MethodRegistry: Registry for custom context methods (accessed via registry
+      submodule)
+    - ContextConfig: Configuration manager for context module (accessed via
+      config submodule)
 
 Submodules:
-    - methods: Context engineering methods (build_context_graph, store_memory, retrieve_context, etc.)
+    - methods: Context engineering methods (build_context_graph, store_memory,
+      retrieve_context, etc.)
     - registry: Method registry for custom methods (method_registry, MethodRegistry)
     - config: Configuration management (context_config, ContextConfig)
 
@@ -82,16 +86,20 @@ Example Usage:
     >>> memory_id = context.store("User asked about Python", conversation_id="conv1")
     >>> results = context.retrieve("Python programming")
     >>> stats = context.store(["Doc 1", "Doc 2"], extract_entities=True)
-    
+
     >>> # Low-level classes (for advanced use cases)
-    >>> from semantica.context import ContextGraphBuilder, AgentMemory, methods
-    >>> builder = ContextGraphBuilder()
-    >>> graph = builder.build_from_entities_and_relationships(entities, relationships)
+    >>> from semantica.context import ContextGraph, AgentMemory, methods
+    >>> graph = ContextGraph()
+    >>> graph_data = graph.build_from_entities_and_relationships(entities, relationships)
     >>> memory = AgentMemory(vector_store=vs, knowledge_graph=kg)
-    >>> memory_id = memory.store("User asked about Python", metadata={"type": "conversation"})
+    >>> memory_id = memory.store(
+    ...     "User asked about Python", metadata={"type": "conversation"}
+    ... )
     >>> results = memory.retrieve("Python", max_results=5)
     >>> # Using methods submodule
-    >>> graph = methods.build_context_graph(entities, relationships, method="entities_relationships")
+    >>> graph = methods.build_context_graph(
+    ...     entities, relationships, method="entities_relationships"
+    ... )
 
 Author: Semantica Contributors
 License: MIT

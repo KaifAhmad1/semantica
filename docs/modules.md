@@ -798,12 +798,12 @@ These modules provide context engineering for agents and foundation data managem
 
 **Components:**
 
-- `ContextGraphBuilder` — Builds context graphs from various sources
+- `ContextGraph` — In-memory context graph store and builder methods
 - `ContextNode` — Context graph node data structure
 - `ContextEdge` — Context graph edge data structure
 - `AgentMemory` — Manages persistent agent memory with RAG
 - `MemoryItem` — Memory item data structure
-- `EntityLinker` — Links entities across sources with URIs
+- `EntityLinker` — Links entities across sources with URI assignment
 - `ContextRetriever` — Retrieves relevant context from multiple sources
 
 **Algorithms:**
@@ -818,19 +818,19 @@ These modules provide context engineering for agents and foundation data managem
 **Quick Example:**
 
 ```python
-from semantica.context import build_context, ContextGraphBuilder, AgentMemory
+from semantica.context import ContextGraph, AgentMemory
+from semantica.context.methods import build_context_graph
 
 # Using convenience function
-result = build_context(
+result = build_context_graph(
     entities=entities,
     relationships=relationships,
-    vector_store=vs,
-    knowledge_graph=kg
+    method="entities_relationships"
 )
 
 # Using classes directly
-builder = ContextGraphBuilder()
-graph = builder.build_from_entities_and_relationships(entities, relationships)
+graph = ContextGraph()
+graph_data = graph.build_from_entities_and_relationships(entities, relationships)
 
 memory = AgentMemory(vector_store=vs, knowledge_graph=kg)
 memory_id = memory.store("User asked about Python", metadata={"type": "conversation"})

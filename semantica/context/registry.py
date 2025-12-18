@@ -1,8 +1,8 @@
 """
 Method Registry Module for Context Engineering
 
-This module provides a method registry system for registering custom context engineering methods,
-enabling extensibility and community contributions to the context toolkit.
+This module provides a method registry system for registering custom context engineering
+methods, enabling extensibility and community contributions to the context toolkit.
 
 Supported Registration Types:
     - Method Registry: Register custom context methods for:
@@ -40,7 +40,7 @@ Author: Semantica Contributors
 License: MIT
 """
 
-from typing import Any, Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional
 
 
 class MethodRegistry:

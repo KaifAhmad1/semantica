@@ -184,8 +184,8 @@ graph.add_nodes([
 # Add Edges
 graph.add_edges([
     {
-        "source": "FastAPI", 
-        "target": "Python", 
+        "source_id": "FastAPI", 
+        "target_id": "Python", 
         "type": "WRITTEN_IN"
     }
 ])

@@ -2,9 +2,9 @@
 Context Methods Module
 
 This module provides all context engineering methods as simple, reusable functions for
-context graph construction, agent memory management, context retrieval, and entity linking.
-It supports multiple context engineering approaches and integrates with the method registry
-for extensibility.
+context graph construction, agent memory management, context retrieval, and entity
+linking. It supports multiple context engineering approaches and integrates with the
+method registry for extensibility.
 
 Supported Methods:
 
@@ -84,7 +84,9 @@ Main Functions:
 
 Example Usage:
     >>> from semantica.context.methods import build_context_graph, retrieve_context
-    >>> graph = build_context_graph(entities, relationships, method="entities_relationships")
+    >>> graph = build_context_graph(
+    ...     entities, relationships, method="entities_relationships"
+    ... )
     >>> results = retrieve_context("Python programming", method="hybrid", max_results=5)
     >>> from semantica.context.methods import get_context_method
     >>> method = get_context_method("graph", "custom_method")
@@ -93,15 +95,14 @@ Author: Semantica Contributors
 License: MIT
 """
 
-from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from ..utils.exceptions import ConfigurationError, ProcessingError
+from ..utils.exceptions import ProcessingError
 from ..utils.logging import get_logger
-from .agent_memory import AgentMemory, MemoryItem
-from .context_graph import ContextEdge, ContextGraph, ContextNode
+from .agent_memory import AgentMemory
+from .context_graph import ContextGraph
 from .context_retriever import ContextRetriever, RetrievedContext
-from .entity_linker import EntityLink, EntityLinker, LinkedEntity
+from .entity_linker import EntityLinker, LinkedEntity
 from .registry import method_registry
 
 logger = get_logger("context_methods")
@@ -117,7 +118,8 @@ def build_context_graph(
     """
     Build context graph from various sources (convenience function).
 
-    This is a user-friendly wrapper that builds context graphs using the specified method.
+    This is a user-friendly wrapper that builds context graphs using the specified
+    method.
 
     Args:
         entities: List of entity dictionaries
@@ -138,8 +140,12 @@ def build_context_graph(
     Examples:
         >>> from semantica.context.methods import build_context_graph
         >>> entities = [{"id": "e1", "text": "Python", "type": "PROGRAMMING_LANGUAGE"}]
-        >>> relationships = [{"source_id": "e1", "target_id": "e2", "type": "related_to"}]
-        >>> graph = build_context_graph(entities, relationships, method="entities_relationships")
+        >>> relationships = [
+        ...     {"source_id": "e1", "target_id": "e2", "type": "related_to"}
+        ... ]
+        >>> graph = build_context_graph(
+        ...     entities, relationships, method="entities_relationships"
+        ... )
         >>> print(f"Graph has {graph['statistics']['node_count']} nodes")
     """
     # Check for custom method in registry
@@ -159,7 +165,8 @@ def build_context_graph(
         if method == "entities_relationships":
             if not entities or not relationships:
                 raise ProcessingError(
-                    "entities and relationships required for entities_relationships method"
+                    "entities and relationships required for entities_relationships "
+                    "method"
                 )
             return builder.build_from_entities_and_relationships(
                 entities, relationships, **kwargs
@@ -221,7 +228,9 @@ def store_memory(
 
     Examples:
         >>> from semantica.context.methods import store_memory
-        >>> memory_id = store_memory("User asked about Python", vector_store=vs, method="store")
+        >>> memory_id = store_memory(
+        ...     "User asked about Python", vector_store=vs, method="store"
+        ... )
         >>> print(f"Stored memory: {memory_id}")
     """
     # Check for custom method in registry
@@ -292,7 +301,9 @@ def retrieve_context(
 
     Examples:
         >>> from semantica.context.methods import retrieve_context
-        >>> results = retrieve_context("Python programming", vector_store=vs, method="hybrid")
+        >>> results = retrieve_context(
+        ...     "Python programming", vector_store=vs, method="hybrid"
+        ... )
         >>> for result in results:
         ...     print(f"{result.content}: {result.score:.2f}")
     """

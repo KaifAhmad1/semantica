@@ -1,7 +1,8 @@
 """
 Configuration Management Module for Context Engineering
 
-This module provides centralized configuration management for context engineering operations,
+This module provides centralized configuration management for context engineering
+operations,
 supporting multiple configuration sources including environment variables, config files,
 and programmatic configuration.
 
@@ -47,7 +48,11 @@ from ..utils.logging import get_logger
 
 
 class ContextConfig:
-    """Configuration manager for context module - supports .env files, environment variables, and programmatic config."""
+    """
+    Configuration manager for context module.
+
+    Supports .env files, environment variables, and programmatic config.
+    """
 
     def __init__(self, config_file: Optional[str] = None):
         """Initialize configuration manager."""

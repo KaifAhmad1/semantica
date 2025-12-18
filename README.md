@@ -340,23 +340,36 @@ print(f"Classes: {len(ontology.classes)}")
 
 [**Cookbook: Ontology**](https://github.com/Hawksight-AI/semantica/tree/main/cookbook/introduction/14_Ontology.ipynb)
 
-### Context Engineering for AI Agents
+### Context Engineering & Memory Systems
 
-> **Persistent Memory** • RAG + Knowledge Graphs • MCP-Compatible Tools • FastEmbed Integrated
+> **Persistent Memory** • **Hybrid Retrieval (Vector + Graph)** • **Hierarchical Storage** • **Entity Linking**
 
 ```python
-from semantica.context import AgentMemory, ContextRetriever
+from semantica.context import AgentContext
 from semantica.vector_store import VectorStore
 
-# Uses FastEmbed by default for high-performance embedding generation
-memory = AgentMemory(vector_store=VectorStore(backend="faiss"), retention_policy="unlimited")
-memory.store("User prefers technical docs", metadata={"user_id": "user_123"})
+# Initialize Context with Hybrid Retrieval (Graph + Vector)
+context = AgentContext(
+    vector_store=VectorStore(backend="faiss"),
+    hybrid_alpha=0.75  # 75% weight to Knowledge Graph, 25% to Vector
+)
 
-retriever = ContextRetriever(memory_store=memory)
-context = retriever.retrieve("What are user preferences?", max_results=5)
+# Store memory with automatic entity linking
+context.store(
+    "User is building a RAG system with Semantica",
+    metadata={"priority": "high", "topic": "rag"}
+)
+
+# Retrieve with context expansion
+results = context.retrieve("What is the user building?", use_graph_expansion=True)
 ```
 
-[**Cookbook: Vector Store**](https://github.com/Hawksight-AI/semantica/tree/main/cookbook/introduction/13_Vector_Store.ipynb) • [**Embedding Generation**](https://github.com/Hawksight-AI/semantica/tree/main/cookbook/introduction/12_Embedding_Generation.ipynb) • [**Context Module**](https://github.com/Hawksight-AI/semantica/tree/main/cookbook/introduction/19_Context_Module.ipynb) • [**Advanced Vector Store**](https://github.com/Hawksight-AI/semantica/tree/main/cookbook/advanced/Advanced_Vector_Store_and_Search.ipynb)
+**Core Notebooks:**
+- [**Context Module Introduction**](https://github.com/Hawksight-AI/semantica/tree/main/cookbook/introduction/19_Context_Module.ipynb) - Basic memory and storage.
+- [**Advanced Context Engineering**](https://github.com/Hawksight-AI/semantica/tree/main/cookbook/advanced/11_Advanced_Context_Engineering.ipynb) - Hybrid retrieval, graph builders, and custom memory policies.
+
+**Related Components:**
+[**Vector Store**](https://github.com/Hawksight-AI/semantica/tree/main/cookbook/introduction/13_Vector_Store.ipynb) • [**Embedding Generation**](https://github.com/Hawksight-AI/semantica/tree/main/cookbook/introduction/12_Embedding_Generation.ipynb) • [**Advanced Vector Store**](https://github.com/Hawksight-AI/semantica/tree/main/cookbook/advanced/Advanced_Vector_Store_and_Search.ipynb)
 
 ### Knowledge Graph-Powered RAG (GraphRAG)
 
