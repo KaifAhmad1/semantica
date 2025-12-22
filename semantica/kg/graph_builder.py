@@ -136,8 +136,8 @@ class GraphBuilder:
             # It's likely a Relation object
             subj = item.subject
             obj = item.object
-            subj_id = getattr(subj, "text", subj) if not isinstance(subj, str) else subj
-            obj_id = getattr(obj, "text", obj) if not isinstance(obj, str) else obj
+            subj_id = getattr(subj, "id", getattr(subj, "text", str(subj))) if not isinstance(subj, str) else subj
+            obj_id = getattr(obj, "id", getattr(obj, "text", str(obj))) if not isinstance(obj, str) else obj
             rel_dict = {
                 "source": subj_id,
                 "target": obj_id,
@@ -147,6 +147,14 @@ class GraphBuilder:
             }
             all_relationships.append(rel_dict)
         elif isinstance(item, dict):
+            # Detect and normalize Entity objects inside dict
+            if "source" in item and not isinstance(item["source"], str):
+                src = item["source"]
+                item["source"] = getattr(src, "id", getattr(src, "text", str(src)))
+            if "target" in item and not isinstance(item["target"], str):
+                tgt = item["target"]
+                item["target"] = getattr(tgt, "id", getattr(tgt, "text", str(tgt)))
+            
             processed = False
             found_something = False
             

@@ -201,23 +201,32 @@ class GraphValidator:
             tgt = rel.get("target")
             
             # Check Dangling Edges
-            if src not in entity_ids:
+            def is_valid_id(node_id):
+                if node_id is None:
+                    return False
+                try:
+                    return node_id in entity_ids
+                except TypeError:
+                    # Not hashable, so it can't be in the set of string IDs
+                    return False
+
+            if not is_valid_id(src):
                 issues.append(ValidationIssue(
                     code="DANGLING_EDGE",
-                    message=f"Source entity ID not found: {src}",
+                    message=f"Source entity ID not found or invalid: {src}",
                     severity=ValidationSeverity.ERROR,
                     element_id=f"{src}->{tgt}",
                     element_type="relationship",
-                    details={"source_id": src}
+                    details={"source_id": str(src)}
                 ))
-            if tgt not in entity_ids:
+            if not is_valid_id(tgt):
                 issues.append(ValidationIssue(
                     code="DANGLING_EDGE",
-                    message=f"Target entity ID not found: {tgt}",
+                    message=f"Target entity ID not found or invalid: {tgt}",
                     severity=ValidationSeverity.ERROR,
                     element_id=f"{src}->{tgt}",
                     element_type="relationship",
-                    details={"target_id": tgt}
+                    details={"target_id": str(tgt)}
                 ))
 
             # Check Self-Loops (Warning)
