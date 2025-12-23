@@ -321,7 +321,13 @@ def extract_entities_llm(
         raise ProcessingError(f"{provider} provider not available")
 
     prompt = f"""Extract named entities from the following text. 
-Return JSON format: [{{"text": "...", "label": "PERSON|ORG|GPE|DATE|...", "start": 0, "end": 10}}]
+Return ONLY a valid JSON list of objects with the following structure:
+[
+  {{"text": "entity name", "label": "ENTITY_TYPE", "start": 0, "end": 10, "confidence": 0.9}}
+]
+
+Entity types should be one of: PERSON, ORG, GPE, DATE, EVENT, PRODUCT, CONCEPT.
+Do not include any conversational filler, explanations, or markdown formatting outside the JSON block.
 
 Text: {text}"""
 

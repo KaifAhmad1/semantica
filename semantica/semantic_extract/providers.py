@@ -120,6 +120,14 @@ class BaseProvider:
                     cleaned_text = block
                     break
 
+        def fix_json(json_str: str) -> str:
+            """Basic JSON fixing for common LLM errors."""
+            # Remove trailing commas before closing braces/brackets
+            json_str = re.sub(r",\s*([\]}])", r"\1", json_str)
+            return json_str
+
+        import re
+
         try:
             return json.loads(cleaned_text)
         except json.JSONDecodeError:
@@ -128,33 +136,46 @@ class BaseProvider:
             start_list = cleaned_text.find("[")
             
             # Determine which one starts first
+            start = -1
             if start_obj >= 0 and (start_list < 0 or start_obj < start_list):
-                # Potential object
+                start = start_obj
+            elif start_list >= 0:
+                start = start_list
+            
+            if start >= 0:
+                # Find the corresponding end
                 end_obj = cleaned_text.rfind("}")
-                if end_obj > start_obj:
-                    try:
-                        return json.loads(cleaned_text[start_obj:end_obj+1])
-                    except json.JSONDecodeError:
-                        pass
-            
-            if start_list >= 0:
-                # Potential list
                 end_list = cleaned_text.rfind("]")
-                if end_list > start_list:
+                end = max(end_obj, end_list)
+                
+                if end > start:
+                    candidate = cleaned_text[start:end+1]
                     try:
-                        return json.loads(cleaned_text[start_list:end_list+1])
+                        return json.loads(candidate)
                     except json.JSONDecodeError:
-                        pass
-            
-            # If we still haven't found it, try any combination
-            start = min(s for s in [start_obj, start_list] if s >= 0) if (start_obj >= 0 or start_list >= 0) else -1
-            end = max(e for e in [cleaned_text.rfind("}"), cleaned_text.rfind("]")] if e >= 0) if (cleaned_text.rfind("}") >= 0 or cleaned_text.rfind("]") >= 0) else -1
-            
-            if start >= 0 and end > start:
-                try:
-                    return json.loads(cleaned_text[start:end+1])
-                except json.JSONDecodeError as e:
-                    raise ProcessingError(f"Failed to parse extracted JSON: {e}\nRaw snippet: {cleaned_text[start:min(start+50, end+1)]}...")
+                        # Try fixing common errors
+                        try:
+                            return json.loads(fix_json(candidate))
+                        except json.JSONDecodeError:
+                            # Last resort: if it's truncated, try to close it
+                            if candidate.endswith("..."):
+                                candidate = candidate[:-3].strip()
+                            
+                            # Simple attempt to close unclosed structures
+                            # This is very basic and might not work for complex cases
+                            open_braces = candidate.count("{") - candidate.count("}")
+                            open_brackets = candidate.count("[") - candidate.count("]")
+                            
+                            fixed_candidate = candidate
+                            if open_braces > 0:
+                                fixed_candidate += "}" * open_braces
+                            if open_brackets > 0:
+                                fixed_candidate += "]" * open_brackets
+                                
+                            try:
+                                return json.loads(fix_json(fixed_candidate))
+                            except json.JSONDecodeError as e:
+                                raise ProcessingError(f"Failed to parse extracted JSON: {e}\nRaw snippet: {candidate[:50]}...")
             
             raise ProcessingError(f"No JSON structure found in response. Raw response: {text[:100]}...")
 
