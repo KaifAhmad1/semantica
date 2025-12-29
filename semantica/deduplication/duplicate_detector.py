@@ -6,16 +6,16 @@ framework, identifying duplicate entities and relationships in knowledge graphs 
 similarity thresholds, clustering algorithms, and confidence scoring.
 
 Algorithms Used:
-    - Pairwise Comparison: O(n²) all-pairs similarity calculation for complete duplicate detection
+    - Pairwise Comparison: Optimized all-pairs similarity calculation with blocking support
     - Batch Processing: Vectorized similarity calculations for efficiency
     - Union-Find Algorithm: Disjoint set union (DSU) for duplicate group formation
     - Confidence Scoring: Multi-factor confidence calculation combining similarity, name matches, property matches, and type matches
-    - Incremental Processing: O(n×m) efficient comparison for new vs existing entities
+    - Incremental Processing: O(n×m) efficient comparison with individual tracking disabled for speed
     - Representative Selection: Most complete entity selection from duplicate groups
 
 Key Features:
     - Entity duplicate detection using multi-factor similarity metrics
-    - Relationship duplicate detection with threshold-based matching
+    - Relationship duplicate detection with granular progress tracking
     - Duplicate group formation using union-find algorithm for transitive closure
     - Incremental duplicate detection for new entities (streaming scenarios)
     - Confidence scoring for duplicate candidates with multiple factors
@@ -419,18 +419,56 @@ class DuplicateDetector:
         Returns:
             List of duplicate relationship pairs
         """
-        duplicates = []
-        threshold = options.get("threshold", 0.9)
+        # Track relationship duplicate detection
+        tracking_id = self.progress_tracker.start_tracking(
+            file=None,
+            module="deduplication",
+            submodule="DuplicateDetector",
+            message=f"Detecting duplicate relationships in {len(relationships)} relations",
+        )
 
-        for i in range(len(relationships)):
-            for j in range(i + 1, len(relationships)):
-                rel1 = relationships[i]
-                rel2 = relationships[j]
+        try:
+            duplicates = []
+            threshold = options.get("threshold", 0.9)
+            total_rels = len(relationships)
+            total_pairs = total_rels * (total_rels - 1) // 2
+            processed = 0
+            
+            # Update interval
+            if total_pairs <= 10:
+                update_interval = 1
+            else:
+                update_interval = max(1, min(100, total_pairs // 100))
 
-                if self._relationships_are_duplicates(rel1, rel2, threshold):
-                    duplicates.append((rel1, rel2))
+            for i in range(len(relationships)):
+                for j in range(i + 1, len(relationships)):
+                    rel1 = relationships[i]
+                    rel2 = relationships[j]
 
-        return duplicates
+                    if self._relationships_are_duplicates(rel1, rel2, threshold):
+                        duplicates.append((rel1, rel2))
+                    
+                    processed += 1
+                    if processed % update_interval == 0 or processed == total_pairs:
+                        self.progress_tracker.update_progress(
+                            tracking_id,
+                            processed=processed,
+                            total=total_pairs,
+                            message=f"Checking relationships... {processed}/{total_pairs}"
+                        )
+
+            self.progress_tracker.stop_tracking(
+                tracking_id,
+                status="completed",
+                message=f"Detected {len(duplicates)} duplicate relationships",
+            )
+            return duplicates
+
+        except Exception as e:
+            self.progress_tracker.stop_tracking(
+                tracking_id, status="failed", message=str(e)
+            )
+            raise
 
     def incremental_detect(
         self,
@@ -501,9 +539,9 @@ class DuplicateDetector:
             # Compare each new entity with all existing entities
             for new_entity in new_entities:
                 for existing_entity in existing_entities:
-                    # Calculate similarity
+                    # Calculate similarity without individual tracking for speed
                     similarity = self.similarity_calculator.calculate_similarity(
-                        new_entity, existing_entity
+                        new_entity, existing_entity, track=False
                     )
 
                     # Check if above threshold
@@ -553,8 +591,28 @@ class DuplicateDetector:
             )
             raise
 
+    def _get_entity_value(self, entity: Any, key: str, default: Any = None) -> Any:
+        """Get value from entity dictionary or object safely."""
+        if hasattr(entity, "__dict__"):
+            # For Entity objects, map 'name' to 'text' and 'type' to 'label'
+            if key == "name":
+                return getattr(entity, "text", default)
+            if key == "type":
+                return getattr(entity, "label", default)
+            if key == "properties":
+                # Check metadata for properties
+                metadata = getattr(entity, "metadata", {})
+                return metadata.get("properties", {})
+            return getattr(entity, key, default)
+        elif isinstance(entity, dict):
+            return entity.get(key, default)
+        return default
+
     def _create_duplicate_candidate(
-        self, entity1: Dict[str, Any], entity2: Dict[str, Any], similarity_score: float
+        self,
+        entity1: Dict[str, Any],
+        entity2: Dict[str, Any],
+        similarity_score: float,
     ) -> DuplicateCandidate:
         """
         Create duplicate candidate from similarity result.
@@ -563,16 +621,9 @@ class DuplicateDetector:
         score and additional factors (name match, property matches, type match)
         to calculate a confidence score.
 
-        Confidence Calculation:
-            - Base: similarity_score
-            - +0.1: Exact name match
-            - +0.05 per matching property value
-            - +0.05: Same entity type
-            - Capped at 1.0
-
         Args:
-            entity1: First entity dictionary
-            entity2: Second entity dictionary
+            entity1: First entity dictionary or object
+            entity2: Second entity dictionary or object
             similarity_score: Base similarity score from similarity calculator
 
         Returns:
@@ -582,15 +633,15 @@ class DuplicateDetector:
         confidence = similarity_score
 
         # Check for exact name match (strong indicator)
-        name1 = entity1.get("name", "").lower().strip()
-        name2 = entity2.get("name", "").lower().strip()
+        name1 = str(self._get_entity_value(entity1, "name", "")).lower().strip()
+        name2 = str(self._get_entity_value(entity2, "name", "")).lower().strip()
         if name1 == name2 and name1:  # Non-empty exact match
             reasons.append("exact_name_match")
             confidence += 0.1
 
         # Check property value matches
-        props1 = entity1.get("properties", {})
-        props2 = entity2.get("properties", {})
+        props1 = self._get_entity_value(entity1, "properties", {})
+        props2 = self._get_entity_value(entity2, "properties", {})
 
         common_props = set(props1.keys()) & set(props2.keys())
         if common_props:
@@ -604,8 +655,8 @@ class DuplicateDetector:
                 confidence += 0.05 * prop_matches
 
         # Check entity type match
-        entity_type1 = entity1.get("type")
-        entity_type2 = entity2.get("type")
+        entity_type1 = self._get_entity_value(entity1, "type")
+        entity_type2 = self._get_entity_value(entity2, "type")
         if entity_type1 and entity_type2 and entity_type1 == entity_type2:
             reasons.append("same_type")
             confidence += 0.05
@@ -635,8 +686,8 @@ class DuplicateDetector:
         groups = []
 
         for candidate in candidates:
-            entity1_id = candidate.entity1.get("id") or id(candidate.entity1)
-            entity2_id = candidate.entity2.get("id") or id(candidate.entity2)
+            entity1_id = self._get_entity_value(candidate.entity1, "id") or id(candidate.entity1)
+            entity2_id = self._get_entity_value(candidate.entity2, "id") or id(candidate.entity2)
 
             group1 = entity_to_group.get(entity1_id)
             group2 = entity_to_group.get(entity2_id)
@@ -680,10 +731,11 @@ class DuplicateDetector:
 
                 # Update references
                 for entity in group2.entities:
-                    entity_id = entity.get("id") or id(entity)
+                    entity_id = self._get_entity_value(entity, "id") or id(entity)
                     entity_to_group[entity_id] = group1
 
-                groups.remove(group2)
+                if group2 in groups:
+                    groups.remove(group2)
 
         return groups
 
@@ -708,8 +760,8 @@ class DuplicateDetector:
         # Select entity with most properties/relationships
         best_entity = max(
             group.entities,
-            key=lambda e: len(e.get("properties", {}))
-            + len(e.get("relationships", [])),
+            key=lambda e: len(self._get_entity_value(e, "properties", {}))
+            + len(self._get_entity_value(e, "relationships", [])),
         )
 
         return best_entity
@@ -719,16 +771,26 @@ class DuplicateDetector:
     ) -> bool:
         """Check if two relationships are duplicates."""
         # Exact match
+        # Handle both dicts and relationship objects if they exist
+        def get_rel_val(rel, key):
+            if hasattr(rel, "__dict__"):
+                return getattr(rel, key, None)
+            if isinstance(rel, dict):
+                return rel.get(key)
+            return None
+
         if (
-            rel1.get("subject") == rel2.get("subject")
-            and rel1.get("predicate") == rel2.get("predicate")
-            and rel1.get("object") == rel2.get("object")
+            get_rel_val(rel1, "subject") == get_rel_val(rel2, "subject")
+            and get_rel_val(rel1, "predicate") == get_rel_val(rel2, "predicate")
+            and get_rel_val(rel1, "object") == get_rel_val(rel2, "object")
         ):
             return True
 
-        # Similarity check
+        # Fuzzy match for predicate
+        pred1 = str(get_rel_val(rel1, "predicate") or "")
+        pred2 = str(get_rel_val(rel2, "predicate") or "")
         similarity = self.similarity_calculator.calculate_string_similarity(
-            str(rel1.get("predicate", "")), str(rel2.get("predicate", ""))
+            pred1, pred2
         )
 
         return similarity >= threshold

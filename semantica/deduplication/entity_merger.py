@@ -14,7 +14,7 @@ Algorithms Used:
     - Merge Quality Validation: Validation of merged entities for completeness and consistency
 
 Key Features:
-    - Merge duplicate entities using configurable strategies
+    - Merge duplicate entities using configurable strategies with group-level progress tracking
     - Preserve provenance information during merges (tracks merged entity sources)
     - Incremental merging of new entities with existing ones
     - Conflict resolution for property and relationship merging
@@ -504,9 +504,9 @@ class EntityMerger:
         # Record source entities
         provenance["merged_from"] = [
             {
-                "id": e.get("id"),
-                "name": e.get("name"),
-                "source": e.get("metadata", {}).get("source"),
+                "id": self._get_entity_value(e, "id"),
+                "name": self._get_entity_value(e, "name"),
+                "source": self._get_entity_value(e, "metadata", {}).get("source") if hasattr(e, "metadata") or isinstance(e, dict) else None,
             }
             for e in source_entities
         ]
@@ -561,3 +561,20 @@ class EntityMerger:
             ...     print(f"Issues: {validation['issues']}")
         """
         return self.merge_strategy_manager.validate_merge(merge_operation.merge_result)
+
+    def _get_entity_value(self, entity: Any, key: str, default: Any = None) -> Any:
+        """Get value from entity dictionary or object safely."""
+        if hasattr(entity, "__dict__"):
+            # For Entity objects, map 'name' to 'text' and 'type' to 'label'
+            if key == "name":
+                return getattr(entity, "text", default)
+            if key == "type":
+                return getattr(entity, "label", default)
+            if key == "properties":
+                # Check metadata for properties
+                metadata = getattr(entity, "metadata", {})
+                return metadata.get("properties", {})
+            return getattr(entity, key, default)
+        elif isinstance(entity, dict):
+            return entity.get(key, default)
+        return default

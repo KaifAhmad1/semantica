@@ -6,7 +6,9 @@ for file, module, and submodule processing across console, log files, and Jupyte
 
 Key Features:
     - Automatic module/submodule detection via introspection
-    - Real-time progress updates with emojis
+    - Real-time progress updates with percentages and item counts
+    - Dynamic update intervals based on dataset size for performance
+    - Consolidated display for concurrent tasks to prevent scrolling
     - Console, Jupyter notebook, and log file support
     - Zero configuration required - works automatically
     - Final summary display
@@ -172,15 +174,6 @@ class ConsoleProgressDisplay(ProgressDisplay):
 
     def _get_action_message(self, module: Optional[str], message: str) -> str:
         """Get action message based on module."""
-        # Extract action from message if it contains "Semantica:"
-        if message and "Semantica:" in message:
-            # Use the message as-is if it already has Semantica format
-            return (
-                message.split("Semantica:")[-1].strip()
-                if "Semantica:" in message
-                else message
-            )
-
         # Map modules to actions
         action_map = {
             "ingest": "is ingesting",
@@ -206,7 +199,17 @@ class ConsoleProgressDisplay(ProgressDisplay):
         }
 
         action = action_map.get(module or "", "is processing")
-        return f"Semantica {action}"
+        base_msg = f"Semantica {action}"
+
+        if not message:
+            return base_msg
+            
+        # If message already contains Semantica format, use it
+        if "Semantica:" in message:
+            return message.split("Semantica:")[-1].strip()
+            
+        # Otherwise combine them
+        return f"{base_msg}: {message}"
 
     def _safe_write(self, text: str) -> None:
         """Safely write text to stdout handling encoding errors."""
@@ -225,6 +228,7 @@ class ConsoleProgressDisplay(ProgressDisplay):
             return
 
         with self.lock:
+            # Create unique key for this item
             key = f"{item.module}:{item.submodule}"
             if item.file:
                 key = f"{item.file}:{key}"
@@ -236,60 +240,48 @@ class ConsoleProgressDisplay(ProgressDisplay):
             if self.use_emoji:
                 parts.append("🧠")
 
-            # Create action message based on module
+            # Create action message based on module (now includes custom message)
             action_msg = self._get_action_message(item.module, item.message)
             parts.append(action_msg)
 
-            # Status emoji
-            if self.use_emoji:
-                parts.append(self._get_status_emoji(item.status))
-
-            # Module emoji
-            if item.module and self.use_emoji:
-                parts.append(self._get_emoji_for_module(item.module))
-
-            # Module name
-            if item.module:
-                parts.append(f"[{item.module}]")
-
-            # Submodule
-            if item.submodule:
-                parts.append(f"{item.submodule}")
-
-            # File
-            if item.file:
-                file_name = Path(item.file).name if item.file else ""
-                parts.append(f"📄 {file_name}")
-
-            # Progress information
-            progress_parts = []
+            # Progress bar and percentage
             if item.progress_percentage is not None:
-                progress_parts.append(f"{item.progress_percentage:.1f}%")
-            
+                pct = item.progress_percentage
+                bar_width = 15
+                filled = int(bar_width * pct / 100)
+                bar = "█" * filled + "░" * (bar_width - filled)
+                parts.append(f"|{bar}| {pct:.1f}%")
+
+            # Count information [done/total]
             if item.processed_items is not None and item.total_items is not None:
-                progress_parts.append(f"{item.processed_items}/{item.total_items}")
-            
+                parts.append(f"[{item.processed_items}/{item.total_items}]")
+
+            # Status and Module emojis
+            if self.use_emoji:
+                status_emoji = self._get_status_emoji(item.status)
+                module_emoji = self._get_emoji_for_module(item.module or "")
+                parts.append(f"{status_emoji}{module_emoji}")
+
+            # ETA and Rate
+            metrics = []
             if item.estimated_remaining is not None and item.estimated_remaining > 0:
-                # Format ETA in human-readable format
                 if item.estimated_remaining < 60:
-                    eta_str = f"ETA: {item.estimated_remaining:.1f}s"
+                    metrics.append(f"ETA: {item.estimated_remaining:.1f}s")
                 elif item.estimated_remaining < 3600:
-                    eta_str = f"ETA: {item.estimated_remaining/60:.1f}m"
+                    metrics.append(f"ETA: {item.estimated_remaining/60:.1f}m")
                 else:
-                    eta_str = f"ETA: {item.estimated_remaining/3600:.1f}h"
-                progress_parts.append(eta_str)
+                    metrics.append(f"ETA: {item.estimated_remaining/3600:.1f}h")
             
-            # Calculate and show processing rate
             if item.start_time and item.processed_items is not None and item.processed_items > 0:
                 elapsed = time.time() - item.start_time
                 if elapsed > 0:
                     rate = item.processed_items / elapsed
-                    progress_parts.append(f"Rate: {rate:.1f}/s")
+                    metrics.append(f"{rate:.1f}/s")
             
-            if progress_parts:
-                parts.append(f"({' | '.join(progress_parts)})")
+            if metrics:
+                parts.append(f"({' | '.join(metrics)})")
             
-            # Time elapsed (if no progress info shown)
+            # Elapsed time if no progress info
             if item.start_time and item.progress_percentage is None:
                 elapsed = time.time() - item.start_time
                 parts.append(f"({elapsed:.1f}s)")
@@ -297,14 +289,16 @@ class ConsoleProgressDisplay(ProgressDisplay):
             line = " ".join(parts)
             self.current_lines[key] = line
 
-            # Print all current lines (overwrite previous)
-            self._safe_write("\r" + " " * 100 + "\r")  # Clear line
+            # Print all current lines
+            # For multiple lines, we combine them to avoid console scrolling issues
+            sys.stdout.write("\r" + " " * 120 + "\r")
             if len(self.current_lines) == 1:
-                self._safe_write(line)
+                sys.stdout.write(line)
             else:
-                # Multiple items - show all
+                # Combine multiple active lines onto one or two lines to be safe
                 lines_list = list(self.current_lines.values())
-                self._safe_write("\n".join(lines_list[-3:]))  # Show last 3
+                sys.stdout.write(" | ".join(lines_list[-2:]))
+            
             sys.stdout.flush()
 
     def show_summary(self, items: List[ProgressItem]) -> None:

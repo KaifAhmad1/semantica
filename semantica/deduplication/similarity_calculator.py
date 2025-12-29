@@ -7,6 +7,9 @@ metrics including string similarity, property similarity, relationship similarit
 and embedding similarity.
 
 Algorithms Used:
+    - Blocking Strategy: Prefix-based entity grouping to reduce O(n²) comparisons
+    - Pre-processing: Vectorized preparation of lowercase names and relationship sets
+    - Short-circuiting: Early exit for dissimilar pairs based on name similarity
     - Levenshtein Distance: Dynamic programming algorithm for edit distance calculation
     - Jaro Similarity: Character-based similarity with match window algorithm
     - Jaro-Winkler Similarity: Jaro with prefix bonus (up to 4 characters, 0.1 weight)
@@ -16,6 +19,7 @@ Algorithms Used:
     - Multi-factor Aggregation: Weighted sum of similarity components with normalization
 
 Key Features:
+    - Blocking strategy and short-circuiting for high-performance large-scale processing
     - Multi-factor similarity calculation (string, property, relationship, embedding)
     - Multiple string similarity algorithms (Levenshtein, Jaro-Winkler, cosine)
     - Weighted aggregation of similarity components with automatic normalization
@@ -146,7 +150,7 @@ class SimilarityCalculator:
         self.logger.debug("Similarity calculator initialized")
 
     def calculate_similarity(
-        self, entity1: Dict[str, Any], entity2: Dict[str, Any], **options
+        self, entity1: Dict[str, Any], entity2: Dict[str, Any], track: bool = True, **options
     ) -> SimilarityResult:
         """
         Calculate overall similarity between two entities.
@@ -156,63 +160,69 @@ class SimilarityCalculator:
         similarity, and embedding similarity (if available). Results are aggregated
         using configurable weights.
 
-        Similarity Components:
-            - String: Name/identifier similarity (Levenshtein, Jaro-Winkler, etc.)
-            - Property: Property value similarity
-            - Relationship: Relationship overlap (Jaccard similarity)
-            - Embedding: Cosine similarity of embeddings (if available)
-
         Args:
-            entity1: First entity dictionary. Should have "name" field and optionally
-                    "properties", "relationships", and "embedding" fields.
-            entity2: Second entity dictionary (same structure as entity1)
-            **options: Additional calculation options (currently unused)
+            entity1: First entity dictionary
+            entity2: Second entity dictionary
+            track: Whether to track progress for this individual calculation (default: True)
+            **options: Additional calculation options
 
         Returns:
-            SimilarityResult object containing:
-                - score: Overall similarity score (0.0 to 1.0)
-                - method: Calculation method used ("multi_factor")
-                - components: Dict of individual component scores
-                - metadata: Weights used for aggregation
-
-        Example:
-            >>> entity1 = {"name": "Apple Inc.", "type": "Company"}
-            >>> entity2 = {"name": "Apple", "type": "Company"}
-            >>> result = calculator.calculate_similarity(entity1, entity2)
-            >>> print(f"Similarity: {result.score:.2f}")
-            >>> print(f"Components: {result.components}")
+            SimilarityResult object
         """
-        # Track similarity calculation
-        tracking_id = self.progress_tracker.start_tracking(
-            file=None,
-            module="deduplication",
-            submodule="SimilarityCalculator",
-            message="Calculating similarity between entities",
-        )
+        tracking_id = None
+        if track:
+            # Track similarity calculation
+            tracking_id = self.progress_tracker.start_tracking(
+                file=None,
+                module="deduplication",
+                submodule="SimilarityCalculator",
+                message="Calculating similarity between entities",
+            )
 
         try:
             components = {}
 
-            # String similarity
-            self.progress_tracker.update_tracking(
-                tracking_id, message="Calculating string similarity..."
-            )
-            string_score = self.calculate_string_similarity(
-                entity1.get("name", ""), entity2.get("name", "")
-            )
+            # String similarity (usually the most important and fastest)
+            if tracking_id:
+                self.progress_tracker.update_tracking(
+                    tracking_id, message="Calculating string similarity..."
+                )
+            
+            # Use pre-calculated lowercase name if available
+            name1 = entity1.get("_lower_name")
+            if name1 is None:
+                name1 = entity1.get("name") or entity1.get("text") or ""
+            
+            name2 = entity2.get("_lower_name")
+            if name2 is None:
+                name2 = entity2.get("name") or entity2.get("text") or ""
+                
+            string_score = self.calculate_string_similarity(name1, name2)
             components["string"] = string_score
 
+            # Short-circuit if string similarity is too low and weight is high
+            # If string similarity is 0 and it accounts for 60% of score,
+            # max possible score is 0.4, which is below most thresholds.
+            if self.string_weight > 0.5 and string_score < 0.3 and not ("embedding" in entity1 and "embedding" in entity2):
+                # Only short-circuit if no embeddings (which might provide semantic similarity)
+                # and string similarity is very low.
+                overall_score = string_score * self.string_weight # Rough estimate
+                if overall_score < (options.get("threshold") or self.similarity_threshold) * 0.5:
+                    return SimilarityResult(score=overall_score, method="short_circuit", components=components)
+
             # Property similarity
-            self.progress_tracker.update_tracking(
-                tracking_id, message="Calculating property similarity..."
-            )
+            if tracking_id:
+                self.progress_tracker.update_tracking(
+                    tracking_id, message="Calculating property similarity..."
+                )
             property_score = self.calculate_property_similarity(entity1, entity2)
             components["property"] = property_score
 
             # Relationship similarity
-            self.progress_tracker.update_tracking(
-                tracking_id, message="Calculating relationship similarity..."
-            )
+            if tracking_id:
+                self.progress_tracker.update_tracking(
+                    tracking_id, message="Calculating relationship similarity..."
+                )
             relationship_score = self.calculate_relationship_similarity(
                 entity1, entity2
             )
@@ -221,18 +231,20 @@ class SimilarityCalculator:
             # Embedding similarity (if available)
             embedding_score = 0.0
             if "embedding" in entity1 and "embedding" in entity2:
-                self.progress_tracker.update_tracking(
-                    tracking_id, message="Calculating embedding similarity..."
-                )
+                if tracking_id:
+                    self.progress_tracker.update_tracking(
+                        tracking_id, message="Calculating embedding similarity..."
+                    )
                 embedding_score = self.calculate_embedding_similarity(
                     entity1["embedding"], entity2["embedding"]
                 )
                 components["embedding"] = embedding_score
 
             # Weighted aggregation
-            self.progress_tracker.update_tracking(
-                tracking_id, message="Aggregating similarity scores..."
-            )
+            if tracking_id:
+                self.progress_tracker.update_tracking(
+                    tracking_id, message="Aggregating similarity scores..."
+                )
             weights = {
                 "string": self.string_weight,
                 "property": self.property_weight,
@@ -251,11 +263,12 @@ class SimilarityCalculator:
                 components.get(key, 0.0) * weight for key, weight in weights.items()
             )
 
-            self.progress_tracker.stop_tracking(
-                tracking_id,
-                status="completed",
-                message=f"Similarity score: {overall_score:.2f}",
-            )
+            if tracking_id:
+                self.progress_tracker.stop_tracking(
+                    tracking_id,
+                    status="completed",
+                    message=f"Similarity score: {overall_score:.2f}",
+                )
             return SimilarityResult(
                 score=overall_score,
                 method="multi_factor",
@@ -264,9 +277,10 @@ class SimilarityCalculator:
             )
 
         except Exception as e:
-            self.progress_tracker.stop_tracking(
-                tracking_id, status="failed", message=str(e)
-            )
+            if tracking_id:
+                self.progress_tracker.stop_tracking(
+                    tracking_id, status="failed", message=str(e)
+                )
             raise
 
     def calculate_string_similarity(
@@ -363,15 +377,16 @@ class SimilarityCalculator:
         Returns:
             Relationship similarity score (0-1)
         """
-        def _make_hashable(item):
-            if isinstance(item, dict):
-                return tuple(sorted((k, _make_hashable(v)) for k, v in item.items()))
-            if isinstance(item, list):
-                return tuple(_make_hashable(x) for x in item)
-            return item
-
-        rels1 = set(_make_hashable(r) for r in entity1.get("relationships", []))
-        rels2 = set(_make_hashable(r) for r in entity2.get("relationships", []))
+        # Use pre-calculated hashable relationships if available
+        if "_hashable_rels" in entity1:
+            rels1 = entity1["_hashable_rels"]
+        else:
+            rels1 = set(self._make_hashable(r) for r in entity1.get("relationships", []))
+            
+        if "_hashable_rels" in entity2:
+            rels2 = entity2["_hashable_rels"]
+        else:
+            rels2 = set(self._make_hashable(r) for r in entity2.get("relationships", []))
 
         if not rels1 and not rels2:
             return 0.5
@@ -383,6 +398,14 @@ class SimilarityCalculator:
         union = rels1 | rels2
 
         return len(intersection) / len(union) if union else 0.0
+
+    def _make_hashable(self, item: Any) -> Any:
+        """Convert item to hashable form for set operations."""
+        if isinstance(item, dict):
+            return tuple(sorted((k, self._make_hashable(v)) for k, v in item.items()))
+        if isinstance(item, list):
+            return tuple(self._make_hashable(x) for x in item)
+        return item
 
     def calculate_embedding_similarity(
         self, embedding1: List[float], embedding2: List[float]
@@ -536,11 +559,14 @@ class SimilarityCalculator:
         self, entities: List[Dict[str, Any]], threshold: Optional[float] = None
     ) -> List[Tuple[Dict[str, Any], Dict[str, Any], float]]:
         """
-        Calculate similarity for all pairs of entities.
+        Calculate similarity for all entity pairs in a batch.
+
+        This method optimizes calculation by comparing only pairs that are likely
+        to be similar using a blocking/indexing strategy.
 
         Args:
-            entities: List of entities
-            threshold: Minimum similarity threshold
+            entities: List of entity dictionaries
+            threshold: Similarity threshold for filtering (default: self.similarity_threshold)
 
         Returns:
             List of (entity1, entity2, similarity) tuples
@@ -557,59 +583,98 @@ class SimilarityCalculator:
             threshold = threshold or self.similarity_threshold
             results = []
 
-            # Calculate total pairs: n*(n-1)/2
-            total_pairs = len(entities) * (len(entities) - 1) // 2
+            # Pre-process entities for faster comparison
+            # 1. Pre-calculate hashable relationships
+            # 2. Pre-calculate lowercase names
+            # 3. Pre-calculate property sets
+            processed_entities = []
+            for entity in entities:
+                # Handle both dicts and Entity objects
+                if hasattr(entity, "__dict__"):
+                    processed_entity = vars(entity).copy()
+                elif isinstance(entity, dict):
+                    processed_entity = entity.copy()
+                else:
+                    processed_entity = {"_original": entity}
+                
+                # Pre-calculate hashable relationships for Jaccard similarity
+                # Handle both 'relationships' and 'metadata.relationships'
+                rels = processed_entity.get("relationships")
+                if rels is None and "metadata" in processed_entity:
+                    rels = processed_entity["metadata"].get("relationships")
+                
+                if rels:
+                    processed_entity["_hashable_rels"] = set(self._make_hashable(r) for r in rels)
+                else:
+                    processed_entity["_hashable_rels"] = set()
+                
+                # Pre-calculate lowercase name
+                # Handle both 'name' and 'text' (used in Entity class)
+                name = processed_entity.get("name") or processed_entity.get("text") or ""
+                processed_entity["_lower_name"] = name.lower().strip()
+                
+                processed_entities.append(processed_entity)
+
+            # Blocking strategy: Group entities by first character of name
+            # This significantly reduces the number of pairs to compare while
+            # still catching most duplicates.
+            blocks: Dict[str, List[int]] = {}
+            for idx, entity in enumerate(processed_entities):
+                name = entity["_lower_name"]
+                if not name:
+                    block_key = "___empty___"
+                else:
+                    # Use the first character as the block key
+                    block_key = name[0]
+                
+                if block_key not in blocks:
+                    blocks[block_key] = []
+                blocks[block_key].append(idx)
+
+            # Calculate total potential pairs within blocks for progress tracking
+            total_pairs = 0
+            for block_indices in blocks.values():
+                n = len(block_indices)
+                total_pairs += n * (n - 1) // 2
+
             processed = 0
-            # Update more frequently: every 1% or at least every 10 items, but always update for small datasets
+            # Update more frequently: every 1% or at least every 10 items
             if total_pairs <= 10:
-                update_interval = 1  # Update every item for small datasets
+                update_interval = 1
             else:
-                update_interval = max(1, min(10, total_pairs // 100))
+                update_interval = max(1, min(100, total_pairs // 100))
             
-            # Initial progress update to show tracking started - ALWAYS show this
             self.progress_tracker.update_tracking(
                 tracking_id,
                 status="running",
-                message=f"Calculating similarity for {len(entities)} entities ({total_pairs} pairs)..."
+                message=f"Comparing {total_pairs} pairs across {len(blocks)} blocks..."
             )
             
-            # Always show initial progress, even if total_pairs is 0
-            remaining = total_pairs - processed
-            self.progress_tracker.update_progress(
-                tracking_id,
-                processed=0,
-                total=total_pairs,
-                message=f"Starting similarity calculation... 0/{total_pairs} (remaining: {remaining})"
-            )
+            # Compare entities within each block
+            for block_key, indices in blocks.items():
+                for i_idx in range(len(indices)):
+                    for j_idx in range(i_idx + 1, len(indices)):
+                        i = indices[i_idx]
+                        j = indices[j_idx]
+                        
+                        similarity = self.calculate_similarity(processed_entities[i], processed_entities[j], track=False)
 
-            for i in range(len(entities)):
-                for j in range(i + 1, len(entities)):
-                    similarity = self.calculate_similarity(entities[i], entities[j])
-
-                    if similarity.score >= threshold:
-                        results.append((entities[i], entities[j], similarity.score))
-                    
-                    processed += 1
-                    remaining = total_pairs - processed
-                    # Update progress: always update for small datasets, or at intervals for large ones
-                    should_update = (
-                        processed % update_interval == 0 or 
-                        processed == total_pairs or 
-                        processed == 1 or
-                        total_pairs <= 10  # Always update for small datasets
-                    )
-                    if should_update:
-                        self.progress_tracker.update_progress(
-                            tracking_id,
-                            processed=processed,
-                            total=total_pairs,
-                            message=f"Comparing entity pairs... {processed}/{total_pairs} (remaining: {remaining})"
-                        )
+                        if similarity.score >= threshold:
+                            results.append((entities[i], entities[j], similarity.score))
+                        
+                        processed += 1
+                        if processed % update_interval == 0 or processed == total_pairs:
+                            self.progress_tracker.update_progress(
+                                tracking_id,
+                                processed=processed,
+                                total=total_pairs,
+                                message=f"Comparing pairs in block '{block_key}'... {processed}/{total_pairs}"
+                            )
 
             self.progress_tracker.stop_tracking(
                 tracking_id,
                 status="completed",
-                message=f"Found {len(results)} similar pairs",
+                message=f"Found {len(results)} similar pairs across {len(blocks)} blocks",
             )
             return results
 

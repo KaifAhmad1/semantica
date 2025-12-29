@@ -4,6 +4,7 @@ Conflict Resolver
 This module provides comprehensive conflict resolution capabilities for the
 Semantica framework, offering multiple strategies for resolving detected conflicts
 including voting mechanisms, credibility-based resolution, and expert review.
+The module includes granular progress tracking for large conflict sets.
 
 Algorithms Used:
 

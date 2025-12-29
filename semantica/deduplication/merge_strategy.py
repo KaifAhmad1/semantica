@@ -14,7 +14,7 @@ Algorithms Used:
 
 Key Features:
     - Multiple merge strategies (keep_first, keep_most_complete, keep_highest_confidence, etc.)
-    - Property-specific merge rules with custom conflict resolution
+    - Property-specific merge rules with granular progress tracking
     - Custom conflict resolution functions for complex merging scenarios
     - Relationship preservation during merges (union of all relationships)
     - Merge quality validation with completeness and consistency checks
@@ -216,6 +216,33 @@ class MergeStrategyManager:
             if not entities:
                 raise ValidationError("No entities to merge")
 
+            # Pre-process entities to handle both dicts and objects
+            processed_entities = []
+            for entity in entities:
+                if hasattr(entity, "__dict__"):
+                    # Map Entity fields to dictionary keys
+                    ent_dict = vars(entity).copy()
+                    # Add mappings for common fields
+                    if "text" in ent_dict and "name" not in ent_dict:
+                        ent_dict["name"] = ent_dict["text"]
+                    if "label" in ent_dict and "type" not in ent_dict:
+                        ent_dict["type"] = ent_dict["label"]
+                    
+                    # Handle metadata properties
+                    metadata = ent_dict.get("metadata", {})
+                    if "properties" in metadata and "properties" not in ent_dict:
+                        ent_dict["properties"] = metadata["properties"]
+                    if "relationships" in metadata and "relationships" not in ent_dict:
+                        ent_dict["relationships"] = metadata["relationships"]
+                    
+                    processed_entities.append(ent_dict)
+                elif isinstance(entity, dict):
+                    processed_entities.append(entity.copy())
+                else:
+                    processed_entities.append({"_original": entity})
+
+            entities = processed_entities
+
             if len(entities) == 1:
                 self.progress_tracker.stop_tracking(
                     tracking_id,
@@ -265,7 +292,7 @@ class MergeStrategyManager:
                 message=f"Merging properties... ({current_step}/{total_steps}, {total_properties} properties, remaining: {remaining_steps} steps)"
             )
             merged_properties, property_conflicts = self._merge_properties(
-                entities, base_entity, strategy
+                entities, base_entity, strategy, tracking_id=tracking_id
             )
 
             # Step 3: Merge relationships
@@ -370,18 +397,25 @@ class MergeStrategyManager:
         entities: List[Dict[str, Any]],
         base_entity: Dict[str, Any],
         strategy: MergeStrategy,
+        tracking_id: Optional[str] = None,
     ) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
         """Merge properties from all entities."""
         merged_properties = base_entity.get("properties", {}).copy()
         conflicts = []
 
-        for entity in entities:
+        total_entities = len(entities) - 1  # Excluding base entity
+        if total_entities <= 0:
+            return merged_properties, conflicts
+
+        for ent_idx, entity in enumerate(entities):
             if entity == base_entity:
                 continue
 
             entity_props = entity.get("properties", {})
+            prop_list = list(entity_props.items())
+            total_props = len(prop_list)
 
-            for prop_name, prop_value in entity_props.items():
+            for prop_idx, (prop_name, prop_value) in enumerate(prop_list):
                 if prop_name not in merged_properties:
                     # New property, add it
                     merged_properties[prop_name] = prop_value
@@ -401,6 +435,14 @@ class MergeStrategyManager:
                                 "resolution": conflict.get("resolution"),
                             }
                         )
+                
+                # Update progress if tracking_id is provided
+                if tracking_id and (prop_idx % 10 == 0 or prop_idx == total_props - 1):
+                    processed_entities = ent_idx
+                    # Calculate overall progress across all entities and their properties
+                    # This is an approximation for smoother progress
+                    progress_msg = f"Merging properties from entity {ent_idx+1}/{len(entities)}: {prop_name}"
+                    self.progress_tracker.update_tracking(tracking_id, message=progress_msg)
 
         return merged_properties, conflicts
 

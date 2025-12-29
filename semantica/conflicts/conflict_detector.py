@@ -4,6 +4,7 @@ Conflict Detector
 This module provides comprehensive conflict detection capabilities for the
 Semantica framework, detecting conflicts from multiple sources and tracking
 source disagreements for compliance and investigation.
+Includes integrated progress tracking for large-scale conflict detection.
 
 Algorithms Used:
 
