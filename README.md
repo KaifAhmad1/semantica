@@ -213,6 +213,8 @@ Semantica is designed for **developers, data engineers, and organizations** buil
 
 ## 📦 Installation
 
+> **✅ Available on PyPI!** Semantica is now published on PyPI. Install it with a single command: `pip install semantica`
+
 **Prerequisites:** Python 3.8+ (3.9+ recommended) • pip (latest version)
 
 ### Install from PyPI (Recommended)
@@ -281,8 +283,6 @@ python -c "import semantica; print(semantica.__version__)"
 
 #### Supply Chain
 - [**Supply Chain Data Integration**](cookbook/use_cases/supply_chain/01_Supply_Chain_Data_Integration.ipynb) - Logistics RSS, deduplication, relationship mapping
-
-> **Note:** Once published to PyPI, you'll be able to install with `pip install semantica`
 
 ### Install from Source (Development)
 
