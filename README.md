@@ -252,7 +252,7 @@ python -c "import semantica; print(semantica.__version__)"
 - [**Entity Extraction**](cookbook/introduction/05_Entity_Extraction.ipynb) - NER & Relationships
 - [**Building Knowledge Graphs**](cookbook/introduction/07_Building_Knowledge_Graphs.ipynb) - Graph Construction
 
-### Industry Use Cases (17 Cookbooks)
+### Industry Use Cases (15 Cookbooks)
 
 **Domain-Specific Cookbooks** showcasing real-world applications with real data sources, advanced chunking strategies, temporal KGs, GraphRAG, and comprehensive Semantica module integration:
 
@@ -282,7 +282,6 @@ python -c "import semantica; print(semantica.__version__)"
 
 #### Renewable Energy
 - [**Energy Market Analysis**](cookbook/use_cases/renewable_energy/01_Energy_Market_Analysis.ipynb) - Energy RSS, EIA API, temporal KGs, TemporalPatternDetector, trend prediction
-- [**Smart Grid Management**](cookbook/use_cases/renewable_energy/02_Smart_Grid_Management.ipynb) - Sensor streams, temporal KGs, token chunking, real-time monitoring
 
 #### Supply Chain
 - [**Supply Chain Data Integration**](cookbook/use_cases/supply_chain/01_Supply_Chain_Data_Integration.ipynb) - Logistics RSS, deduplication, relationship mapping
@@ -684,7 +683,7 @@ print(f"Answer: {result.answer} | Nodes: {kg.node_count}, Edges: {kg.edge_count}
 
 **Biomedical** — Drug discovery, medical literature analysis.
 
-[**Explore Use Case Examples**](https://github.com/Hawksight-AI/semantica/tree/main/cookbook/use_cases) — See real-world implementations in finance, biomedical, cybersecurity, trading, and more. **17 comprehensive domain-specific cookbooks** with real data sources, advanced chunking strategies, temporal KGs, GraphRAG, and full Semantica module integration.
+[**Explore Use Case Examples**](https://github.com/Hawksight-AI/semantica/tree/main/cookbook/use_cases) — See real-world implementations in finance, biomedical, cybersecurity, trading, and more. **15 comprehensive domain-specific cookbooks** with real data sources, advanced chunking strategies, temporal KGs, GraphRAG, and full Semantica module integration.
 
 ## 🔬 Advanced Features
 

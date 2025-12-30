@@ -503,16 +503,6 @@ Real-world examples and end-to-end applications across various industries.
     
     [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/renewable_energy/01_Energy_Market_Analysis.ipynb)
 
--   :material-transmission-tower: **Smart Grid Management**
-    ---
-    Optimizing power grid management and distribution using sensor streams, temporal knowledge graphs, token chunking, and real-time monitoring with failure prediction.
-    
-    **Topics**: Grid Optimization, Energy Distribution, Stream Processing, Real-Time Monitoring
-    
-    **Difficulty**: Advanced
-    
-    [Open Notebook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/renewable_energy/02_Smart_Grid_Management.ipynb)
-
 </div>
 
 ### Supply Chain
