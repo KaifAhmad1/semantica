@@ -9,6 +9,8 @@ on:
     paths:
       - 'docs/**'
       - 'mkdocs.yml'
+      - 'CHANGELOG.md'
+      - 'RELEASE.md'
   workflow_dispatch:
 
 # Permissions needed to deploy to GitHub Pages

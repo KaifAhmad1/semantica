@@ -273,5 +273,5 @@ pip install litellm
 
 - [Context Module](context.md) - GraphRAG with multi-hop reasoning
 - [Semantic Extract Module](semantic_extract.md) - Entity and relationship extraction
-- [GraphRAG Cookbook](../../cookbook/use_cases/advanced_rag/01_GraphRAG_Complete.ipynb) - Complete GraphRAG example
+- [GraphRAG Cookbook](https://github.com/Hawksight-AI/semantica/blob/main/cookbook/use_cases/advanced_rag/01_GraphRAG_Complete.ipynb) - Complete GraphRAG example
 
