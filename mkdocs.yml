@@ -1,12 +1,12 @@
 site_name: Semantica
 site_description: Open Source Framework for Semantic Intelligence & Knowledge Engineering
-site_url: https://semantica.dev
+site_url: https://hawksight-ai.github.io/semantica/
 repo_url: https://github.com/Hawksight-AI/semantica
 repo_name: Hawksight-AI/semantica
 edit_uri: edit/main/docs/
 
 # Copyright
-copyright: Copyright &copy; 2024 Hawksight AI
+copyright: Copyright &copy; 2025 Hawksight AI
 
 # Theme Configuration
 theme:
@@ -116,6 +116,7 @@ nav:
     - Graph Store: reference/graph_store.md
     - Ingest: reference/ingest.md
     - Knowledge Graph: reference/kg.md
+    - LLMs: reference/llms.md
     - Normalize: reference/normalize.md
     - Ontology: reference/ontology.md
     - Parse: reference/parse.md
@@ -130,9 +131,12 @@ nav:
     - Visualization: reference/visualization.md
   - Guides:
     - concepts.md
+    - deep-dive.md
     - modules.md
+    - glossary.md
     - use-cases.md
     - examples.md
+    - Code Examples: CodeExamples.md
     - learning-more.md
   - Cookbook: cookbook.md
   - Resources:
