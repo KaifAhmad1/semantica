@@ -73,8 +73,6 @@ import json
 import os
 from typing import Any, Dict, List, Optional, Union
 
-import torch
-
 from ..utils.exceptions import ProcessingError
 from ..utils.logging import get_logger
 from .config import config
@@ -544,6 +542,14 @@ class HuggingFaceLLMProvider(BaseProvider):
     ):
         """Initialize HuggingFace LLM provider."""
         super().__init__(**kwargs)
+        # Lazy import torch only when needed
+        try:
+            import torch
+        except ImportError:
+            raise ImportError(
+                "torch is required for HuggingFaceLLMProvider. Install with: pip install torch"
+            )
+        
         self.model_name = model_name
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.model = None
@@ -607,12 +613,23 @@ class HuggingFaceModelLoader:
 
     def __init__(self, device: Optional[str] = None):
         """Initialize HuggingFace model loader."""
+        # Lazy import torch only when needed
+        try:
+            import torch
+        except ImportError:
+            raise ImportError(
+                "torch is required for HuggingFaceModelLoader. Install with: pip install torch"
+            )
+        
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self._cache: Dict[str, Any] = {}
         self.logger = get_logger("huggingface_loader")
 
     def load_ner_model(self, model_name: str, **kwargs):
         """Load NER model."""
+        # Import torch at method level to ensure it's available
+        import torch
+        
         cache_key = f"{model_name}_ner"
         if cache_key in self._cache:
             return self._cache[cache_key]
@@ -638,6 +655,9 @@ class HuggingFaceModelLoader:
 
     def load_relation_model(self, model_name: str, **kwargs):
         """Load relation extraction model."""
+        # Import torch at method level to ensure it's available
+        import torch
+        
         cache_key = f"{model_name}_relation"
         if cache_key in self._cache:
             return self._cache[cache_key]
