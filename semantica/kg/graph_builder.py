@@ -944,7 +944,7 @@ class GraphBuilder:
             )
             return graph
 
-        except ImportError:
+        except (ImportError, OSError):
             self.progress_tracker.stop_tracking(
                 tracking_id, status="failed", message="neo4j library not available"
             )

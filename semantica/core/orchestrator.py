@@ -116,7 +116,7 @@ class Semantica:
                 self._modules["embedding_generator"] = EmbeddingGenerator(
                     config=self.config.get("embedding", {})
                 )
-            except ImportError as e:
+            except (ImportError, OSError) as e:
                 self.logger.warning(f"Could not import EmbeddingGenerator: {e}")
                 raise ProcessingError(f"Embeddings module not available: {e}")
         return self._modules["embedding_generator"]
@@ -133,7 +133,7 @@ class Semantica:
             try:
                 from ..reasoning import GraphReasoner
                 self._modules["reasoner"] = GraphReasoner(config=self.config)
-            except ImportError as e:
+            except (ImportError, OSError) as e:
                 self.logger.warning(f"Could not import GraphReasoner: {e}")
                 raise ProcessingError(f"Reasoning module not available: {e}")
         return self._modules["reasoner"]
@@ -371,7 +371,7 @@ class Semantica:
 
                 if isinstance(pipeline, Pipeline):
                     execution_engine = ExecutionEngine()
-            except ImportError:
+            except (ImportError, OSError):
                 execution_engine = None
 
             if execution_engine is None and not hasattr(pipeline, "execute"):
@@ -528,7 +528,7 @@ class Semantica:
             from ..pipeline import PipelineBuilder
 
             self.logger.debug("Framework modules verified and available")
-        except ImportError as e:
+        except (ImportError, OSError) as e:
             # Log but don't fail - modules may be optional or not installed
             self.logger.warning(
                 f"Some framework modules could not be imported: {e}. "
@@ -662,7 +662,7 @@ class Semantica:
 
             pipeline_builder.add_step("default_step", "default")
             return pipeline_builder.build("default_pipeline")
-        except ImportError:
+        except (ImportError, OSError):
             self.logger.debug("Pipeline module not available, using config directly")
             return pipeline_config
 
@@ -731,7 +731,7 @@ class Semantica:
                 )
                 raise
 
-        except ImportError:
+        except (ImportError, OSError):
             self.logger.warning("KG module not available, returning placeholder")
             return {"status": "placeholder", "results": results}
 
@@ -801,7 +801,7 @@ class Semantica:
                 )
                 raise
 
-        except ImportError:
+        except (ImportError, OSError):
             self.logger.warning(
                 "Embeddings module not available, returning placeholder"
             )
@@ -905,7 +905,7 @@ class Semantica:
                 # CPU percent may not be available immediately
                 pass
 
-        except ImportError:
+        except (ImportError, OSError):
             # psutil not available, use basic metrics
             self.logger.debug("psutil not available, using basic metrics")
         except Exception as e:

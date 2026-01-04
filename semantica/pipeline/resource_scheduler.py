@@ -155,7 +155,7 @@ class ResourceScheduler:
                     capacity=100.0,
                     metadata={},
                 )
-        except ImportError:
+        except (ImportError, OSError):
             # Fallback if psutil not available
             self.logger.warning("psutil not available, using default resource values")
             self.resources["cpu"] = Resource(

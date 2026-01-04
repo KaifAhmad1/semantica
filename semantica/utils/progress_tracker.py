@@ -52,8 +52,12 @@ try:
     from IPython.display import HTML, clear_output, display
 
     IPYTHON_AVAILABLE = True
-except ImportError:
+except (ImportError, OSError):
     IPYTHON_AVAILABLE = False
+    get_ipython = None
+    HTML = None
+    clear_output = None
+    display = None
 
 
 @dataclass

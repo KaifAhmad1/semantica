@@ -12,11 +12,13 @@ from ..utils.logging import get_logger
 
 logger = get_logger("llms.litellm")
 
-try:
+from ..utils.helpers import safe_import
+
+_litellm, LITELLM_AVAILABLE = safe_import("litellm")
+if LITELLM_AVAILABLE:
     from litellm import completion
-    LITELLM_AVAILABLE = True
-except ImportError:
-    LITELLM_AVAILABLE = False
+else:
+    completion = None
     logger.warning(
         "litellm library not installed. Install with: pip install litellm"
     )

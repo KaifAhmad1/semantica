@@ -334,7 +334,7 @@ class HybridSearch:
                     try:
                         from ..embeddings import EmbeddingGenerator
                         self.embedding_generator = EmbeddingGenerator()
-                    except ImportError:
+                    except (ImportError, OSError):
                         raise ImportError("EmbeddingGenerator not available for string queries")
                 
                 query_vector = self.embedding_generator.generate_embeddings(query, data_type="text")

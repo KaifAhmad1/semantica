@@ -48,7 +48,7 @@ try:
     from weaviate.classes.query import MetadataQuery, QueryReturn
 
     WEAVIATE_AVAILABLE = True
-except ImportError:
+except (ImportError, OSError):
     WEAVIATE_AVAILABLE = False
     weaviate = None
     MetadataQuery = None

@@ -44,7 +44,7 @@ try:
     from dateutil.relativedelta import relativedelta
 
     HAS_DATEUTIL = True
-except ImportError:
+except (ImportError, OSError):
     HAS_DATEUTIL = False
     date_parser = None
     relativedelta = None

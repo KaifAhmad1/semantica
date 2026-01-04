@@ -34,7 +34,7 @@ from ..utils.progress_tracker import get_progress_tracker
 try:
     from elasticsearch import Elasticsearch
     from elasticsearch.helpers import scan
-except ImportError:
+except (ImportError, OSError):
     Elasticsearch = None
     scan = None
 

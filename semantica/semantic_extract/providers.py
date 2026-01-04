@@ -197,7 +197,7 @@ class OpenAIProvider(BaseProvider):
 
             if self.api_key:
                 self.client = OpenAI(api_key=self.api_key)
-        except ImportError:
+        except (ImportError, OSError):
             self.client = None
             self.logger.warning(
                 "openai library not installed. Install with: pip install semantica[llm-openai]"
@@ -259,7 +259,7 @@ class GeminiProvider(BaseProvider):
             if self.api_key:
                 genai.configure(api_key=self.api_key)
                 self.client = genai.GenerativeModel(self.model)
-        except ImportError:
+        except (ImportError, OSError):
             self.client = None
             self.logger.warning(
                 "google-generativeai library not installed. Install with: pip install semantica[llm-gemini]"
@@ -315,7 +315,7 @@ class GroqProvider(BaseProvider):
 
             if self.api_key:
                 self.client = Groq(api_key=self.api_key)
-        except ImportError:
+        except (ImportError, OSError):
             self.client = None
             self.logger.warning(
                 "groq library not installed. Install with: pip install semantica[llm-groq]"
@@ -379,7 +379,7 @@ class AnthropicProvider(BaseProvider):
 
             if self.api_key:
                 self.client = Anthropic(api_key=self.api_key)
-        except ImportError:
+        except (ImportError, OSError):
             self.client = None
             self.logger.warning(
                 "anthropic library not installed. Install with: pip install semantica[llm-anthropic]"
@@ -447,7 +447,7 @@ class OllamaProvider(BaseProvider):
                 self.logger.warning(
                     "Ollama server not accessible. Make sure Ollama is running."
                 )
-        except ImportError:
+        except (ImportError, OSError):
             self.client = None
             self.logger.warning(
                 "ollama library not installed. Install with: pip install semantica[llm-ollama]"
@@ -502,7 +502,7 @@ class DeepSeekProvider(BaseProvider):
 
             if self.api_key:
                 self.client = deepseek.Client(api_key=self.api_key)
-        except ImportError:
+        except (ImportError, OSError):
             self.client = None
             self.logger.warning(
                 "deepseek library not installed. Install with: pip install semantica[llm-deepseek]"
@@ -545,7 +545,7 @@ class HuggingFaceLLMProvider(BaseProvider):
         # Lazy import torch only when needed
         try:
             import torch
-        except ImportError:
+        except (ImportError, OSError):
             raise ImportError(
                 "torch is required for HuggingFaceLLMProvider. Install with: pip install torch"
             )
@@ -565,7 +565,7 @@ class HuggingFaceLLMProvider(BaseProvider):
             self.model = AutoModelForCausalLM.from_pretrained(self.model_name)
             self.model.to(self.device)
             self.model.eval()
-        except ImportError:
+        except (ImportError, OSError):
             self.logger.warning(
                 "transformers library not installed. Install with: pip install semantica[models-huggingface]"
             )
@@ -616,7 +616,7 @@ class HuggingFaceModelLoader:
         # Lazy import torch only when needed
         try:
             import torch
-        except ImportError:
+        except (ImportError, OSError):
             raise ImportError(
                 "torch is required for HuggingFaceModelLoader. Install with: pip install torch"
             )
@@ -645,7 +645,7 @@ class HuggingFaceModelLoader:
             )
             self._cache[cache_key] = nlp
             return nlp
-        except ImportError:
+        except (ImportError, OSError):
             raise ImportError(
                 "transformers library not installed. Install with: pip install semantica[models-huggingface]"
             )
@@ -672,7 +672,7 @@ class HuggingFaceModelLoader:
             )
             self._cache[cache_key] = nlp
             return nlp
-        except ImportError:
+        except (ImportError, OSError):
             raise ImportError(
                 "transformers library not installed. Install with: pip install semantica[models-huggingface]"
             )
@@ -696,7 +696,7 @@ class HuggingFaceModelLoader:
             nlp = {"tokenizer": tokenizer, "model": model, "device": self.device}
             self._cache[cache_key] = nlp
             return nlp
-        except ImportError:
+        except (ImportError, OSError):
             raise ImportError(
                 "transformers library not installed. Install with: pip install semantica[models-huggingface]"
             )

@@ -119,12 +119,9 @@ from .triplet_extractor import Triplet
 logger = get_logger("methods")
 
 # Try to import spaCy
-try:
-    import spacy
+from ..utils.helpers import safe_import
 
-    SPACY_AVAILABLE = True
-except ImportError:
-    SPACY_AVAILABLE = False
+spacy, SPACY_AVAILABLE = safe_import("spacy")
 
 
 # ============================================================================

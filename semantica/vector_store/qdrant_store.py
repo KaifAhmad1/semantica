@@ -55,7 +55,7 @@ try:
     )
 
     QDRANT_AVAILABLE = True
-except ImportError:
+except (ImportError, OSError):
     QDRANT_AVAILABLE = False
     QdrantClientLib = None
     Distance = None

@@ -82,13 +82,13 @@ class ConnectivityAnalyzer:
         self.config = config
 
         # Try to use networkx if available (optional dependency)
-        try:
-            import networkx as nx
-
-            self.nx = nx
+        from ..utils.helpers import safe_import
+        networkx, nx_available = safe_import("networkx")
+        if nx_available:
+            self.nx = networkx
             self.use_networkx = True
             self.logger.debug("NetworkX available, using optimized implementations")
-        except ImportError:
+        else:
             self.nx = None
             self.use_networkx = False
             self.logger.warning("NetworkX not available, using basic implementations")

@@ -1046,7 +1046,7 @@ class GraphStore:
         try:
             from ..context.entity_linker import EntityLinker
             linker = EntityLinker() # Use default config
-        except ImportError:
+        except (ImportError, OSError):
             return []
 
         entity_nodes = [n for n in nodes if n.get("type") == "entity"]

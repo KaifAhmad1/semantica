@@ -49,7 +49,7 @@ try:
     import faiss
 
     FAISS_AVAILABLE = True
-except ImportError:
+except (ImportError, OSError):
     FAISS_AVAILABLE = False
     faiss = None
 

@@ -34,14 +34,14 @@ try:
     from sentence_transformers import SentenceTransformer
 
     SENTENCE_TRANSFORMERS_AVAILABLE = True
-except ImportError:
+except (ImportError, OSError):
     SENTENCE_TRANSFORMERS_AVAILABLE = False
 
 try:
     from fastembed import TextEmbedding
 
     FASTEMBED_AVAILABLE = True
-except ImportError:
+except (ImportError, OSError):
     FASTEMBED_AVAILABLE = False
 
 

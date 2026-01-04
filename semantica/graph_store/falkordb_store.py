@@ -47,7 +47,7 @@ try:
     from falkordb import FalkorDB
 
     FALKORDB_AVAILABLE = True
-except ImportError:
+except (ImportError, OSError):
     FALKORDB_AVAILABLE = False
     FalkorDB = None
 

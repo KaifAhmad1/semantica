@@ -32,7 +32,7 @@ from ..utils.progress_tracker import get_progress_tracker
 
 try:
     from datasets import load_dataset, Dataset, IterableDataset
-except ImportError:
+except (ImportError, OSError):
     load_dataset = None
     Dataset = None
     IterableDataset = None

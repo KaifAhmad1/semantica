@@ -33,7 +33,7 @@ try:
     from langdetect.lang_detect_exception import LangDetectException
 
     LANGDETECT_AVAILABLE = True
-except ImportError:
+except (ImportError, OSError):
     LANGDETECT_AVAILABLE = False
     LangDetectException = Exception
 

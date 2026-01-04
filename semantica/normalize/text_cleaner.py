@@ -34,7 +34,7 @@ try:
     from bs4 import BeautifulSoup
 
     BEAUTIFULSOUP_AVAILABLE = True
-except ImportError:
+except (ImportError, OSError):
     BEAUTIFULSOUP_AVAILABLE = False
     BeautifulSoup = None
 

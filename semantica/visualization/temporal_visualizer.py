@@ -37,7 +37,7 @@ try:
     import plotly.express as px
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
-except ImportError:
+except (ImportError, OSError):
     px = None
     go = None
     make_subplots = None

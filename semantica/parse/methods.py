@@ -228,7 +228,7 @@ def parse_document_docling(
     """
     try:
         from .docling_parser import DoclingParser
-    except ImportError:
+    except (ImportError, OSError):
         raise ImportError(
             "Docling is not installed. Install it with: pip install docling"
         )
@@ -249,7 +249,7 @@ def parse_document_docling(
 try:
     from .docling_parser import DoclingParser
     method_registry.register("document", "docling", parse_document_docling)
-except ImportError:
+except (ImportError, OSError):
     # Docling not available, skip registration
     pass
 

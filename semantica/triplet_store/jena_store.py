@@ -39,7 +39,7 @@ try:
     from rdflib.plugins.stores.sparqlstore import SPARQLStore
 
     HAS_JENA_RDFLIB = True
-except ImportError:
+except (ImportError, OSError):
     HAS_JENA_RDFLIB = False
     Graph = None
     RDF = None

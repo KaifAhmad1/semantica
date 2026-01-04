@@ -428,7 +428,7 @@ class SeedDataManager:
             self.logger.info(f"Loaded {len(records)} records from database")
             return records
 
-        except ImportError:
+        except (ImportError, OSError):
             raise ProcessingError(
                 "Database ingestion module not available. Install required dependencies."
             )
@@ -530,7 +530,7 @@ class SeedDataManager:
             self.logger.info(f"Loaded {len(records)} records from API: {full_url}")
             return records
 
-        except ImportError:
+        except (ImportError, OSError):
             raise ProcessingError(
                 "requests library not available. Install with: pip install requests"
             )

@@ -32,15 +32,11 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
 from ..utils.exceptions import ProcessingError
+from ..utils.helpers import safe_import
 from ..utils.logging import get_logger
 from ..utils.progress_tracker import get_progress_tracker
 
-try:
-    import spacy
-
-    SPACY_AVAILABLE = True
-except ImportError:
-    SPACY_AVAILABLE = False
+spacy, SPACY_AVAILABLE = safe_import("spacy")
 
 
 @dataclass

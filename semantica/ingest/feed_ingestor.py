@@ -358,7 +358,7 @@ class FeedParser:
             from dateutil import parser
 
             return parser.parse(date_string)
-        except ImportError:
+        except (ImportError, OSError):
             pass
 
         return None

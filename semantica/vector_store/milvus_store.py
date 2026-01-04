@@ -56,7 +56,7 @@ try:
     )
 
     MILVUS_AVAILABLE = True
-except ImportError:
+except (ImportError, OSError):
     MILVUS_AVAILABLE = False
     connections = None
     Collection = None

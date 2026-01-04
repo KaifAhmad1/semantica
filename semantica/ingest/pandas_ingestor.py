@@ -36,7 +36,7 @@ from ..utils.progress_tracker import get_progress_tracker
 
 try:
     import pandas as pd
-except ImportError:
+except (ImportError, OSError):
     pd = None
 
 

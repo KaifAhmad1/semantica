@@ -50,7 +50,7 @@ try:
     )
 
     NEO4J_AVAILABLE = True
-except ImportError:
+except (ImportError, OSError):
     NEO4J_AVAILABLE = False
     GraphDatabase = None
     Neo4jError = Exception

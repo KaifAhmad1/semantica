@@ -36,7 +36,7 @@ from typing import Any, Dict, List, Optional, Union
 try:
     import plotly.express as px
     import plotly.graph_objects as go
-except ImportError:
+except (ImportError, OSError):
     px = None
     go = None
 

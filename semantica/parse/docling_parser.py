@@ -1,8 +1,10 @@
 """
 Docling Document Parser Module
 
-This module handles document parsing using Docling for enhanced table extraction
-and better document structure understanding across multiple formats (PDF, DOCX, PPTX, XLSX, HTML, images).
+This module provides a standalone document parser that uses Docling as its core dependency.
+DoclingParser is completely independent from DocumentParser and uses only:
+    - docling: Core document parsing library (DocumentConverter)
+    - semantica utilities: Logging, progress tracking, exceptions
 
 Key Features:
     - Multi-format document parsing (PDF, DOCX, PPTX, XLSX, HTML, images)
@@ -11,9 +13,13 @@ Key Features:
     - Markdown, HTML, and JSON export formats
     - Local execution support
     - OCR support for scanned documents
+    - Standalone parser - no dependency on DocumentParser
+
+Core Dependency:
+    - docling: Required for all parsing functionality
 
 Main Classes:
-    - DoclingParser: Docling-based document parser
+    - DoclingParser: Standalone Docling-based document parser
 
 Example Usage:
     >>> from semantica.parse import DoclingParser
@@ -31,20 +37,26 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 from ..utils.exceptions import ProcessingError, ValidationError
+from ..utils.helpers import safe_import
 from ..utils.logging import get_logger
 from ..utils.progress_tracker import get_progress_tracker
 
 # Try to import docling, handle gracefully if not available
+DOCLING_AVAILABLE = False
+DOCLING_IMPORT_ERROR = None
+DocumentConverter = None
+InputFormat = None
+PdfPipelineOptions = None
+
 try:
     from docling.document_converter import DocumentConverter
     from docling.datamodel.base_models import InputFormat
     from docling.datamodel.pipeline_options import PdfPipelineOptions
     DOCLING_AVAILABLE = True
-except ImportError:
+    DOCLING_IMPORT_ERROR = None
+except (ImportError, OSError) as e:
     DOCLING_AVAILABLE = False
-    DocumentConverter = None
-    InputFormat = None
-    PdfPipelineOptions = None
+    DOCLING_IMPORT_ERROR = str(e)
 
 
 @dataclass
@@ -75,11 +87,6 @@ class DoclingParser:
                 - enable_ocr: Enable OCR for scanned documents (default: False)
                 - table_extraction_mode: Table extraction mode (default: "auto")
         """
-        if not DOCLING_AVAILABLE:
-            raise ImportError(
-                "Docling is not installed. Install it with: pip install docling"
-            )
-
         self.logger = get_logger("docling_parser")
         self.config = config
         self.progress_tracker = get_progress_tracker()
@@ -87,23 +94,11 @@ class DoclingParser:
         if not self.progress_tracker.enabled:
             self.progress_tracker.enabled = True
 
-        # Initialize DocumentConverter
-        export_format = config.get("export_format", "markdown")
-        enable_ocr = config.get("enable_ocr", False)
-        table_extraction_mode = config.get("table_extraction_mode", "auto")
-
-        # Configure pipeline options
-        pipeline_options = PdfPipelineOptions()
-        if enable_ocr:
-            pipeline_options.do_ocr = True
-
-        self.converter = DocumentConverter(
-            format_options={
-                "markdown": {"table_format": table_extraction_mode},
-            },
-            pipeline_options=pipeline_options,
-        )
-        self.export_format = export_format
+        # Store config for lazy initialization
+        self.export_format = config.get("export_format", "markdown")
+        self.enable_ocr = config.get("enable_ocr", False)
+        self.table_extraction_mode = config.get("table_extraction_mode", "auto")
+        self._converter = None
 
     def parse(self, file_path: Union[str, Path], **options) -> Dict[str, Any]:
         """
@@ -135,10 +130,19 @@ class DoclingParser:
             if not file_path.exists():
                 raise ValidationError(f"Document file not found: {file_path}")
 
-            # Check if docling is available
+            # Check if docling is available and initialize converter lazily
             if not DOCLING_AVAILABLE:
-                raise ImportError(
-                    "Docling is not installed. Install it with: pip install docling"
+                if DOCLING_IMPORT_ERROR:
+                    raise ImportError(DOCLING_IMPORT_ERROR)
+                else:
+                    raise ImportError("Docling is not installed")
+
+            # Lazy initialization of converter
+            if self._converter is None:
+                self._converter = DocumentConverter(
+                    format_options={
+                        "markdown": {"table_format": self.table_extraction_mode},
+                    },
                 )
 
             # Determine export format
@@ -149,7 +153,7 @@ class DoclingParser:
             )
 
             # Convert document using Docling
-            result = self.converter.convert(str(file_path))
+            result = self._converter.convert(str(file_path))
 
             # Extract content based on export format
             extract_text = options.get("extract_text", True)
@@ -200,7 +204,7 @@ class DoclingParser:
                 "export_format": export_format,
             }
 
-        except ImportError:
+        except (ImportError, OSError):
             self.progress_tracker.stop_tracking(
                 tracking_id, status="failed", message="Docling not installed"
             )

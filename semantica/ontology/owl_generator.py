@@ -42,7 +42,7 @@ try:
     from rdflib.namespace import NamespaceManager as RDFNamespaceManager
 
     HAS_RDFLIB = True
-except ImportError:
+except (ImportError, OSError):
     HAS_RDFLIB = False
     Graph = None
     RDF = None

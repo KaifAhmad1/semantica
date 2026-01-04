@@ -85,7 +85,7 @@ class CommunityDetector:
             self.nx = nx
             self.use_networkx = True
             self.logger.debug("NetworkX available, using optimized implementations")
-        except ImportError:
+        except (ImportError, OSError):
             self.nx = None
             self.use_networkx = False
             self.logger.warning("NetworkX not available, using basic implementations")
