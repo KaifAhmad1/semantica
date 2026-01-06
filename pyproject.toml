@@ -172,11 +172,14 @@ llm-anthropic = [
 llm-ollama = [
     "ollama>=0.1.0"
 ]
+llm-deepseek = [
+    "deepseek>=0.1.0"
+]
 llm-litellm = [
     "litellm>=1.0.0"
 ]
 llm-all = [
-    "semantica[llm-openai,llm-gemini,llm-groq,llm-anthropic,llm-ollama,llm-litellm]"
+    "semantica[llm-openai,llm-gemini,llm-groq,llm-anthropic,llm-ollama,llm-deepseek,llm-litellm]"
 ]
 models-huggingface = [
     "transformers>=4.20.0",

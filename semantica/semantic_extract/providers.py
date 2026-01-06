@@ -436,7 +436,7 @@ class OllamaProvider(BaseProvider):
     def _init_client(self):
         """Initialize Ollama client."""
         try:
-            import ollama
+            import ollama  # type: ignore[import-untyped]
 
             self.client = ollama
             # Test connection
@@ -498,7 +498,7 @@ class DeepSeekProvider(BaseProvider):
 
     def _init_client(self):
         try:
-            import deepseek
+            import deepseek  # type: ignore[import-untyped]
 
             if self.api_key:
                 self.client = deepseek.Client(api_key=self.api_key)
