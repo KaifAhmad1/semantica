@@ -311,8 +311,18 @@ def extract_entities_llm(
     # Support llm_model parameter to disambiguate from ML model
     if "llm_model" in kwargs:
         model = kwargs.pop("llm_model")
+    
+    # Pass api_key if provided in kwargs (needed for all providers)
+    provider_kwargs = kwargs.copy()
+    if "api_key" not in provider_kwargs:
+        # Try to get from environment as fallback for all providers
+        import os
+        env_key = f"{provider.upper()}_API_KEY"
+        api_key = os.getenv(env_key)
+        if api_key:
+            provider_kwargs["api_key"] = api_key
 
-    llm = create_provider(provider, model=model, **kwargs)
+    llm = create_provider(provider, model=model, **provider_kwargs)
 
     if not llm.is_available():
         raise ProcessingError(f"{provider} provider not available")
@@ -745,7 +755,17 @@ def extract_relations_llm(
     if "llm_model" in kwargs:
         model = kwargs.pop("llm_model")
     
-    llm = create_provider(provider, model=model, **kwargs)
+    # Pass api_key if provided in kwargs (needed for all providers)
+    provider_kwargs = kwargs.copy()
+    if "api_key" not in provider_kwargs:
+        # Try to get from environment as fallback for all providers
+        import os
+        env_key = f"{provider.upper()}_API_KEY"
+        api_key = os.getenv(env_key)
+        if api_key:
+            provider_kwargs["api_key"] = api_key
+
+    llm = create_provider(provider, model=model, **provider_kwargs)
 
     if not llm.is_available():
         raise ProcessingError(f"{provider} provider not available")
@@ -782,6 +802,16 @@ Extract all meaningful relationships between the entities, using the most approp
                 # Find matching entities
                 subject_text = item.get("subject", "")
                 object_text = item.get("object", "")
+                
+                # Ensure subject_text and object_text are strings
+                if not isinstance(subject_text, str):
+                    subject_text = str(subject_text) if subject_text else ""
+                if not isinstance(object_text, str):
+                    object_text = str(object_text) if object_text else ""
+                
+                # Skip if either is empty
+                if not subject_text or not object_text:
+                    continue
 
                 subject_entity = next(
                     (e for e in entities if e.text.lower() == subject_text.lower()),
@@ -938,7 +968,21 @@ def extract_triplets_llm(
     **kwargs,
 ) -> List[Triplet]:
     """LLM-based triplet extraction."""
-    llm = create_provider(provider, model=model, **kwargs)
+    # Support llm_model parameter to disambiguate from ML model
+    if "llm_model" in kwargs:
+        model = kwargs.pop("llm_model")
+    
+    # Pass api_key if provided in kwargs (needed for all providers)
+    provider_kwargs = kwargs.copy()
+    if "api_key" not in provider_kwargs:
+        # Try to get from environment as fallback for all providers
+        import os
+        env_key = f"{provider.upper()}_API_KEY"
+        api_key = os.getenv(env_key)
+        if api_key:
+            provider_kwargs["api_key"] = api_key
+
+    llm = create_provider(provider, model=model, **provider_kwargs)
 
     if not llm.is_available():
         raise ProcessingError(f"{provider} provider not available")

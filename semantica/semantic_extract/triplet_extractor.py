@@ -246,6 +246,17 @@ class TripletExtractor:
                         method_options["model"] = all_options.get(
                             "llm_model", all_options.get("model")
                         )
+                        # Pass api_key if provided (needed for all providers)
+                        if "api_key" in all_options:
+                            method_options["api_key"] = all_options["api_key"]
+                        elif "api_key" not in method_options:
+                            # Try to get from environment as fallback
+                            import os
+                            provider = method_options.get("provider", "openai")
+                            env_key = f"{provider.upper()}_API_KEY"
+                            api_key = os.getenv(env_key)
+                            if api_key:
+                                method_options["api_key"] = api_key
 
                     triplets = method_func(
                         text,
