@@ -139,6 +139,8 @@ nav:
     - examples.md
     - Code Examples: CodeExamples.md
     - learning-more.md
+  - Integrations:
+    - Docling: integrations/docling.md
   - Cookbook: cookbook.md
   - Resources:
     - community-projects.md

@@ -159,11 +159,11 @@ parser = DoclingParser()
 result = parser.parse("complex_table.pdf")
 
 # Access high-accuracy tables
-for table in result.tables:
-    print(table.headers)
+for table in result["tables"]:
+    print(table["headers"])
     
 # Get markdown representation
-print(result.markdown)
+print(result["full_text"])
 ```
 
 ### WebParser

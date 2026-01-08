@@ -271,9 +271,13 @@ parsed = parser.parse("document.pdf", format="auto")
 
 # Enhanced parsing with Docling (recommended for complex layouts/tables)
 # Requires: pip install docling
-docling_parser = DoclingParser()
-docling_result = docling_parser.parse("complex_table.pdf")
-print(f"Extracted {len(docling_result.tables)} tables")
+docling_parser = DoclingParser(enable_ocr=True)
+result = docling_parser.parse("complex_table.pdf")
+
+print(f"Text (Markdown): {result['full_text'][:100]}...")
+print(f"Extracted {len(result['tables'])} tables")
+for i, table in enumerate(result['tables']):
+    print(f"Table {i+1} headers: {table.get('headers', [])}")
 
 # Normalize text
 normalizer = TextNormalizer()
