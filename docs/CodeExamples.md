@@ -138,6 +138,39 @@ async for item in feed_processor.stream_items():
     knowledge_graph.add_triplets(core.generate_triplets(semantics))
 ```
 
+### 🦆 Docling Clear Code Example
+
+High-accuracy document parsing with structural understanding:
+
+```python
+from semantica.parse import DoclingParser
+
+# 1. Initialize DoclingParser
+# Docling provides superior table extraction and structure understanding
+# Requires: pip install docling
+parser = DoclingParser(
+    enable_ocr=True,          # Enable OCR for scanned documents
+    export_format="markdown"  # Options: "markdown", "html", "json"
+)
+
+# 2. Parse a complex document
+# Supports PDF, DOCX, PPTX, XLSX, HTML, and images
+result = parser.parse("complex_invoice.pdf")
+
+# 3. Access structured content
+print(f"Content (Markdown):\n{result['full_text']}")
+
+# 4. Extract and iterate over tables with high precision
+for i, table in enumerate(result['tables']):
+    print(f"\nTable {i+1}:")
+    print(f"Headers: {table.get('headers', [])}")
+    print(f"Data rows: {len(table.get('rows', []))}")
+
+# 5. Get document metadata
+metadata = result['metadata']
+print(f"\nMetadata: {metadata.get('title')} ({result.get('total_pages')} pages)")
+```
+
 ### 📊 Structured Data Processing Module
 
 Handle structured and semi-structured data formats:

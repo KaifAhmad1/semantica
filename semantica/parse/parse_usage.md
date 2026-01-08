@@ -170,17 +170,17 @@ result = parser.parse("complex_invoice.pdf")
 
 # 2. Extract structured content
 # result contains the full Docling document object if available
-print(f"Extracted Text (Markdown): {result.markdown}")
+print(f"Extracted Text (Markdown): {result['full_text']}")
 
 # 3. Access extracted tables with high accuracy
-for i, table in enumerate(result.tables):
-    print(f"Table {i+1} headers: {table.headers}")
-    print(f"Table {i+1} row count: {len(table.rows)}")
+for i, table in enumerate(result['tables']):
+    print(f"Table {i+1} headers: {table.get('headers', [])}")
+    print(f"Table {i+1} row count: {len(table.get('rows', []))}")
 
 # 4. Extract metadata
-metadata = result.metadata
-print(f"Title: {metadata.title}")
-print(f"Page Count: {metadata.page_count}")
+metadata = result['metadata']
+print(f"Title: {metadata.get('title')}")
+print(f"Page Count: {metadata.get('page_count')}")
 ```
 
 #### Advanced Configuration
@@ -198,7 +198,7 @@ parser = DoclingParser(
 
 # Parse with specific export format
 result = parser.parse("scanned_document.pdf")
-print(f"HTML Content: {result.html}")
+print(f"HTML Content: {result['full_text']}")
 
 # Batch processing
 results = parser.parse_batch(["doc1.pdf", "doc2.docx"])
@@ -504,23 +504,22 @@ pdf_parser = PDFParser()
 pdf_data = pdf_parser.parse("document.pdf", extract_text=True, extract_tables=True)
 
 # Access pages
-for page_dict in pdf_data.get("pages", []):
-    page = PDFPage(**page_dict)
-    print(f"Page {page.page_number}: {len(page.text)} characters")
-    print(f"  Tables: {len(page.tables)}")
-    print(f"  Images: {len(page.images)}")
+for page in pdf_data.get("pages", []):
+    print(f"Page {page['page_number']}: {len(page['text'])} characters")
+    print(f"  Tables: {len(page['tables'])}")
+    print(f"  Images: {len(page['images'])}")
 
 # Access metadata
-metadata = PDFMetadata(**pdf_data.get("metadata", {}))
-print(f"Title: {metadata.title}")
-print(f"Author: {metadata.author}")
-print(f"Page Count: {metadata.page_count}")
+metadata = pdf_data.get("metadata", {})
+print(f"Title: {metadata.get('title')}")
+print(f"Author: {metadata.get('author')}")
+print(f"Page Count: {metadata.get('page_count')}")
 ```
 
 ### DOCX Parser
 
 ```python
-from semantica.parse import DOCXParser, DocxSection, DocxMetadata
+from semantica.parse import DOCXParser
 
 docx_parser = DOCXParser()
 
@@ -528,15 +527,14 @@ docx_parser = DOCXParser()
 docx_data = docx_parser.parse("document.docx", extract_tables=True)
 
 # Access sections
-for section_dict in docx_data.get("sections", []):
-    section = DocxSection(**section_dict)
-    print(f"Section: {section.heading} (Level {section.level})")
-    print(f"  Content: {section.content[:100]}...")
+for section in docx_data.get("sections", []):
+    print(f"Section: {section['heading']} (Level {section['level']})")
+    print(f"  Content: {section['content'][:100]}...")
 
 # Access metadata
-metadata = DocxMetadata(**docx_data.get("metadata", {}))
-print(f"Title: {metadata.title}")
-print(f"Author: {metadata.author}")
+metadata = docx_data.get("metadata", {})
+print(f"Title: {metadata.get('title')}")
+print(f"Author: {metadata.get('author')}")
 ```
 
 ### JSON Parser
