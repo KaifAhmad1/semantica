@@ -360,7 +360,7 @@ results = vector_store.search(query="supply chain", top_k=5)
 
 ### Graph Store & Triplet Store
 
-> **Neo4j, FalkorDB support** • **SPARQL queries** • **RDF triplets**
+> **Neo4j, FalkorDB, Amazon Neptune support** • **SPARQL queries** • **RDF triplets**
 
 ```python
 from semantica.graph_store import GraphStore
@@ -369,6 +369,24 @@ from semantica.triplet_store import TripletStore
 # Graph Store (Neo4j, FalkorDB)
 graph_store = GraphStore(backend="neo4j", uri="bolt://localhost:7687", user="neo4j", password="password")
 graph_store.add_nodes([{"id": "n1", "labels": ["Person"], "properties": {"name": "Alice"}}])
+
+# Amazon Neptune Graph Store (OpenCypher via HTTP with IAM Auth)
+neptune_store = GraphStore(
+    backend="neptune",
+    endpoint="your-cluster.us-east-1.neptune.amazonaws.com",
+    port=8182,
+    region="us-east-1",
+    iam_auth=True,  # Uses AWS credential chain (boto3, env vars, or IAM role)
+)
+
+# Node Operations
+neptune_store.add_nodes([
+    {"labels": ["Person"], "properties": {"id": "alice", "name": "Alice", "age": 30}},
+    {"labels": ["Person"], "properties": {"id": "bob", "name": "Bob", "age": 25}},
+])
+
+# Query Operations
+result = neptune_store.execute_query("MATCH (p:Person) RETURN p.name, p.age")
 
 # Triplet Store (Blazegraph, Jena, RDF4J)
 triplet_store = TripletStore(backend="blazegraph", endpoint="http://localhost:9999/blazegraph")
