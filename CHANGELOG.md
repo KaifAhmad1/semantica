@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated `set_model` to properly refresh configuration and dimensions during model switches.
 
 ### Added
+- Added `semantica/semantic_extract/schemas.py` with canonical Pydantic models for consistent structured output.
+- Enhanced extractors with robust fallback chains (LLM -> Pattern) to ensure data availability.
 - Added comprehensive unit test suite `tests/embeddings/test_model_switching.py` for verifying dynamic model transitions and dimension updates.
 - Fixed `TypeError: unhashable type: 'Entity'` in `GraphAnalyzer` when processing graphs with raw `Entity` objects or dictionaries in relationships (#159).
 - Robustified ID extraction across `CentralityCalculator`, `CommunityDetector`, and `ConnectivityAnalyzer` to handle various entity formats.
