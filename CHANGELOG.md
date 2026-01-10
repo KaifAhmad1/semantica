@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Amazon Neptune Support**:
+    - Added `AmazonNeptuneStore` providing Amazon Neptune graph database integration via Bolt protocol and OpenCypher.
+    - Implemented `NeptuneAuthTokenManager` extending Neo4j AuthManager for AWS IAM SigV4 signing with automatic token refresh.
+    - Added robust connection handling: retry logic with backoff for transient errors (signature expired, connection closed) and driver recreation.
+    - Added `graph-amazon-neptune` optional dependency group (boto3, neo4j).
+    - Comprehensive test suite covering all GraphStore interface methods.
+- **Docling Integration**:
+    - Added `DoclingParser` in `semantica.parse` for high-fidelity document parsing using the Docling library.
+    - Supports multi-format parsing (PDF, DOCX, PPTX, XLSX, HTML, images) with superior table extraction and structure understanding.
+    - Implemented as a standalone parser supporting local execution, OCR, and multiple export formats (Markdown, HTML, JSON).
 - **Robust Extraction Fallbacks**:
     - Implemented comprehensive fallback chains ("ML/LLM" -> "Pattern" -> "Last Resort") across `NERExtractor`, `RelationExtractor`, and `TripletExtractor` to prevent empty result lists.
     - Added "Last Resort" pattern matching in `NERExtractor` to identify capitalized words as generic entities when all other methods fail.
